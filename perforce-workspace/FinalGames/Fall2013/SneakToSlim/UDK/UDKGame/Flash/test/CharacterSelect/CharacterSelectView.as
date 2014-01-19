@@ -1,19 +1,30 @@
 ﻿package  {
 
-	import flash.display.MovieClip;
-	import fl.controls.TileList;
-	import fl.data.DataProvider;
+    import flash.system.fscommand;
 
-	public class CharacterSelectView extends MovieClip {
+    import scaleform.clik.events.ListEvent;
 
+    public class CharacterSelectView extends SelectView {
 
-		public function CharacterSelectView() {
-			// constructor code
-			var characterMenu:TileList = TileList(this.getChildByName('CharacterMenu'));
-			var characters:DataProvider = DataProvider(characterMenu.dataProvider);
-			trace(characterMenu.columnWidth);
-			trace(characters.toArray());
-		}
-	}
+        public function CharacterSelectView() {
+            super()
+            // constructor code
+            setSource([
+                'Rabbit',
+                'Ginseng Baby',
+                'Shorty',
+                'Lady Qian'
+            ]);
+        }
+
+        override public function set selectedModel(value:Object):void {
+            super.selectedModel = value;
+            if (selectedModel != null) {
+                trace('command', 'name '+selectedModel.name);
+                fscommand('characterSelect', 'name '+selectedModel.name);
+            }
+        }
+
+    }
 
 }
