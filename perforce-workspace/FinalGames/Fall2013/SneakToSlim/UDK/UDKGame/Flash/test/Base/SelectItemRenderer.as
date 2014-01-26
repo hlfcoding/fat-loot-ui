@@ -2,12 +2,10 @@ package  {
 
     import scaleform.clik.controls.ListItemRenderer;
 
-    // TODO: Make into UIComponent?
     public class SelectItemRenderer extends ListItemRenderer {
 
         public function SelectItemRenderer() {
             super();
-            // constructor code
         }
 
         override protected function updateAfterStateChange():void {
@@ -16,6 +14,13 @@ package  {
                 textField.wordWrap = true;
                 textField.multiline = true;
             }
+        }
+
+        override public function setData(data:Object):void {
+            if (data == null) {
+                return;
+            }
+            this.data = data;
         }
 
     }

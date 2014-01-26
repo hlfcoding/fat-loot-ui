@@ -4,49 +4,74 @@ package {
     import flash.events.Event;
 
     import scaleform.clik.controls.Button;
+    import scaleform.clik.controls.ButtonBar;
     import scaleform.clik.controls.ListItemRenderer;
-    import scaleform.clik.controls.TileList;
-    import scaleform.clik.constants.InvalidationType;
+    import scaleform.clik.controls.ScrollBar;
     import scaleform.clik.data.DataProvider;
     import scaleform.clik.events.ListEvent;
     import scaleform.clik.events.FocusHandlerEvent;
 
-    public class SelectView extends MovieClip {
+    public class TableSelectView extends MovieClip {
 
         public var collection:DataProvider;
-        public var selectMenu:TileList; // TODO: Support focusing.
+        public var selectMenu:ExtendedScrollingList; // TODO: Support focusing.
         public var selectPreview:PreviewView;
+        public var selectScrollBar:ScrollBar;
+        public var selectTopBar:ButtonBar;
 
         protected var _selectedModel:Object;
 
-        public function SelectView() {
+        public function TableSelectView() {
             super();
             collection = DataProvider(selectMenu.dataProvider);
-            collection.itemRendererName = 'SelectItemRenderer';
-            selectMenu.rowHeight = selectMenu.height;
-            selectMenu.addEventListener(ListEvent.ITEM_ROLL_OVER, handleItemFocus);
-            selectMenu.addEventListener(ListEvent.ITEM_ROLL_OUT, handleItemFocus);
-            selectMenu.addEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
+            collection.itemRendererName = 'TableItemRenderer';
+            if (selectPreview != null) {
+                selectMenu.addEventListener(ListEvent.ITEM_ROLL_OVER, handleItemFocus);
+                selectMenu.addEventListener(ListEvent.ITEM_ROLL_OUT, handleItemFocus);
+                selectMenu.addEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
+            }
         }
 
         public function init() {
             // Init.
             selectMenu.selectedIndex = 0;
-            selectedModel = selectPreview.model = getModelAtIndex(0);
+            selectedModel = getModelAtIndex(0);
+            if (selectPreview != null) {
+                selectPreview.model = selectedModel;
+            }
+            if (selectTopBar != null) {
+                var contentWidth:Number = 400;
+                var baseHeight:Number = 30;
+                selectTopBar.setActualScale(1, 1);
+                selectTopBar.setActualSize(contentWidth, baseHeight);
+                //selectTopBar.buttonWidth = contentWidth / columnNames.length;
+            }
         }
 
         public function get selectedModel():Object { return _selectedModel; }
         public function set selectedModel(value:Object):void {
             if (value === _selectedModel && value != null) { return; }
             _selectedModel = value;
-            selectPreview.model = value;
+            if (selectPreview != null) {
+                selectPreview.model = value;
+            }
         }
 
+        public function get columnNames():Array {
+            return selectTopBar.dataProvider as Array;
+        }
+        public function set columnNames(names:Array):void {
+            (selectTopBar.dataProvider as DataProvider).setSource(names);
+        }
         public function set source(source:Array):void {
+            source.forEach(formatItem);
             collection.setSource(source);
-            selectMenu.columnWidth = selectMenu.width / collection.length;
             selectMenu.selectedIndex = 0;
             selectedModel = getModelAtIndex(0);
+        }
+
+        public function formatItem(item:Object, index:int, source:Array):Object {
+            return item;
         }
 
         public function handleItemFocus(event:ListEvent):void {
