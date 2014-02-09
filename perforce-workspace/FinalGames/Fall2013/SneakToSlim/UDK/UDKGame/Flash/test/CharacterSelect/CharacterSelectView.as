@@ -38,7 +38,7 @@
         public function onSkillSelect(event:ListEvent):void {
             if (event.type === ListEvent.INDEX_CHANGE) {
                 var skill:Object = skillSelectView.getModelAtIndex(event.index);
-                Utility.sendCommand('skillSelect', 'selectCharacterSkillInUdk', skill.id);
+                // We're just viewing the skill. There's no selection.
             }
         }
 
