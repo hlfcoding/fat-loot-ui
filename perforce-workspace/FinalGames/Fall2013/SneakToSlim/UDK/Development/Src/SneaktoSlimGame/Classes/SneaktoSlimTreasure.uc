@@ -237,5 +237,5 @@ DefaultProperties
 	bAlwaysRelevant=true
 	CurrentSpawnPointIndex = 255;
 
-	treasureVelocity = 200.0
+	treasureVelocity = 500.0
 }

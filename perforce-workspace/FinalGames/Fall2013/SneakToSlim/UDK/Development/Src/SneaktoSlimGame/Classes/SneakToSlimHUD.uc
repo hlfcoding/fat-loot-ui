@@ -8,8 +8,10 @@ var Color teamColor[4];
 var Color defaultTeamColor[4];
 
 var string allPplScore[4];
-var PathNode topDownCam;  
+//var PathNode topDownCam;            
 var array<PathNode> corners;        //Placed in map editor beforehand
+var array<vector> cornerPoints;
+var vector topLeft;
 var bool once;
        
 var vector right, up, dir;
@@ -25,6 +27,7 @@ var int screenYResolution;
 
 var SneaktoSlimGFxHUD FlashHUD;
 var SneaktoSlimGFxMap FlashMap;
+var SneaktoSlimGFxPauseMenu FlashPauseMenu;
 
 replication 
 {   //ARRANGE THESE ALPHABETICALLY
@@ -51,6 +54,12 @@ singular event Destroyed()
 	{
 		FlashMap.Close(true);
 		FlashMap = none;
+	}
+
+	if(FlashPauseMenu != none)
+	{
+		FlashPauseMenu.Close(true);
+		FlashPauseMenu = none;
 	}
 
 	super.Destroyed();
@@ -80,8 +89,6 @@ simulated function PostBeginPlay()
 	{
 		if(InStr(node.Tag, 'Corner') != -1)
 			corners[corners.Length] = node;
-		if(node.Tag == 'topDownCamera')
-			topDownCam = node;
 	}
 	findMapDimensions();
 	//Presets simple vectors for 3D to 2D calculation
@@ -106,6 +113,11 @@ simulated function PostBeginPlay()
 	FlashMap.SetViewScaleMode(SM_NoScale);
 	FlashMap.SetAlignment(Align_TopLeft);
 
+	FlashPauseMenu = new class 'SneaktoSlimGFxPauseMenu';
+	FlashPauseMenu.Init(class 'Engine'.static.GetEngine().GamePlayers[FlashPauseMenu.LocalPlayerOwnerIndex]);
+	FlashPauseMenu.SetViewScaleMode(SM_NoScale);
+	FlashPauseMenu.SetAlignment(Align_TopLeft);
+
 	//Saves map specific info in flash class
 	FlashMap.mapName = WorldInfo.GetMapName();
 	FlashMap.mapPath = "SneaktoSlimImages." $ FlashMap.mapName $ "TopDownMap";
@@ -115,30 +127,99 @@ simulated function PostBeginPlay()
 //See "Nick P." for more details
 function findMapDimensions()
 {
-	local PathNode topLeft, topRight, bottomLeft;
-	local int i;
+	local vector topRight, bottomLeft;
+	local vector prime, prime2;
+	local int i, k;
 
-	//Breaks if map corners at not placed in editor
-	if(corners.Length == 0)
+	//Same code as if(fltemplemap)
+	if(WorldInfo.GetMapName() == "demoday")
 	{
-		`log("WARNING: Corners not placed in map");
-		return;
-	}
+		//Breaks if map corners at not placed in editor
+		if(corners.Length != 4)
+		{
+			`log("WARNING: Corners not placed in map");
+			return;
+		}
 
-	//Gets specify tag corners
-	for(i = 0; i < 4; i++)
+		//Gets specify tag corners
+		for(i = 0; i < 4; i++)
+		{
+			//Rotates points in odd, confusing axis to standard xy coordinate system
+			//Top down view of corners in editor
+			//(Actual) to  (Expected/Pecieved)
+			//BR   TR  -->  TL   TR
+			//BL   TL  -->  BL   BR
+			prime.X = corners[i].Location.Y;    //Rotate point -90 deg (clockwise about origin)
+			prime.Y = -corners[i].Location.X;
+			prime2.X = prime.X;     //Vertical flip about y axis
+			prime2.Y = -prime.Y;
+			cornerPoints[i] = prime2;
+
+			if(corners[i].Tag == 'topLeftCorner')
+				topLeft = cornerPoints[i];
+			if(corners[i].Tag == 'topRightCorner')
+				topRight = cornerPoints[i];
+			if(corners[i].Tag == 'bottomLeftCorner')
+				bottomLeft = cornerPoints[i];
+		}
+
+		//translate corner nodes so that topLeft point is at (0,0) and save into mutable array
+		for(k = 0; k < 4; k++)
+		{
+			cornerPoints[k].X += -topLeft.X;
+			cornerPoints[k].Y += -topLeft.Y;
+		}
+
+		//Distance formula
+		mapWidth = sqrt(square(topLeft.X - topRight.X) + square(topLeft.Y - topRight.Y));
+		mapHeight = sqrt(square(topLeft.X - bottomLeft.X) + square(topLeft.Y - bottomLeft.Y));
+	}
+	//Same code as if(demoday)
+	else if(WorldInfo.GetMapName() == "fltemplemap")
 	{
-		if(corners[i].Tag == 'topLeftCorner')
-			topLeft = corners[i];
-		if(corners[i].Tag == 'topRightCorner')
-			topRight = corners[i];
-		if(corners[i].Tag == 'bottomLeftCorner')
-			bottomLeft = corners[i];
-	}
+		//Breaks if map corners at not placed in editor
+		if(corners.Length != 4)
+		{
+			`log("WARNING: Corners not placed in map");
+			return;
+		}
 
-	//Distance formula
-	mapWidth = sqrt(square(topLeft.Location.X - topRight.Location.X) + square(topLeft.Location.Y - topRight.Location.Y));
-	mapHeight = sqrt(square(topLeft.Location.X - bottomLeft.Location.X) + square(topLeft.Location.Y - bottomLeft.Location.Y));
+		//Gets specify tag corners
+		for(i = 0; i < 4; i++)
+		{
+			//Rotates points in odd, confusing axis to standard xy coordinate system
+			//Top down view of corners in editor
+			//(Actual) to  (Expected/Pecieved)
+			//BR   TR  -->  TL   TR
+			//BL   TL  -->  BL   BR
+			prime.X = corners[i].Location.Y;    //Rotate point -90 deg (clockwise about origin)
+			prime.Y = -corners[i].Location.X;
+			prime2.X = prime.X;     //Vertical flip about y axis
+			prime2.Y = -prime.Y;
+			cornerPoints[i] = prime2;
+
+			if(corners[i].Tag == 'topLeftCorner')
+				topLeft = cornerPoints[i];
+			if(corners[i].Tag == 'topRightCorner')
+				topRight = cornerPoints[i];
+			if(corners[i].Tag == 'bottomLeftCorner')
+				bottomLeft = cornerPoints[i];
+		}
+
+		//translate corner nodes so that topLeft point is at (0,0) and save into mutable array
+		for(k = 0; k < 4; k++)
+		{
+			cornerPoints[k].X += -topLeft.X;
+			cornerPoints[k].Y += -topLeft.Y;
+		}
+
+		//Distance formula
+		mapWidth = sqrt(square(topLeft.X - topRight.X) + square(topLeft.Y - topRight.Y));
+		mapHeight = sqrt(square(topLeft.X - bottomLeft.X) + square(topLeft.Y - bottomLeft.Y));
+	}
+	else
+		`log("Add findMapDimensions code for map " $ FlashMap.mapName);
+	return;
 }
 
 
@@ -162,26 +243,58 @@ function Vector WorldPointTo2DScreenPoint(Vector point3D)
 		`log(corners[3].Name $ "(" $ corners[3].Tag $ ") at " $ corners[3].Location);
 		once = true;
 	}*/
-	screenPoint.X = (((point3D - topDownCam.Location) dot right) / mapWidth) + 0.5;     //Return value from 0 to 1
+	/*screenPoint.X = (((point3D - topDownCam.Location) dot right) / mapWidth) + 0.5;     //Return value from 0 to 1
 	screenPoint.Y = (((point3D - topDownCam.Location) dot up) / mapHeight) + 0.5;
-	screenPoint.Z = 0;  //Unused
+	screenPoint.Z = 0; */ //Unused
 
 	//Since world axis is different from screen axis
 	//I translate up 1 to match standard euclid plane,
 	//rotate along the x/y axis,
 	//then translate back down 1 to match screen axis
-	prime.X = screenPoint.X;
+	/*prime.X = screenPoint.X;
 	prime.Y = 1 - screenPoint.Y;
 	prime2.X = prime.Y;
 	prime2.Y = prime.X;
 	screenPoint.X = prime2.X;
-	screenPoint.Y = 1 - prime2.Y;
+	screenPoint.Y = 1 - prime2.Y;*/
 	//canvas.SetPos(Canvas.ClipX*0.2,Canvas.ClipY*0.4);
 	//canvas.DrawText("X: " $ screenPoint.X $ " | Y: " $ screenPoint.Y);
 
-	//Scales values to match screen size
-	screenPoint.X *= canvas.SizeX;   
-	screenPoint.Y *= canvas.SizeY;
+	//same
+	if(FlashMap.mapName == "demoday")
+	{
+		prime.X = point3D.Y;    //Rotate point -90 deg (clockwise about origin)
+		prime.Y = -point3D.X;
+		prime2.X = prime.X;     //Vertical flip about y axis
+		prime2.Y = -prime.Y;
+		prime2.X += -topLeft.X; //Translate to topLeft origin
+		prime2.Y += -topLeft.Y;
+		prime2.X = abs(prime2.X)/mapWidth;  //0 to 1 ratio of location point 
+		prime2.Y = abs(prime2.Y)/mapHeight; //relative to map dimensions.
+
+		screenPoint.X = prime2.X;
+		screenPoint.Y = prime2.Y;
+	}
+	//same
+	else if(FlashMap.mapName == "fltemplemap")
+	{
+		prime.X = point3D.Y;    //Rotate point -90 deg (clockwise about origin)
+		prime.Y = -point3D.X;
+		prime2.X = prime.X;     //Vertical flip about y axis
+		prime2.Y = -prime.Y;
+		prime2.X += -topLeft.X; //Translate to topLeft origin
+		prime2.Y += -topLeft.Y;
+		prime2.X = abs(prime2.X)/mapWidth;  //0 to 1 ratio of location point 
+		prime2.Y = abs(prime2.Y)/mapHeight; //relative to map dimensions.
+
+		screenPoint.X = prime2.X;
+		screenPoint.Y = prime2.Y;
+	}
+	else
+	{
+		screenPoint.X = -1;
+		screenPoint.Y = -1;
+	}
 
 	return screenPoint;
 }
@@ -394,6 +507,12 @@ simulated event PostRender()
 	{
 		FlashMap.TickMap(0);
 		FlashMap.scaleObjects(canvas.SizeX, canvas.SizeY);
+	}
+
+	if(FlashPauseMenu != none)
+	{
+		FlashPauseMenu.TickMap(0);
+		FlashPauseMenu.scaleObjects(canvas.SizeX, canvas.SizeY);
 	}
 }
 

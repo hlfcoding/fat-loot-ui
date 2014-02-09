@@ -96,14 +96,14 @@ function TickHud(float DeltaTime)
 		root.SetBool("visible", true);
 
 	//Only updates if health is different
-	if(lastPlayerHealth != SneaktoSlimPawn(player.Pawn).v_energy)
-	{
+	//if(lastPlayerHealth != SneaktoSlimPawn(player.Pawn).v_energy)
+	//{
 		lastPlayerHealth = SneaktoSlimPawn(player.Pawn).v_energy;
 		//Sets healthbar's custom variable which the script uses to change its own color
 		HealthBar.SetInt("currentHealth", lastPlayerHealth);   
 		//Scales according to width size
 		GetVariableObject("_root.stamina_bar.currentBar").SetInt("width", (lastPlayerHealth * healthBarLength /100));
-	}
+	//}
 }
 
 DefaultProperties

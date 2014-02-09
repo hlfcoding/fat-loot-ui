@@ -22,8 +22,8 @@ simulated event PostBeginPlay()
 	LightBeamEffectRef.SetHidden(true);
 	ChestLight.SetLightProperties(0.f);
 	ChestLight.SetEnabled(false);
-	EmissiveMaterialOn = MaterialInstanceConstant(DynamicLoadObject("flvfx.EmissiveLighting.EmissiveLight_base_treasure", class'MaterialInstanceConstant'));
-	EmissiveMaterialoff = MaterialInstanceConstant(DynamicLoadObject("flvfx.EmissiveLighting.Invisible", class'MaterialInstanceConstant'));
+	//EmissiveMaterialOn = MaterialInstanceConstant(DynamicLoadObject("flvfx.EmissiveLighting.EmissiveLight_base_treasure", class'MaterialInstanceConstant'));
+	//EmissiveMaterialoff = MaterialInstanceConstant(DynamicLoadObject("flvfx.EmissiveLighting.Invisible", class'MaterialInstanceConstant'));
 
 }
 
@@ -41,30 +41,7 @@ simulated function SneaktoSlimTreasure SpawnTreasure()
 	return MyTreasure;
 }
 
-/*simulated reliable Client function SetTreasure(bool _isHaveTreasure){
-	isHaveTreasure = _isHaveTreasure;
-	if(isHaveTreasure){
-		`log(self.Role);
-		SetParticalEffectActive(true);
-	}
-	else{
-		SetParticalEffectActive(false);
-	}
-}*/
 
-
-/*event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vector HitNormal)
-{
-	 
-	 if(isHaveTreasure == true){
-		 super.Touch(Other, OtherComp, HitLocation, HitNormal);
-         MyTreasure.turnOn();
-	     MyTreasure = none;
-	     SetTreasureFlag(false);
-	 }
-	 //ParticalEffect.SetActive(false);
-	
-}*/
 
 simulated function SetTreasureFlag(bool flag){
 	`log("Change Flag~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@isHaveTreasure);
@@ -115,6 +92,7 @@ simulated function bool UsedBy(Pawn User)
 		MyTreasure.giveTreasure(SneaktoSlimPawn(User),self);
 		MyTreasure = none;
 		SetTreasureFlag(false);
+		`log("???????????????????????Treasure!!!!!!!!!!!!!!!!!!!!!"@isHaveTreasure);
 	}
 	return true;
 }
@@ -175,6 +153,9 @@ DefaultProperties
 	End Object
 	Components.Add(TreasurePointLight)
 	ChestLight=TreasurePointLight
+
+	EmissiveMaterialOn = MaterialInstanceConstant'flvfx.EmissiveLighting.EmissiveLight_base_treasure'
+	EmissiveMaterialoff = MaterialInstanceConstant'flvfx.EmissiveLighting.Invisible'
 
     bBlockActors=true
     bHidden=false

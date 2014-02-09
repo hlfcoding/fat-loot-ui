@@ -81,6 +81,7 @@ DefaultProperties
 
 	Begin Object Name=CollisionCylinder
         CollisionHeight=+44.000000
+		CollisionRadius=15.000000
     End Object
  
 	Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment

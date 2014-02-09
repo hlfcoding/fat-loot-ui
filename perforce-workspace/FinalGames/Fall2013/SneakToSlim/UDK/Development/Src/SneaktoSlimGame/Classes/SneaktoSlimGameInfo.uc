@@ -21,6 +21,7 @@ var sneaktoslimplayercontroller sneaktoslimplayercontroller;
 var sneaktoslimPawn sneaktoslimPawnArchetype;
 
 var int demoTime;
+var string uniqueMatchDate;     //Randomly generated number to associate files with a certain game
 
 /**
  * Called when the game info is first initialized
@@ -30,6 +31,9 @@ var int demoTime;
 event PreBeginPlay()
 {
 	demoTime = 0;
+	uniqueMatchDate = TimeStamp();
+	uniqueMatchDate = Repl(uniqueMatchDate, ":", ";");    //.txt format doesn't allow colons in filenames
+	uniqueMatchDate = Repl(uniqueMatchDate, "/", ",");    //.txt format doesn't allow slashs in filenames
 
 	Super.PreBeginPlay();
 
@@ -50,14 +54,59 @@ function GameOver()
 	}
 }
 
+function updateStatsFile()
+{
+	local FileWriter f;
+	local int count;
+	local SneakToSlimAINavMeshController AIController;
+	local SneaktoSlimPawn pawn;
+
+	//Opens file
+	f = Spawn(class'FileWriter');
+	if(f != NONE)
+	{
+		f.OpenFile(uniqueMatchDate $ " ~ Global - " $ WorldInfo.GetMapName(), FWFT_Stats);
+	}
+
+	//Writes to file
+	f.Logf("Total AI Guard Catches: ");
+	count = 1;
+
+	foreach self.WorldInfo.AllControllers(class 'SneakToSlimAINavMeshController', AIController)
+	{
+		f.Logf("   Guard " $ count $ " = " $ AIController.totalCatches);
+		count++;
+	}
+
+	f.Logf("");
+	f.Logf("Final Scores: ");
+	count = 1;
+
+	foreach self.WorldInfo.AllPawns(class 'SneaktoSlimPawn', pawn)
+	{
+		f.Logf("   Player " $ count $ " = " $ pawn.playerScore);
+		count++;
+	}
+
+	//Closes file
+	if(f != NONE)
+	{
+		f.Destroy();
+	}
+}
+
 event Tick(float deltaTime)
 {
-	local int currentTime;
+	local int currentTime, count;
 	local SneaktoSlimPawn pawn;
 	local string time;
+	local SneakToSlimAINavMeshController AIController;
+	local string AICatchText;
 
 	super.Tick(deltaTime);
 
+	AICatchText = "";
+	count = 1;
 	currentTime = int(GetTimerCount('GameOver',));
 
 	if(currentTime != -1)
@@ -564,7 +613,6 @@ event PostBeginPlay()
 	local SneaktoSlimTreasure tmpTreasureBox;
 	TreasureInit();
 	ClothInit();
-    BuffInit();
 	foreach AllActors(class 'SneaktoSlimTreasure',tmpTreasureBox)
 	{
 		myTreasureBox.AddItem(tmpTreasureBox);
@@ -597,19 +645,7 @@ simulated function TreasureInit()
 	`Log("complete searching all the TSP" @myTreasure.Location,true,'alex');
 }
 
-simulated function BuffInit()
-{
-	local nearbyTrigger NT;
-	foreach AllActors(class'nearbyTrigger',NT)
-	{
-		NT.CreatePotionMesh();
-	}
 
-	foreach AllActors(class'nearbyTrigger',NT)
-	{
-		NT.StartSpawnBuffItem();
-	}
-}
 
 function ClothInit()
 {

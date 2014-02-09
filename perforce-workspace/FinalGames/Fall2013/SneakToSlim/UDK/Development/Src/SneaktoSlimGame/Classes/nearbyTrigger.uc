@@ -1,107 +1,112 @@
 class nearbyTrigger extends ITrigger;
 
-var repnotify int BuffType;
+
 var () int NoBuffProbility;
 var () int InvisibleProbility;
-var BuffBottle PotionBottle;
-replication {   //ARRANGE THESE ALPHABETICALLY
+var int BuffType;
+var repnotify bool isHaveBuff;
+var ParticleSystemComponent ParticalEffect;
+
+replication {
 	if (bNetDirty)
-		BuffType;
+		isHaveBuff;
 }
 
 simulated event PostBeginPlay()
 {
     super.PostBeginPlay();
-	if(Role == ROLE_Authority){
-		StartSpawnBuffItem();
-	}
+	//if(Role == ROLE_Authority){
+		//isHaveBuff = true;
+	//}
 
 }
 
 simulated function StartSpawnBuffItem(){
 	
 	Local int randNum;
-	`log("Spawn the Item!!!!!!!!!FGSDDGAGG!1111111111111111111111111");
-	if(Role == ROLE_Authority){
+	isHaveBuff = true;
+	//if(Role == ROLE_Authority){
         randNum = Rand(100);
-		if(randNum < InvisibleProbility){
+		if(randNum < 30){
             BuffType = 1;
 		}
-		else{
+		else if(randNum<60){
 			BuffType = 2;
 		}
-    }
+		else{
+			BuffType = 3;
+		}
+
+
+    //}
 }
 
 
+simulated event ReplicatedEvent(name VarName){
+	if(VarName == 'isHaveBuff'){
+        `log("1111111111122222222222222isHaveBuff~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@isHaveBuff);
+		
+		SetParticalEffectActive(isHaveBuff);
+	}
 
-simulated function CreatePotionMesh(){
-	Local vector NewLocation;
-	PotionBottle = spawn(class'BuffBottle',,,self.Location);
-	if(PotionBottle!=none){
-		`log("Spawn bottle!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	}
-	else{
-		`log("Cant Spawn bottle!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	}
-    NewLocation.X = PotionBottle.Location.X+30;
-	NewLocation.Y = PotionBottle.Location.Y+30;
-	NewLocation.Z = PotionBottle.Location.Z+30;
-	PotionBottle.SetLocation(NewLocation);
-	PotionBottle.SetHidden(false);
 }
 
+simulated function SetParticalEffectActive(bool flag){
+     ParticalEffect.SetActive(flag);
+	 if (flag)
+	 {
+		PromtText = "Press E to Get the treasure";
+	 } else
+	 {
+		PromtText = "";
+	 }
+}
+
+
+simulated function ChangeBuff(int type){
+	BuffType = type;
+}
 //function bool UsedBy(Pawn User)
 simulated function bool UsedBy(Pawn User)
 {
 	local bool used;
 	used = super.UsedBy(User);
-	if(string(User.Class) == "SneaktoSlimPawn")
-	{
-		`log( Name $ " Touched by " $ User.Name $ " name is " $ displayName);
 
 		//Only use power if user is currently not using a power
-	     if(BuffType == 1){
-	         SneaktoSlimPawn(User).bBuffed = 1;
+	     if(BuffType !=0){
+	         SneaktoSlimPawn(User).bBuffed = BuffType;
 			//SneaktoSlimPawn(User).inputStringToHUD("get invis powerup, press Shift to use");
 			
 			//Tells the user as a client to update its UI
 			 SneaktoSlimPawn(User).showPowerupUI(BuffType);
-
-			 `log( User.Name $ ".bBuffed " $ " is " $ SneaktoSlimPawn(User).bBuffed );
-			 BuffType=0;
-			 if(Role == ROLE_Authority){
-		        setTimer(10.0,false,'StartSpawnBuffItem');
-	         }
-		}
-		if(BuffType == 2){
-			SneaktoSlimPawn(User).bBuffed = 2;
-			//SneaktoSlimPawn(User).inputStringToHUD("get invis powerup, press Shift to use");
-			
-			//Tells the user as a client to update its UI
-			SneaktoSlimPawn(User).showPowerupUI(BuffType);
-
-			`log( User.Name $ ".bBuffed " $ " is " $ SneaktoSlimPawn(User).bBuffed );
-			BuffType=0;
-			if(Role == ROLE_Authority){
-		        setTimer(10.0,false,'StartSpawnBuffItem');
-	        }
+			 ChangeBuff(0);
+			 isHaveBuff = false;
+			 `log("33333333333333333333333333333isHaveBuff~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@isHaveBuff);
+			 //if(Role == ROLE_Authority){
+		     setTimer(10.0,false,'StartSpawnBuffItem');
+	         //}
 		}
         
 
 		Sneaktoslimpawn(User).playerPlayOrStopCustomAnim('customSearch', 'Search', 1.f, true, 0, 0, false, true);
 
 		return true;
-	}
-	return used;
 }
 
 
 DefaultProperties
 {
-	displayName = "BookShelf";
-	PromtText = "Press 'E' to Check the shelf";
-	eqGottenText = "";
+	displayName = "BookShelf"
+	PromtText = "Press 'E' to Check the shelf"
+	eqGottenText = ""
+
+	Begin Object Class=ParticleSystemComponent Name=TeapotEffectComponent
+        Template=ParticleSystem'flparticlesystem.Steam'
+        bAutoActivate = true
+		//Translation=(Z=80.0)
+	End Object
+    ParticalEffect = TeapotEffectComponent
+	Components.Add(TeapotEffectComponent)
 
 	Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment
 		bSynthesizeSHLight=TRUE
@@ -109,11 +114,11 @@ DefaultProperties
 		bUseBooleanEnvironmentShadowing=FALSE
 	End Object
 	Components.Add(MyLightEnvironment)
-	MyLight = MyLightEnvironment;
+	MyLight = MyLightEnvironment
 
 	//Create a new mesh object. This object will be the 3D model of the trigger
 	Begin Object Class=StaticMeshComponent Name=MyMesh
-        StaticMesh=StaticMesh'FLInteractiveObject.Shelf.large_shelf'
+        StaticMesh=StaticMesh'FLInteractiveObject.teapot.teapot'
 		bUsePrecomputedShadows=True
 		LightEnvironment=MyLightEnvironment
 		CastShadow=true
@@ -127,7 +132,8 @@ DefaultProperties
 
   	 bBlockActors=true //trigger will block players
   	 bHidden=false //players can see the trigger
-	 BuffType = 0;
-	 NoBuffProbility = 50;
-	 InvisibleProbility = 50;
+	 BuffType = 1
+	 isHaveBuff = true
+	 NoBuffProbility = 50
+	 InvisibleProbility = 50
 }

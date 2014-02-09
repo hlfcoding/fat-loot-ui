@@ -3,6 +3,9 @@
  */
 class SneaktoSlimPlayerController extends GamePlayerController
 	config(Game);
+
+Const DegreeToRadian = 0.01745329252;
+
 var bool bPlayerCanZoom;
 var name previousStateName;
 //var bool bIsSprinting;
@@ -13,7 +16,25 @@ var MiniMap myMap;
 var float HoldTime;
 var int RESPAWN_TIME;
 var PlayerStart playerBase;
-var bool uiOn;
+var bool uiOn, pauseMenuOn;
+
+var int totalParticipateTime, totalSprintTime, locationTime, locationTime2, totalVaseTime;       //Timer variables
+var float totalLocationTime[20];                                                                 //Array which contains times players spend in an area. 
+																								 //Index is hardcode to a particular section. See "trackLocation()"
+
+//Additions stats associated with guard catches
+var float averageTimeBetweenCatch, longestTimeBetweenCatch, shortTimeBetweenCatch, averageDifferenceInCatchTime, firstTimeCaught;
+var int timeBetweenGuardCatches, timesCaughtAboveAverage, timesCaughtBelowAverage;
+
+//Additional stats associated with treasure
+var float averageTimeBetweenTreasureHolds, longestTimeBetweenTreasureHold, shortestTimeBetweenTreasureHold, averageDifferenceInBetweenHoldTime, firstTimeBetweenHold;
+var int timeBetweenGettingTreasure, timesBetweenHoldsAboveAverage, timesBetweenHoldsBelowAverage;
+var float averageTimeHoldingTreasure, longestTimeHoldingTreasure, shortestTimeHoldingTreasure, averageDifferenceInTreasureHoldTime, firstTimeTreasureHold;
+var int timeHoldingTreasure, timesHoldingTreasureAboveAverage, timesHoldingTreasureBelowAverage;
+
+var int totalLocationIndex, totalLocationIndex2;
+var int numberOfTimesHitWithBellyBump;
+var string tempString;
 
 simulated event PostBeginPlay()
 {
@@ -26,10 +47,584 @@ simulated event PostBeginPlay()
 
 	myMap = Spawn(class'SneaktoSlimGame.MiniMap',,,self.Location,,,);
 	uiOn = true;
+	pauseMenuOn = false;
 	
 	SetTimer(0.05, false, 'getBase');
-	
 
+	totalParticipateTime = 0;
+	SetTimer(1, true, 'addToParticipateTime');
+
+	totalSprintTime = 0;
+	SetTimer(1, true, 'addToSprintTime');
+	pauseSprintTimer();
+
+	totalVaseTime = 0;
+	SetTimer(1, true, 'addToVaseTime');
+	pauseVaseTimer();
+
+	totalLocationIndex = -1;
+	totalLocationIndex2 = -1;
+	locationTime = 0;
+	locationTime2 = 0;
+	SetTimer(1, true, 'addToLocationTime');
+	SetTimer(1, true, 'addToLocationTime2');
+
+	timeBetweenGuardCatches = 0;
+	SetTimer(1, true, 'addToCatchTime');
+	longestTimeBetweenCatch = -1;
+	shortTimeBetweenCatch = 99999;
+
+	self.timeHoldingTreasure = 0;
+	self.timeBetweenGettingTreasure = 0;
+	SetTimer(1, true, 'addToTreasureHoldTime');
+	self.pauseTreasureHoldTimer();
+	self.longestTimeBetweenTreasureHold = -1;
+	self.longestTimeHoldingTreasure = -1;
+	self.shortestTimeHoldingTreasure = 99999;
+	self.shortestTimeBetweenTreasureHold = 99999;
+	totalParticipateTime = 0;
+	SetTimer(1, true, 'addToBetweenTreasureTime');
+
+	tempString = "";
+}
+
+simulated function addToParticipateTime()
+{
+	totalParticipateTime++;
+}
+
+simulated function addToSprintTime()
+{
+	totalSprintTime++;
+}
+
+simulated function addToVaseTime()
+{
+	totalVaseTime++;
+}
+
+simulated function addToLocationTime()
+{
+	if(totalLocationIndex == -1)
+		return;
+
+	locationTime++;
+}
+
+simulated function addToLocationTime2()
+{
+	if(totalLocationIndex2 == -1)
+		return;
+
+	locationTime2++;
+}
+
+simulated function addToTreasureHoldTime()
+{
+	self.timeHoldingTreasure++;
+}
+
+simulated function addToBetweenTreasureTime()
+{
+	self.timeBetweenGettingTreasure++;
+}
+
+simulated function addToCatchTime()
+{
+	timeBetweenGuardCatches++;
+}
+
+unreliable server function pauseParticipateTimer()
+{
+	PauseTimer(true, 'addToParticipateTime');
+}
+
+unreliable server function resumeParticipateTimer()
+{
+	PauseTimer(false, 'addToParticipateTime');
+}
+
+unreliable server function pauseSprintTimer()
+{
+	PauseTimer(true, 'addToSprintTime');
+}
+
+unreliable server function resumeSprintTimer()
+{
+	PauseTimer(false, 'addToSprintTime');
+}
+
+unreliable server function pauseVaseTimer()
+{
+	PauseTimer(true, 'addToVaseTime');
+}
+
+unreliable server function resumeVaseTimer()
+{
+	PauseTimer(false, 'addToVaseTime');
+}
+
+unreliable server function pauseLocationTimer()
+{
+	PauseTimer(true, 'addToLocationTime');
+}
+
+unreliable server function resumeLocationTimer()
+{
+	PauseTimer(false, 'addToLocationTime');
+}
+
+unreliable server function pauseLocationTimer2()
+{
+	PauseTimer(true, 'addToLocationTime2');
+}
+
+unreliable server function resumeLocationTimer2()
+{
+	PauseTimer(false, 'addToLocationTime2');
+}
+
+unreliable server function pauseCatchTimer()
+{
+	PauseTimer(true, 'addToCatchTime');
+}
+
+unreliable server function resumeCatchTimer()
+{
+	PauseTimer(false, 'addToCatchTime');
+}
+
+unreliable server function pauseTreasureHoldTimer()
+{
+	PauseTimer(true, 'addToTreasureHoldTime');
+}
+
+unreliable server function resumeTreasureHoldTimer()
+{
+	PauseTimer(false, 'addToTreasureHoldTime');
+}
+
+unreliable server function pauseBetweenTreasureTimer()
+{
+	PauseTimer(true, 'addToBetweenTreasureTime');
+}
+
+unreliable server function resumeBetweenTreasureTimer()
+{
+	PauseTimer(false, 'addToBetweenTreasureTime');
+}
+
+unreliable server function recordHoldTreasureTime()
+{
+	local float time;
+
+	self.pauseTreasureHoldTimer();
+
+	time = self.timeHoldingTreasure + GetTimerCount('addToTreasureHoldTime');
+
+	if(!(self.averageTimeHoldingTreasure != 0))
+		self.firstTimeTreasureHold = time;
+
+	//Records shortest time
+	if(time < self.shortestTimeHoldingTreasure)
+		self.shortestTimeHoldingTreasure = time;
+	//Records largest time
+	if(time > self.longestTimeHoldingTreasure)
+		self.longestTimeHoldingTreasure = time;
+	//Calculates average time
+	self.averageTimeHoldingTreasure = (self.averageTimeHoldingTreasure*(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 1) + time) / SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot;
+	
+	//Calculates "average deviation"
+	//For example, a small deviation means that a majority of times were close to the average time 
+	//where as a large deviation means the difference in times between various catches were large
+	if(self.averageTimeHoldingTreasure < time)
+	{
+		self.timesHoldingTreasureAboveAverage++;
+		self.averageDifferenceInTreasureHoldTime = (self.averageDifferenceInTreasureHoldTime*(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 2) + abs(time - self.averageTimeHoldingTreasure)) / (SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 1);
+	}
+	if(self.averageTimeHoldingTreasure > time)
+	{
+		self.timesHoldingTreasureBelowAverage++;
+		self.averageDifferenceInTreasureHoldTime = (self.averageDifferenceInTreasureHoldTime*(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 2) + abs(time - self.averageTimeHoldingTreasure)) / (SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 1);
+	}
+
+	//Resets Timer
+	SetTimer(1, true, 'addToTreasureHoldTime');
+	self.timeHoldingTreasure = 0;
+	self.pauseTreasureHoldTimer();
+
+	self.resumeBetweenTreasureTimer();
+}
+
+unreliable server function recordBetweenTreasureTime()
+{
+	local float time;
+
+	pauseBetweenTreasureTimer();
+
+	time = self.timeBetweenGettingTreasure + GetTimerCount('addToBetweenTreasureTime');
+
+	if(!(self.averageTimeBetweenTreasureHolds != 0))
+		self.firstTimeBetweenHold = time;
+
+	//Records shortest time
+	if(time < self.shortestTimeBetweenTreasureHold)
+		self.shortestTimeBetweenTreasureHold = time;
+	//Records largest time
+	if(time > self.longestTimeBetweenTreasureHold)
+		self.longestTimeBetweenTreasureHold = time;
+	//Calculates average time
+	self.averageTimeBetweenTreasureHolds = (self.averageTimeBetweenTreasureHolds*(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 1) + time) / SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot;
+	
+	//Calculates "average deviation"
+	//For example, a small deviation means that a majority of times were close to the average time 
+	//where as a large deviation means the difference in times between various catches were large
+	if(self.averageTimeBetweenTreasureHolds < time)
+	{
+		self.timesBetweenHoldsAboveAverage++;
+		self.averageDifferenceInBetweenHoldTime = (self.averageDifferenceInBetweenHoldTime*(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 2) + abs(time - self.averageTimeBetweenTreasureHolds)) / (SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 1);
+	}
+	if(self.averageTimeBetweenCatch > time)
+	{
+		self.timesBetweenHoldsBelowAverage++;
+		self.averageDifferenceInBetweenHoldTime = (self.averageDifferenceInBetweenHoldTime*(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 2) + abs(time - self.averageTimeBetweenTreasureHolds)) / (SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 1);
+	}
+
+	//Resets Timer
+	SetTimer(1, true, 'addToBetweenTreasureTime');
+	self.timeBetweenGettingTreasure = 0;
+	self.pauseBetweenTreasureTimer();
+
+	resumeTreasureHoldTimer();
+}
+
+unreliable server function recordCatchStats()
+{
+	local float time;
+
+	pauseCatchTimer();
+
+	SneaktoSlimPawn(self.Pawn).totalTimesCaught++;
+	time = timeBetweenGuardCatches + GetTimerCount('addToCatchTime');
+
+	if(!(self.averageTimeBetweenCatch != 0))
+		self.firstTimeCaught = time;
+
+	//Records shortest catch time
+	if(time < self.shortTimeBetweenCatch)
+		self.shortTimeBetweenCatch = time;
+	//Records largest catch time
+	if(time > self.longestTimeBetweenCatch)
+		self.longestTimeBetweenCatch = time;
+	//Calculates average catch time
+	self.averageTimeBetweenCatch = (self.averageTimeBetweenCatch*(SneaktoSlimPawn(self.Pawn).totalTimesCaught - 1) + time) / SneaktoSlimPawn(self.Pawn).totalTimesCaught;
+	
+	//Calculates "average deviation"
+	//For example, a small deviation means that a majority of catches were close to the average time 
+	//where as a large deviation means the difference in times between various catches were large
+	if(self.averageTimeBetweenCatch < time)
+	{
+		self.timesCaughtAboveAverage++;
+		self.averageDifferenceInCatchTime = (self.averageDifferenceInCatchTime*(SneaktoSlimPawn(self.Pawn).totalTimesCaught - 2) + abs(time - self.averageTimeBetweenCatch)) / (SneaktoSlimPawn(self.Pawn).totalTimesCaught - 1);
+	}
+	if(self.averageTimeBetweenCatch > time)
+	{
+		self.timesCaughtBelowAverage++;
+		self.averageDifferenceInCatchTime = (self.averageDifferenceInCatchTime*(SneaktoSlimPawn(self.Pawn).totalTimesCaught - 2) + abs(time - self.averageTimeBetweenCatch)) / (SneaktoSlimPawn(self.Pawn).totalTimesCaught - 1);
+	}
+
+	//Resets Timer
+	SetTimer(1, true, 'addToCatchTime');
+	timeBetweenGuardCatches = 0;
+	resumeCatchTimer();
+
+	//self.totalParticipateTime + GetTimerCount('addToParticipateTime')
+	//averageTimeBetweenCatch, longestTimeBetweenCatch, shortTimeBetweenCatch;
+}
+
+function recordFirstAverageTime()
+{
+	//Checks first record of time caught by guard and averages it into the deviation stats
+	if(self.averageTimeBetweenCatch < self.firstTimeCaught)
+	{
+		self.timesCaughtAboveAverage++;
+		self.averageDifferenceInCatchTime = (self.averageDifferenceInCatchTime*(SneaktoSlimPawn(self.Pawn).totalTimesCaught - 2) + abs(self.firstTimeCaught - self.averageTimeBetweenCatch)) / (SneaktoSlimPawn(self.Pawn).totalTimesCaught - 1);
+	}
+	if(self.averageTimeBetweenCatch > self.firstTimeCaught)
+	{
+		self.timesCaughtBelowAverage++;
+		self.averageDifferenceInCatchTime = (self.averageDifferenceInCatchTime*(SneaktoSlimPawn(self.Pawn).totalTimesCaught - 2) + abs(self.firstTimeCaught - self.averageTimeBetweenCatch)) / (SneaktoSlimPawn(self.Pawn).totalTimesCaught - 1);
+	}
+}
+
+function recordFirstBetweenHoldTime()
+{
+	if(self.averageTimeBetweenTreasureHolds < self.firstTimeBetweenHold)
+	{
+		self.timesBetweenHoldsAboveAverage++;
+		self.averageDifferenceInBetweenHoldTime = (self.averageDifferenceInBetweenHoldTime*(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 2) + abs(self.firstTimeBetweenHold - self.averageTimeBetweenTreasureHolds)) / (SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 1);
+	}
+	if(self.averageTimeBetweenCatch > self.firstTimeBetweenHold)
+	{
+		self.timesBetweenHoldsBelowAverage++;
+		self.averageDifferenceInBetweenHoldTime = (self.averageDifferenceInBetweenHoldTime*(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 2) + abs(self.firstTimeBetweenHold - self.averageTimeBetweenTreasureHolds)) / (SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 1);
+	}
+}
+
+function recordFirstTreasureHoldTime()
+{
+	if(self.averageTimeHoldingTreasure < self.firstTimeTreasureHold)
+	{
+		self.timesHoldingTreasureAboveAverage++;
+		self.averageDifferenceInTreasureHoldTime = (self.averageDifferenceInTreasureHoldTime*(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 2) + abs(self.firstTimeTreasureHold - self.averageTimeHoldingTreasure)) / (SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 1);
+	}
+	if(self.averageTimeHoldingTreasure > self.firstTimeTreasureHold)
+	{
+		self.timesHoldingTreasureBelowAverage++;
+		self.averageDifferenceInTreasureHoldTime = (self.averageDifferenceInTreasureHoldTime*(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 2) + abs(self.firstTimeTreasureHold - self.averageTimeHoldingTreasure)) / (SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot - 1);
+	}
+}
+
+unreliable server function trackLocation(float X, float Y, string mapName)
+{
+	local Vector point;
+
+	tempString = mapName;
+	//Done this instead of just passing vector as parameter because for 
+	//some reason the values were being read as ints instead of floats
+	point.X = X;
+	point.Y = Y;
+
+	if(mapName == "demoday")
+	{
+		//Upper left quad
+		if((point.X >= 0 && point.X < 0.5) && (point.Y >= 0 && point.Y < 0.5))
+		{
+			if(totalLocationIndex != 0)
+			{
+				recordRemainingLocationTime();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime');
+				totalLocationIndex = 0;
+			}
+		}
+		//Upper right quad
+		if((point.X >= 0.5 && point.X < 1.0) && (point.Y >= 0 && point.Y < 0.5))
+		{
+			if(totalLocationIndex != 1)
+			{
+				recordRemainingLocationTime();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime');
+				totalLocationIndex = 1;
+			}
+		}
+		//Lower left quad
+		if((point.X >= 0 && point.X < 0.5) && (point.Y >= 0.5 && point.Y < 1.0))
+		{
+			if(totalLocationIndex != 2)
+			{
+				recordRemainingLocationTime();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime');
+				totalLocationIndex = 2;
+			}
+		}
+		//Lower right quad
+		if((point.X >= 0.5 && point.X < 1.0) && (point.Y >= 0.5 && point.Y < 1.0))
+		{
+			if(totalLocationIndex != 3)
+			{
+				recordRemainingLocationTime();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime');
+				totalLocationIndex = 3;
+			}
+		}
+		//Center
+		if((point.X >= 0.3 && point.X < 0.7) && (point.Y >= 0.3 && point.Y < 0.7))
+		{
+			if(totalLocationIndex2 != 4)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 4;
+			}
+		}
+	}
+	if(mapName == "fltemplemap")
+	{
+		//Sector 1
+		if((point.X >= 0.35 && point.X < 0.65) && (point.Y >= 0.0 && point.Y < 0.2))
+		{
+			if(totalLocationIndex2 != 5)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 5;
+			}
+		}
+		//Sector 2
+		if((point.X >= 0.2 && point.X < 0.35) && (point.Y >= 0.2 && point.Y < 0.35))
+		{
+			if(totalLocationIndex2 != 6)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 6;
+			}
+		}
+		//Sector 3
+		if((point.X >= 0.35 && point.X < 0.65) && (point.Y >= 0.2 && point.Y < 0.35))
+		{
+			if(totalLocationIndex2 != 7)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 7;
+			}
+		}
+		//Sector 4
+		if((point.X >= 0.65 && point.X < 0.8) && (point.Y >= 0.2 && point.Y < 0.35))
+		{
+			if(totalLocationIndex2 != 8)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 8;
+			}
+		}
+		//Sector 5
+		if((point.X >= 0.0 && point.X < 0.2) && (point.Y >= 0.35 && point.Y < 0.65))
+		{
+			if(totalLocationIndex2 != 9)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 9;
+			}
+		}
+		//Sector 6
+		if((point.X >= 0.2 && point.X < 0.35) && (point.Y >= 0.35 && point.Y < 0.65))
+		{
+			if(totalLocationIndex2 != 10)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 10;
+			}
+		}
+		//Sector 7/Center
+		if((point.X >= 0.35 && point.X < 0.65) && (point.Y >= 0.35 && point.Y < 0.65))
+		{
+			if(totalLocationIndex2 != 11)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 11;
+			}
+		}
+		//Sector 8
+		if((point.X >= 0.65 && point.X < 0.8) && (point.Y >= 0.35 && point.Y < 0.65))
+		{
+			if(totalLocationIndex2 != 12)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 12;
+			}
+		}
+		//Sector 9
+		if((point.X >= 0.8 && point.X < 1.0) && (point.Y >= 0.35 && point.Y < 0.65))
+		{
+			if(totalLocationIndex2 != 13)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 13;
+			}
+		}
+		//Sector 10
+		if((point.X >= 0.2 && point.X < 0.35) && (point.Y >= 0.65 && point.Y < 0.8))
+		{
+			if(totalLocationIndex2 != 14)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 14;
+			}
+		}
+		//Sector 11
+		if((point.X >= 0.35 && point.X < 0.65) && (point.Y >= 0.65 && point.Y < 0.8))
+		{
+			if(totalLocationIndex2 != 15)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 15;
+			}
+		}
+		//Sector 12
+		if((point.X >= 0.65 && point.X < 0.8) && (point.Y >= 0.35 && point.Y < 0.8))
+		{
+			if(totalLocationIndex2 != 16)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 16;
+			}
+		}
+		//Sector 13
+		if((point.X >= 0.35 && point.X < 0.65) && (point.Y >= 0.8 && point.Y < 1.0))
+		{
+			if(totalLocationIndex2 != 17)
+			{
+				recordRemainingLocationTime2();
+				//Resets timer
+				SetTimer(1, true, 'addToLocationTime2');
+				totalLocationIndex2 = 17;
+			}
+		}
+	}
+}
+
+//Saved current location time to total time array
+//Called in track location method if player moves to a different area and once during prepForQuit
+unreliable server function recordRemainingLocationTime()
+{
+	//Doesn't add time for out of bounds
+	if(totalLocationIndex != -1)
+	{
+		totalLocationTime[totalLocationIndex] += self.locationTime + GetTimerCount('addToLocationTime');
+		locationTime = 0;
+		ClearTimer('addToLocationTime');
+	}
+}
+
+//Saved current location time to total time array
+//Called in track location method if player moves to a different area and once during prepForQuit
+unreliable server function recordRemainingLocationTime2()
+{
+	//Doesn't add time for out of bounds
+	if(totalLocationIndex2 != -1)
+	{
+		totalLocationTime[totalLocationIndex2] += self.locationTime2 + GetTimerCount('addToLocationTime2');
+		locationTime2 = 0;
+		ClearTimer('addToLocationTime2');
+	}
 }
 
 simulated function getBase()
@@ -41,6 +636,21 @@ simulated function getBase()
 			break;
 		}
 	}
+}
+
+final function bool IsInViewCos( vector ViewVec, vector DirVec, float FOVCos )
+{
+	local float CosAngle;		//cosine of angle from object's LOS to WP
+	CosAngle = Normal( ViewVec ) dot  Normal( DirVec );
+	return (0 <= CosAngle && FOVCos < CosAngle);
+}
+
+final function bool ActorLookingAt( Actor SeeingActor, Actor Target, float AngleInDegreeFromLOS )
+{
+	if( Target == None || SeeingActor == None )
+		return false;
+
+	return IsInViewCos( vector(SeeingActor.Rotation), Target.Location - SeeingActor.Location, Cos(AngleInDegreeFromLOS * DegreeToRadian) );
 }
 
 //Currently makes player input zero, while still accepting player inputs.
@@ -115,8 +725,9 @@ simulated state CustomizedPlayerWalking
 		}
 	}
 
-	simulated exec function SpeedDown()
+	simulated exec function OnReleaseSecondSkill()
 	{
+		pauseSprintTimer();
 		ServerSpeedDown();
 		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
 					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
@@ -134,49 +745,18 @@ Begin:
 	if(debugStates) logState();
 }
 
-simulated state PreBellyBump extends CustomizedPlayerWalking
+reliable server function ServerSpeedDown()
 {
-	event BeginState (Name LastStateName)
+	if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+				SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
+	if(sneaktoslimpawn(self.Pawn).s_energized == 1)
 	{
-		if (LastStateName == 'Sprinting')
-		{
-			SpeedDown();
-		}
-		else if (LastStateName == 'InvisibleExhausted' || LastStateName == 'InvisibleSprinting' || LastStateName == 'InvisibleWalking')
-		{
-			attemptToChangeState('EndInvisible');
-			GoToState('EndInvisible');
-		}
-		else if (LastStateName == 'DisguisedExhausted' || LastStateName == 'DisguisedSprinting' || LastStateName == 'DisguisedWalking')
-		{
-			attemptToChangeState('EndDisguised');
-			GoToState('EndDisguised');
-		}
+		ClearTimer('EnergyCheck');
+		SetTimer(2, false, 'StartEnergyRegen');
+		sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
+		sneaktoslimpawn(self.Pawn).s_energized = 0;
 	}
-
-
-Begin:
-	if(debugStates) logState();
-
-	ClearTimer('EnergyRegen');
-
-	previousStateName = 'BellyBump';
-	//Don't belly bump if map is on
-	if(myMap != NONE && !myMap.isOn) //&& 
-	//if(//////////////////////////////////////////////////////////////////////////!myMap.isOn && 
-		//!sneaktoslimpawn(self.Pawn).vaseIMayBeUsing.occupied )
-	{
-		//sneaktoslimpawn(self.Pawn).bumpReadyNode.PlayCustomAnim('preBump', 4.0f, 0.1f, 0, false, true);
-		//FinishAnim(sneaktoslimpawn(self.Pawn).bumpReadyNode.GetCustomAnimNodeSeq() );
-
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customBumpReady','preBump', 4.f, true, 0, 0, false);
-		//WaitForLanding();
-
-		FinishAnim(AnimNodePlayCustomAnim(sneaktoslimpawn(self.pawn).mySkelComp.FindAnimNode('customBumpReady')).GetCustomAnimNodeSeq());
-
-		GoToState('InBellyBump');
-	}
-	GoToState('Playerwalking');
 }
 
 function addOutLine()
@@ -198,182 +778,150 @@ function addOutLine()
 	} 
 }
 
-
-simulated state InBellyBump extends CustomizedPlayerWalking
+unreliable server function recordRemainingStats()
 {
-
-	simulated function Timer()
-	{    
-		GoToState('FinishBellyBump');
-	}
-
-	event OnAnimEnd(AnimNodeSequence SeqNode, float PlayedTime, float ExcessTime)
-	{
-		super.OnAnimEnd(SeqNode, PlayedTime, ExcessTime);
-		`log("213123123123123");
-	}
-
-	simulated function bool letsBellyBump()
-	{
-		if (sneaktoslimpawn(self.Pawn).v_energy > 10 && sneaktoslimpawn(self.Pawn).GroundSpeed != 0) 
-		{
-			
-			sneaktoslimpawn(self.Pawn).v_energy -= sneaktoslimpawn(self.Pawn).PerDashEnergy;
-			//current.SetPhysics(PHYS_FALLING);
-
-			//current.Velocity = Vector(current.Rotation) * current.GroundSpeed * 5;
-			//current.Velocity.Z = 100;
-			//`log("current.Location " $ current.Location $ " current.Velocity " $ current.Velocity);
-			sneaktoslimpawn(self.Pawn).TakeDamage(0, none, sneaktoslimpawn(self.Pawn).Location, Vector(sneaktoslimpawn(self.Pawn).Rotation) * 50000, class'DamageType');
-
-			//sneaktoslimpawn(self.Pawn).bIsDashing = true;
-			sneaktoslimpawn(self.Pawn).Mesh.MotionBlurInstanceScale = 1;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-
-Begin:
-	if(debugStates) logState();
-
-	//current_2.bIsDashing = true;
-	letsBellyBump();
-	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customBumping','bumping', 1.f, true, 0, 0, false);
-	//WaitForLanding();
-
-	FinishAnim(AnimNodePlayCustomAnim(sneaktoslimpawn(self.pawn).mySkelComp.FindAnimNode('customBumping')).GetCustomAnimNodeSeq());
-	//settimer(2);
-	//
-	GoToState('FinishBellyBump');
+	recordFirstAverageTime();
+	recordFirstBetweenHoldTime();
+	recordFirstTreasureHoldTime();
+	recordRemainingLocationTime();
+	recordRemainingLocationTime2();
 }
 
-
-simulated state FinishBellyBump extends CustomizedPlayerWalking
+//Writes stats to "../UDKGame/Stats"
+unreliable server function prepForQuit()
 {
+	local FileWriter f;
+	local float totalPlayTime;
 
-	
-Begin:
-	if(debugStates) logState();
-	SetTimer(2, false, 'StartEnergyRegen');
+	totalPlayTime = self.totalParticipateTime + GetTimerCount('addToParticipateTime');
+	recordRemainingStats();
 
-	//sneaktoslimpawn(self.Pawn).bIsDashing = false;
-	//sneaktoslimpawn(self.Pawn).bumpLandNode.PlayCustomAnim('Postbump', 0.5f, 0, 0.1f, false, true);
-	//FinishAnim(sneaktoslimpawn(self.Pawn).bumpLandNode.GetCustomAnimNodeSeq() );
+	f = Spawn(class'FileWriter');
+	if(f != NONE)
+	{
+		f.OpenFile(SneaktoSlimGameInfo(WorldInfo.Game).uniqueMatchDate $ " ~ STS Player " $ SneaktoSlimPawn(self.Pawn).GetTeamNum()+1, FWFT_Stats);
+	}
 
+	SneaktoSlimGameInfo(WorldInfo.Game).updateStatsFile();
 
-	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customLand','postbump', 0.1f, true, 0, 0.2, false);
-	FinishAnim(AnimNodePlayCustomAnim(sneaktoslimpawn(self.pawn).mySkelComp.FindAnimNode('customLand')).GetCustomAnimNodeSeq());
+	//Player unique stats
+	f.Logf("Total Time(s):");
+	f.Logf("    In play session: " $ totalPlayTime);
+	f.Logf("             *Pause Time is ignored");
+	f.Logf("");
+	if(tempString == "demoday")
+	{
+		f.Logf("    DemoDay      *See .png image for more accurate region representation");
+		f.Logf("    ---------------------------");
+		f.Logf("    |            |            |");
+		f.Logf("    |   Quad 1   |   Quad 2   |");
+		f.Logf("    |         ---|----        |");
+		f.Logf("    |--------|-Center-|-------|");
+		f.Logf("    |         ---|----        |");
+		f.Logf("    |   Quad 3   |   Quad 4   |");
+		f.Logf("    |            |            |");
+		f.Logf("    ---------------------------");
+		f.Logf("    In quad 1: " $ totalLocationTime[0]);
+		f.Logf("    In quad 2: " $ totalLocationTime[1]);
+		f.Logf("    In quad 3: " $ totalLocationTime[2]);
+		f.Logf("    In quad 4: " $ totalLocationTime[3]);
+		f.Logf("    In center: " $ totalLocationTime[4]);
+	}
+	if(tempString == "fltemplemap")
+	{
+		f.Logf("    FLTempleMap      *See .png image for more accurate region representation");
+		f.Logf("    -------------------------------");
+		f.Logf("    |           | 1   |           |");
+		f.Logf("    |      -----|-----|-----      |");
+		f.Logf("    |     |  2  | 3   |  4  |     |");
+		f.Logf("    |-----|-----|-----|-----|-----|");
+		f.Logf("    |  5  | 6   | 7   |  8  |  9  |");
+		f.Logf("    |-----|-----|-----|-----|-----|");
+		f.Logf("    |     | 10  | 11  | 12  |     |");
+		f.Logf("    |      -----|-----|-----      |");
+		f.Logf("    |           | 13  |           |");
+		f.Logf("    -------------------------------");
+		f.Logf("    In sector 1: " $ totalLocationTime[5]);
+		f.Logf("    In sector 2: " $ totalLocationTime[6]);
+		f.Logf("    In sector 3: " $ totalLocationTime[7]);
+		f.Logf("    In sector 4: " $ totalLocationTime[8]);
+		f.Logf("    In sector 5: " $ totalLocationTime[9]);
+		f.Logf("    In sector 6: " $ totalLocationTime[10]);
+		f.Logf("    In sector 7: " $ totalLocationTime[11]);
+		f.Logf("    In sector 8: " $ totalLocationTime[12]);
+		f.Logf("    In sector 9: " $ totalLocationTime[13]);
+		f.Logf("    In sector 10: " $ totalLocationTime[14]);
+		f.Logf("    In sector 11: " $ totalLocationTime[15]);
+		f.Logf("    In sector 12: " $ totalLocationTime[16]);
+		f.Logf("    In sector 13: " $ totalLocationTime[17]);
+	}
+	f.Logf("");
+	f.Logf("");
+	f.Logf("Total # of Times:");
+	f.Logf("----------------------------------------------------------------------------------");
+	f.Logf("    Caught by Guards = " $ SneaktoSlimPawn(self.Pawn).totalTimesCaught);
+	if(SneaktoSlimPawn(self.Pawn).totalTimesCaught > 0)
+	{
+		f.Logf("");
+		f.Logf("         *Related Stats:");
+		f.Logf("               Average Time Between Catches: " $ self.averageTimeBetweenCatch);
+		f.Logf("                    *Deviation: " $ self.averageDifferenceInCatchTime);
+		f.Logf("                    *Times caught above average: " $ self.timesCaughtAboveAverage);
+		f.Logf("                    *Times caught below average: " $ self.timesCaughtBelowAverage);
+		f.Logf("                Longest Time Caught: " $ self.longestTimeBetweenCatch);
+		f.Logf("               Shortest Time Caught: " $ self.shortTimeBetweenCatch);
+	}
+	f.Logf("-----------------------------------------------------------------------------------");
+	f.Logf("          Final Score = " $ SneaktoSlimPawn(self.pawn).playerScore);
+	f.Logf("                       ---");
+	f.Logf("    Treasure Obtained = " $ SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot $ " times");
+	if(SneaktoSlimPawn(self.Pawn).totalTimesTreasureGot > 0)
+	{
+		f.Logf("");
+		f.Logf("         *Related Stats:");
+		f.Logf("               Average Time Between Acquisitions: " $ self.averageTimeBetweenTreasureHolds);
+		f.Logf("                    *Deviation: " $ self.averageDifferenceInBetweenHoldTime);
+		f.Logf("                    *Times above average: " $ self.timesBetweenHoldsAboveAverage);
+		f.Logf("                    *Times below average: " $ self.timesBetweenHoldsBelowAverage);
+		f.Logf("                Longest Time: " $ self.longestTimeBetweenTreasureHold);
+		f.Logf("               Shortest Time: " $ self.shortestTimeBetweenTreasureHold);
+		f.Logf("");
+		f.Logf("               Average Time Holding Treasure: " $ self.averageTimeHoldingTreasure);
+		f.Logf("                    *Deviation: " $ self.averageDifferenceInTreasureHoldTime);
+		f.Logf("                    *Times above average: " $ self.timesHoldingTreasureAboveAverage);
+		f.Logf("                    *Times below average: " $ self.timesHoldingTreasureBelowAverage);
+		f.Logf("                Longest Time: " $ self.longestTimeHoldingTreasure);
+		f.Logf("               Shortest Time: " $ self.shortestTimeHoldingTreasure);
+	}
+	f.Logf("-----------------------------------------------------------------------------------");
+	f.Logf("           Vase Used = " $ SneaktoSlimPawn(self.Pawn).totalTimesVasesUsed);
+	f.Logf("                      *Total Time: " $ self.totalVaseTime + GetTimerCount('addToVaseTime'));
+	f.Logf("-----------------------------------------------------------------------------------");
+	f.Logf("    Belly Bumps Used = " $ SneaktoSlimPawn(self.Pawn).totalTimesBellyBumpUsed);
+	/*f.Logf("                           *Misses = " $ SneaktoSlimPawn(self.Pawn).getBBMissCount());
+	f.Logf("                             *Hits = " $ SneaktoSlimPawn(self.Pawn).getBBHitCount());
+	f.Logf("  Hit by Belly Bumps = " $ self.getBBHitByCount());*/
+	f.Logf("-----------------------------------------------------------------------------------");
+	f.Logf("   Sprints Activated = " $ SneaktoSlimPawn(self.Pawn).totalTimesSprintActivate);
+	f.Logf("                      *Total Time: " $ (self.totalSprintTime + GetTimerCount('addToSprintTime')) $ " secs.   (" $ (self.totalSprintTime + GetTimerCount('addToSprintTime')/totalPlayTime * 100) $ "% of play time)");
+	f.Logf("-----------------------------------------------------------------------------------");
+	f.Logf("       Powerups Used = " $ SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed);
 
-	GoToState('Playerwalking');
+	if(f != NONE)
+	{
+		f.Destroy();
+	}
 }
-
-
 
 exec simulated function clientChangeState(name stateName)
 {
 	attemptToChangeState(stateName);
-	//simulatedChangeState(stateName);
 }
 
 simulated reliable server function attemptToChangeState(name stateName)
 {
-		if (stateName == 'PreBellyBump')
-		{
-			//sneaktoslimpawn(self.Pawn).bIsDashing = true;
-			GoToState(stateName);
-		}
-		else if (stateName == 'PlayerWalking')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'Sprinting')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'EndSprinting')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'Stunned')
-		{
-			//sneaktoslimpawn(self.Pawn).isStunned = true;
-			GoToState(stateName);
-		}
-		else if (stateName == 'Hiding')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'EndHiding')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'Exhausted')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'InvisibleWalking')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'InvisibleSprinting')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'InvisibleExhausted')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'EndInvisible')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'DisguisedWalking')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'DisguisedSprinting')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'DisguisedExhausted')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'EndDisguised')
-		{
-			`log("server EndDisguised");
-			GoToState(stateName);
-		}
-		else if (stateName == 'HoldingTreasureWalking')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'HoldingTreasureSprinting')
-		{
-			GoToState(stateName);
-		}
-		else if (stateName == 'HoldingTreasureExhausted')
-		{
-			GoToState(stateName);
-		}
-	//simulatedChangeState(stateName);
+	GoToState(stateName);		
 }
-
-/*event PlayerTick( float DeltaTime )
-{
-	super.PlayerTick(DeltaTime);
-
-	//Nick: updates map's location to match player's location (if on)
-	if(myMap != NONE)
-	{
-		if(myMap.isOn)
-			myMap.playerLocation = Location;
-	}
-}*/
 
 //When player clicks 'M' their minimap is turned on/off
 exec function toggleMap()
@@ -384,7 +932,8 @@ exec function toggleMap()
 	else
 		toggleClientUI();*/
 		
-	if(myMap != NONE)
+	//Checks if map exists and pause menu isn't on
+	if(myMap != NONE && !pauseMenuOn)
 	{
 		myMap.toggleMap();
 		if(myMap.isOn)
@@ -400,6 +949,34 @@ exec function toggleMap()
 			topDownCamera = cam;
 	}
 	SneaktoSlimPlayerController(Controller).setCameraActor(topDownCamera);*/
+}
+
+//When press 'ESC' key the pause menu field is active and disables/enables player movement
+//Other classes like STSHUD and STSGFxPauseMenu check this field during their ticks
+exec function togglePauseMenu()
+{
+	//Checks if map is not used
+	if(myMap != NONE)
+	{
+		if(!myMap.isOn)
+		{
+			//`log("Pause Menu activated");
+			pauseMenuOn = !pauseMenuOn;
+
+			if(pauseMenuOn)
+			{
+				pauseParticipateTimer();
+				SneaktoSlimPawn(self.Pawn).disablePlayerMovement();
+				IgnoreLookInput(true);
+			}
+			else
+			{
+				resumeParticipateTimer();
+				SneaktoSlimPawn(self.Pawn).enablePlayerMovement();
+				IgnoreLookInput(false);
+			}
+		}
+	}
 }
 
 unreliable client function toggleClientUI()
@@ -457,18 +1034,6 @@ simulated state PlayerWalking
 		`log(sneaktoslimpawn(self.Pawn).v_energy);
 	}
 
-	exec function BellyBump()
-	{
-		if(sneaktoslimpawn(self.Pawn).v_energy <= 20)
-			return;
-		else
-		{
-			attemptToChangeState('PreBellyBump');
-			GoToState('PreBellyBump');
-			//changeEveryoneState('PreBellyBump');
-		}
-	}
-
 	// when player input 'Left Shift'
 	simulated exec function FL_useBuff()
 	{
@@ -476,6 +1041,8 @@ simulated state PlayerWalking
 		
 		if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
 		{
+			SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
+
 			sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 
 			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
@@ -486,48 +1053,27 @@ simulated state PlayerWalking
 		}
 		if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
 		{			
+			SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
+
 			sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
 			sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
 
 			attemptToChangeState('DisguisedWalking');
 			GoToState('DisguisedWalking');
+		}
+		if(sneaktoslimpawn(self.Pawn).bBuffed == 3) 
+		{			
+			SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
 
+			sneaktoslimpawn(self.Pawn).serverResetBBuffed();
+			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+			sneaktoslimpawn(self.Pawn).bUsingBuffed[2] = 1;//should not be used 
+
+			attemptToChangeState('UsingThunderFan');
+			GoToState('UsingThunderFan');
 		}
 	}
-
-	
-
-	//Called when sprint-button is clicked down and held. SpeedDown() is called when the button is released.
-	simulated exec function SneakySpeed()
-	{
-		attemptToChangeState('Sprinting');//to server
-		GoToState('Sprinting');//local
-	}
-
-	//Called when sprint-button is released.
-	//simulated exec function NoMoreSpeed()
-	//{
-	//	//attemptToChangeState('EndSprinting');//to server
-	//	//GoToState('EndSprinting');//local
-	//	SpeedDown();
-	//}
-	
-	//function applyInvis()
-	//{
-	//	//Passes current countdown time to itself as client
-	//	current.showCountdownTimer(int(current.BuffedTimerDefault[0]-current.BuffedTimer));
-
-	//	if(current.BuffedTimer >= current.BuffedTimerDefault[0])
-	//	{
-	//		current.hideCountdownTimer();
-	//		current.BuffedTimer = 0;
-	//		current.inputStringToCenterHUD(0);
-	//		`log("buff end ");
-	//		GoToState('EndInvisible');
-	//		attemptToChangeState('EndInvisible');
-	//	}
-	//}
 
 	//Update player rotation when walking
 	simulated function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
@@ -619,21 +1165,14 @@ simulated state PlayerWalking
 		//
 	}
 
-
-
-	//exec function forceStun (int number)
-	//{
-	//	PushState ('Stunned');
-	//}
-
-
-
 Begin:
 	if(debugStates) logState();
 }
 
 simulated function DropTreasure()
 {
+	self.recordHoldTreasureTime();
+
 	ServerDropTreasure();
 	`log("Function dropping treasure");
 	SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customTreasureWalk','Treasure_Walk',1.f,false,0.5,0.5,true,false);
@@ -650,157 +1189,51 @@ simulated function StartEnergyRegen()
 	SetTimer(0.05, true, 'EnergyRegen');
 }
 
+//Nick: Fixed minor bug where energy would stop regen at 99
 simulated function EnergyRegen()
 {
-	if (sneaktoslimpawn(self.Pawn).v_energy + sneaktoslimpawn(self.Pawn).energyRegenerateRate <= 100)
+	if (sneaktoslimpawn(self.Pawn).v_energy/* + sneaktoslimpawn(self.Pawn).energyRegenerateRate*/ < 100)
 	{
 		sneaktoslimpawn(self.Pawn).v_energy = sneaktoslimpawn(self.Pawn).v_energy + sneaktoslimpawn(self.Pawn).energyRegenerateRate;
-		if (sneaktoslimpawn(self.Pawn).v_energy > 99.95)
-			sneaktoslimpawn(self.Pawn).v_energy = 100;
+		/*if (sneaktoslimpawn(self.Pawn).v_energy > 99.95)
+			sneaktoslimpawn(self.Pawn).v_energy = 100;*/
 	}
+	else
+		sneaktoslimpawn(self.Pawn).v_energy = 100;
 }
 
-
-//Player goes through this state when he clicks sprint-button.
-simulated state Sprinting extends PlayerWalking
+simulated state UsingThunderFan extends CustomizedPlayerWalking
 {
-
-	event BeginState (Name LastStateName)
+	simulated function UseThunderFan()
 	{
-		////
-		//InvisibleWalking should go into either PlayerWalking or InvisibleSprinting then to Sprinting
-		//
-		if (LastStateName == 'HoldingTreasureWalking' || LastStateName == 'HoldingTreasureExhausted')
+		local SneaktoSlimPawn victim;
+		`log("UsingThunderFan!!");
+
+		foreach self.Pawn.VisibleCollidingActors(class'SneaktoSlimPawn', victim, 300)
 		{
-			GoToState('HoldingTreasureSprinting');
-		}
-		else if (LastStateName == 'InvisibleWalking' || LastStateName == 'InvisibleExhausted')
-		{
-			GoToState('InvisibleSprinting');
-		}
-		else if (LastStateName == 'DisguisedWalking' || LastStateName == 'DisguisedExhausted')
-		{
-			GoToState('DisguisedSprinting');
-		}
-		else
-		{
-			`log("state " $ LastStateName $ " trying to go through state Sprinting", true, 'LOG');
-		}
-	}
-
-	
-	//event EndState (name NextStateName)
-	//{
-	//	if(NextStateName == 'Hiding')
-	//		SpeedDown();
-	//}
-
-	// when player input 'Left Shift', also overwrite the same func in playerWalking
-	simulated exec function FL_useBuff()
-	{
-		//no "super" because we have to rewtire/ override!
-		sneaktoslimpawn(self.Pawn).checkServerFLBuff(sneaktoslimpawn(self.Pawn).enumBuff.bBuffed, true);
-		
-		if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
-		{
-			sneaktoslimpawn(self.Pawn).bBuffed= 0;
-			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-			sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used 
-
-			attemptToChangeState('InvisibleSprinting');
-			GoToState('InvisibleSprinting');
-		}
-		if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
-		{			
-			sneaktoslimpawn(self.Pawn).bBuffed = 0;
-
-			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-			sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
-
-			attemptToChangeState('DisguisedSprinting');
-			GoToState('DisguisedSprinting');
-
-		}
-	}
-
-	simulated function SpeedUp()
-	{
-		if(sneaktoslimpawn(self.Pawn).s_energized == 0)
-		{
-			SetTimer(0.05, true, 'EnergyCheck');
-			//SwitchToShoulderCam();        //ANDYCAM
-			SwitchToCamera('ShoulderCam');
-			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLSprintingSpeed;
-			sneaktoslimpawn(self.Pawn).s_energized = 1;
-		}
-	}
-
-	simulated exec function SpeedDown()
-	{
-		ServerSpeedDown();
-		//current = sneaktoslimpawn(self.Pawn);
-		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
-		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
-		{
-			ClearTimer('EnergyCheck');
-			SetTimer(2, false, 'StartEnergyRegen');
-			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-			sneaktoslimpawn(self.Pawn).s_energized = 0;
-		}
-		attemptToChangeState('Playerwalking');
-		GoToState('Playerwalking');
-	}
-
-
-	simulated function EnergyCheck()
-	{
-		if (Vsize(sneaktoslimpawn(self.Pawn).Velocity) != 0)
-		{
-			if(sneaktoslimpawn(self.Pawn).v_energy > sneaktoslimpawn(self.Pawn).PerSpeedEnergy)
-			{
-				ClearTimer('EnergyRegen');
-				//current.startSpeedUpAnim();
-				SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,true,0.5,0.5,true,false);
-				sneaktoslimpawn(self.Pawn).v_energy = sneaktoslimpawn(self.Pawn).v_energy - sneaktoslimpawn(self.Pawn).PerSpeedEnergy;
-				if (sneaktoslimpawn(self.Pawn).v_energy < 0)
-					sneaktoslimpawn(self.Pawn).v_energy = 0;
-			}
-			else
-			{
-				//attemptToChangeState('EndSprinting');
-				//GoToState('EndSprinting');//local
-				SpeedDown();
+			if (ActorLookingAt(SneaktoSlimPawn(self.Pawn), victim, 45))
+			{				
+				victim.knockBackVector = (victim.Location - self.Location);
+				victim.knockBackVector = 25 * Normal(victim.knockBackVector);
+			
+				victim.knockBackVector.Z = 0; //attempting to keep the hit player grounded.					
+				SneaktoSlimPlayerController(victim.Controller).attemptToChangeState('BeingBellyBumped');//already done by server, no need to call server again
+				SneaktoSlimPlayerController(victim.Controller).GoToState('BeingBellyBumped');//already done by server, no need to call server again
 			}
 		}
-		else
-		{
-			SetTimer(2, false, 'StartEnergyRegen');
-			SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5f);
-		}
+	}
+
+	simulated function StopThunderFan()
+	{
+		GoToState('PlayerWalking');
+		attemptToChangeState('PlayerWalking');
 	}
 
 Begin:
-	if(debugStates) logState();
-
-	//SwitchToShoulderCam();    //ANDYCAM
-	Speedup();
+	UseThunderFan();
+	SetTimer(0.5f, false, 'StopThunderFan');	
 }
 
-reliable server function ServerSpeedDown()
-{
-	if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-				SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
-	if(sneaktoslimpawn(self.Pawn).s_energized == 1)
-	{
-		ClearTimer('EnergyCheck');
-		SetTimer(2, false, 'StartEnergyRegen');
-		sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-		sneaktoslimpawn(self.Pawn).s_energized = 0;
-	}
-}
 
 simulated state InvisibleWalking extends PlayerWalking
 {
@@ -811,94 +1244,22 @@ simulated state InvisibleWalking extends PlayerWalking
 		super.Use();
 	}
 
-	exec function BellyBump()
-	{
-		//breaks invisibility
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
-	}
-
 	//override from playerWalking
-	simulated exec function SneakySpeed()
+	simulated exec function OnPressSecondSkill()
 	{
+		SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+		resumeSprintTimer();
 		attemptToChangeState('InvisibleSprinting');//to server
 		GoToState('InvisibleSprinting');//local
 	}
 
-	//event PlayerTick( float DeltaTime ) 
-	//{
-	//	`log(current.BuffedTimer $ " InvisibleWalking PlayerTick " $ DeltaTime);
-	//	current.BuffedTimer += DeltaTime;
-	//}	
-
-	//event EndState(Name NextStateName)
-	//{
-	//	ClearTimer('countDownTimer');
-	//}
 
 Begin:
 	if(debugStates) logState();
 
-	//if(!IsTimerActive('countDownTimer'))
-	//	setTimer(1.0f, true, 'countDownTimer');
-
 	goInvisible();
 }
 
-
-//function countDownTimer()
-//{
-//	sneaktoslimpawn(self.Pawn).BuffedTimer += 1.f;
-//	`log(sneaktoslimpawn(self.Pawn).BuffedTimer);
-//}
-
-simulated state InvisibleSprinting extends Sprinting
-{
-	simulated exec function use()           //E-button
-	{
-		attemptToChangeState('EndInvisible');
-		GoToState('EndInvisible');
-	}
-
-	exec function BellyBump()
-	{
-		//breaks invisibility
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
-	}
-
-	simulated exec function SpeedDown()
-	{
-		ServerSpeedDown();
-		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
-		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
-		{
-			ClearTimer('EnergyCheck');
-			SetTimer(2, false, 'StartEnergyRegen');
-			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-			sneaktoslimpawn(self.Pawn).s_energized = 0;
-		}
-		attemptToChangeState('InvisibleWalking');
-		GoToState('InvisibleWalking');
-	}
-
-	//event EndState(Name NextStateName)
-	//{
-	//	ClearTimer('countDownTimer');
-	//}
-
-Begin:
-	if(debugStates) logState();
-
-	//if(!IsTimerActive('countDownTimer'))
-	//	setTimer(1.0f, true, 'countDownTimer');
-
-	Speedup();
-	goInvisible();
-
-}
 
 //Will end Invisible from any Invisible state
 simulated state EndInvisible
@@ -966,6 +1327,8 @@ simulated state Exhausted extends PlayerWalking
 		
 		if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
 		{
+			SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
+
 			sneaktoslimpawn(self.Pawn).bBuffed= 0;
 			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
 			sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used 
@@ -975,6 +1338,8 @@ simulated state Exhausted extends PlayerWalking
 		}
 		if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
 		{			
+			SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
+
 			sneaktoslimpawn(self.Pawn).bBuffed = 0;
 
 			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
@@ -1010,15 +1375,9 @@ simulated state InvisibleExhausted extends InvisibleWalking
 		GoToState('EndInvisible');
 	}
 
-	simulated exec function SpeedDown()
+	simulated exec function OnReleaseSecondSkill()
 	{
-	}
-
-	exec function BellyBump()
-	{
-		//breaks invisibility
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
+		pauseSprintTimer();
 	}
 
 	event EndState(Name NextStateName)
@@ -1055,7 +1414,7 @@ simulated state caughtByAI extends CustomizedPlayerWalking
 		if(LastStateName == 'Sprinting' || LastStateName == 'HoldingTreasureSprinting')
 		{
 			sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint', 'Sprint', 1.f, false);
-			SpeedDown();
+			OnReleaseSecondSkill();
 		}
 		else if(LastStateName == 'Stun')
 			sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customStun', 'Stun', 1.f, false);
@@ -1116,15 +1475,10 @@ simulated state DisguisedWalking extends PlayerWalking
 		GoToState('EndDisguised');
 	}
 
-	exec function BellyBump()
+	simulated exec function OnPressSecondSkill()
 	{
-		//breaks Disguise
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
-	}
-
-	simulated exec function SneakySpeed()
-	{
+		SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+		resumeSprintTimer();
 		attemptToChangeState('DisguisedSprinting');//to server
 		GoToState('DisguisedSprinting');//local
 	}
@@ -1134,43 +1488,6 @@ Begin:
 	goDisguised();
 }
 
-simulated state DisguisedSprinting extends Sprinting
-{
-	simulated exec function use()           //E-button
-	{
-		attemptToChangeState('EndDisguised');
-		GoToState('EndDisguised');
-	}
-
-	exec function BellyBump()
-	{
-		//breaks Disguise
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
-	}
-
-	simulated exec function SpeedDown()
-	{
-		ServerSpeedDown();
-		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
-		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
-		{
-			ClearTimer('EnergyCheck');
-			SetTimer(2, false, 'StartEnergyRegen');
-			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-			sneaktoslimpawn(self.Pawn).s_energized = 0;
-		}
-		attemptToChangeState('DisguisedWalking');
-		GoToState('DisguisedWalking');
-	}
-
-Begin:
-	if(debugStates) logState();
-	Speedup();
-	goDisguised();
-}
 
 //Child of PlayerWalking, entered when player has <20% energy, and exited when >=20%
 simulated state DisguisedExhausted extends DisguisedWalking
@@ -1181,15 +1498,9 @@ simulated state DisguisedExhausted extends DisguisedWalking
 		GoToState('EndDisguised');
 	}
 
-	exec function BellyBump()
+	simulated exec function OnReleaseSecondSkill()
 	{
-		//breaks Disguise
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
-	}
-
-	simulated exec function SpeedDown()
-	{
+		pauseSprintTimer();
 	}
 
 	event EndState(Name NextStateName)
@@ -1274,12 +1585,14 @@ simulated function logState()
 simulated state HoldingTreasureWalking extends PlayerWalking
 {
 
-	exec function BellyBump()   //Can't Belly-bump while holding treasure
+	exec function OnPressFirstSkill()   //Can't Belly-bump while holding treasure
 	{
 	}
 
-	simulated exec function SneakySpeed()
+	simulated exec function OnPressSecondSkill()
 	{
+		SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+		resumeSprintTimer();
 		attemptToChangeState('HoldingTreasureSprinting');//to server
 		GoToState('HoldingTreasureSprinting');//local
 	}
@@ -1306,53 +1619,13 @@ Begin:
 	HoldTreasure();
 }
 
-simulated state HoldingTreasureSprinting extends Sprinting
-{
-	exec function BellyBump()     //Doesn't belly-bump while Holding Treasure
-	{
-	}
-
-	simulated exec function SpeedDown()
-	{
-		ServerSpeedDown();
-		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
-		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
-		{
-			ClearTimer('EnergyCheck');
-			SetTimer(2, false, 'StartEnergyRegen');
-			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-			sneaktoslimpawn(self.Pawn).s_energized = 0;
-		}
-		attemptToChangeState('HoldingTreasureWalking');
-		GoToState('HoldingTreasureWalking');
-	}
-
-	simulated exec function FL_useBuff()
-	{
-
-	}
-
-	simulated exec function use()
-	{
-
-	}
-
-
-Begin:
-	if(debugStates) logState();
-	SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customTreasureWalk','Treasure_Walk',2.3f,true,0.5,0.5,true,true);
-	Speedup();
-	HoldTreasure();
-}
-
 //Child of PlayerWalking, entered when player has <20% energy, and exited when >=20%
 simulated state HoldingTreasureExhausted extends HoldingTreasureWalking
 {
 
-	simulated exec function SpeedDown()
+	simulated exec function OnReleaseSecondSkill()
 	{
+		pauseSprintTimer();
 	}
 
 	event EndState(Name NextStateName)
@@ -1438,6 +1711,17 @@ simulated function ExhaustedCheck()
 	
 }
 
+unreliable server function incrementBellyBumpHitBys()
+{
+	numberOfTimesHitWithBellyBump++;;
+}
+
+unreliable server function int getBBHitByCount()
+{
+	//`log("Client Hit By count: " $ numberOfTimesHitWithBellyBump);
+	return self.numberOfTimesHitWithBellyBump;
+}
+
 simulated state BeingBellyBumped extends CustomizedPlayerWalking
 {
 	//local Vector knockBackVector;
@@ -1502,16 +1786,24 @@ Begin:
 	//GoToState('PlayerWalking');
 }
 
-
 simulated state Stunned extends CustomizedPlayerWalking
 {
-	//simulated event PushedState()
-	//{
-	//	SetTimer(1.0f);
-	//}
+	event BeginState (Name LastStateName)
+	{
+		SetTimer(2.0f, false, 'StunnedPeriod');
+		if(SneaktoSlimPawn(self.Pawn).isGotTreasure)    //if self is holding treasure...
+		{            
+			SneaktoSlimPawn(self.Pawn).dropTreasure();         //...drops it.
+		}
+	}
+
+	event EndState (name NextStateName)
+	{
+		StunnedPeriod();
+	}
 
 	simulated function StunnedPeriod()
-	{    
+	{   
 		//PopState();
 		//sneaktoslimpawn(self.Pawn).stopStunnedAnim();		
 		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customStun', 'Stun', 1.f, false);
@@ -1530,7 +1822,7 @@ Begin:
 	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customStun', 'Stun', 1.f, true, 0, 0, true, true);
 	//sneaktoslimpawn(self.Pawn).startStopStunnedAnim(true);
 	//sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnimStruct(sneaktoslimpawn(self.Pawn).stunnedNodeInfo, true);
-	SetTimer(2.0f, false, 'StunnedPeriod');
+	//SetTimer(2.0f, false, 'StunnedPeriod');
 }
 
 
@@ -1555,7 +1847,7 @@ simulated state Hiding extends CustomizedPlayerWalking
 		if (LastStateName == 'HoldingTreasureSprinting' || LastStateName == 'DisguisedSprinting' || LastStateName == 'InvisibleSprinting' || LastStateName == 'Sprinting')
 		{
 			if(debugStates) `log(self.GetStateName());
-			SpeedDown();
+			OnReleaseSecondSkill();
 		}
 	}
 
@@ -1844,6 +2136,9 @@ reliable client function clientResetState()
 {
 	self.GotoState('caughtByAI');
 }
+
+
+
 
 ///////////////////////////////////////////////////////////
 //

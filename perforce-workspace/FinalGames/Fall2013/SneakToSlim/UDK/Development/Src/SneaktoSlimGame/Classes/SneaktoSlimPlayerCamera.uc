@@ -57,7 +57,6 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 
 	//local int lastHitAccount;
 
-
 	// store previous POV, in case we need it later
 	OrigPOV = OutVT.POV;
  
@@ -283,7 +282,12 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 				//	}
 				//}
 				if (CameraStyle != 'IsometricCam')
-					OutVT.POV.Location = (HitActor == None) ? Pos : HitLocation;
+				{
+					if (HitActor != None && (HitActor.Tag == 'Wall' || HitActor.Tag == 'wall_edge' || HitActor.Tag == 'wall_pillar'))
+						OutVT.POV.Location = HitLocation;
+					else
+						OutVT.POV.Location = Pos;
+				}
 				else
 					OutVT.POV.Location = Pos;
 				OutVT.POV.Rotation = Rot;

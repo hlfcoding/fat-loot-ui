@@ -2,6 +2,7 @@ class SneakToSlimAINavMeshController extends AIController;
 
 var int nextPatrolPointIndex;
 var SneakToSlimPawn chaseTarget;                //player the AI is trying to follow
+var int alreadyStartled;
 var Vector investigationLocation;               //location AI has to currently investigate
 var array<SneaktoSlimPawn> visiblePlayers;      //stores currently visible SneakToSlimPawns
 var float currentChaseStamina;
@@ -28,6 +29,7 @@ var float PAWN_STUCK_TIMEOUT;                   //duration in seconds that guard
 var float DISTANCE_EPSILON;                     //non-zero distance
 var float JUMP_FORCE;                           //pawn's jumping strength
 var float REACHED_DESTINATION_EPSILON;          //if pawn is this distance away from destination, it is approximated to have reached the destination
+var int totalCatches;
 
 event PostBeginPlay()
 {
@@ -35,6 +37,10 @@ event PostBeginPlay()
 	chaseTarget = none;
 	super.PostBeginPlay();
 }
+
+
+
+
 
 public event Possess(Pawn inPawn, bool bVehicleTransition)
 {	
@@ -44,6 +50,8 @@ public event Possess(Pawn inPawn, bool bVehicleTransition)
 
     isOnPatrolRoute = true;                                                 //Initially Guard is on Patrol (can find next destination)	
 	jumpCount = 0;
+	isCatching = false;
+	alreadyStartled = 0;
 	pawnWantsToMove = true;
 	currentChaseStamina = SneakToSlimAIPawn(Pawn).MaxChaseStamina;          //Initially stamina is full (max possible)
 	SetTimer(VISION_CHECK_FREQUENCY, true, 'setVisibleSneaktoSlimPawns');   //AI is always watching for players	
@@ -51,6 +59,11 @@ public event Possess(Pawn inPawn, bool bVehicleTransition)
 	SetTimer(STUCK_CHECK_FREQUENCY, true, 'checkPawnStuck');                //periodically check if guard is stuck/ unable to move
 	GotoState('Patrol');
 }
+
+
+
+
+
 
 state Idle
 {
@@ -72,6 +85,7 @@ state Patrol
 	local int waitTimeIndex;
 	local int waitTime;
 	local vector moveDestination;
+	local SneaktoSlimPawn playerWithinVisibleRange;
 	
  Begin:	
 	pawnWantsToMove = true;
@@ -114,9 +128,12 @@ state Patrol
 		nextPatrolPointIndex++;		
 		rotateTowardsMoveDirection = true;
 	}
-	
+
+
 	goto 'Begin';
 }
+
+
 
 
 
@@ -129,18 +146,14 @@ Begin:
 	if(visiblePlayers.Length > 0)
 	{			
 		MoveTarget = chaseTarget;
-		if( isWithinLineOfSight(MoveTarget) ) 
-		{
-			MoveToward(MoveTarget, MoveTarget);
-		}
-		else
-		{
-			PushState('MoveToLocation');
-		}
 		//if AI is close enough to player, player is caught
 		if((VSize(chaseTarget.Location - Pawn.Location) < SneakToSlimAIPawn(Pawn).CatchDistance))
 		{
-			isCatching = true;			
+			totalCatches++;
+			chaseTarget.recordCatchStats();
+
+			isCatching = true;
+
 			`log(Pawn.Name $ ": has caught player " $ chaseTarget.name, true, 'Ravi');			 
 
 			if( chaseTarget.isGotTreasure == true )
@@ -155,10 +168,23 @@ Begin:
 				SneaktoslimPlayerController(chaseTarget.Controller).GotoState('caughtByAI');
 				SneaktoslimPlayerController(chaseTarget.Controller).clientAttemptToState('caughtByAI');
 			}
+
 			pawnWantsToMove = false;
 			sleep(SneakToSlimAIPawn(Pawn).HoldTime);
 			pawnWantsToMove = true;
 			goto 'End';
+		}
+		else
+		{
+			if( isWithinLineOfSight(MoveTarget)) 
+			{
+				//MoveToward(MoveTarget, MoveTarget);
+				PushState('MoveToLocation');
+			}
+			else
+			{
+				PushState('MoveToLocation');
+			}
 		}
 	}
 	goto 'Begin';
@@ -167,18 +193,30 @@ End:
 	chaseTarget = none;
 	isCatching = false;
 	setStateVariables("Patrol");
+	alreadyStartled = 0;
 	GoToState('Patrol');
 
 Startled:	
 	SneakToSlimAIPawn(Pawn).aiState = "Follow";
-	`log(Pawn.Name $ " has spotted player! Startled for " $ SneakToSlimAIPawn(Pawn).DetectReactionTime $ " seconds", true, 'Ravi');	
-	pawnWantsToMove = false;
-	Pawn.GroundSpeed = 0; //AI should not move when it is startled
-	MoveToward(chaseTarget, chaseTarget); //Rotate toward player
-	sleep(SneakToSlimAIPawn(Pawn).DetectReactionTime);	
+	if (alreadyStartled == 0)
+	{
+		alreadyStartled = 1;
+		`log(Pawn.Name $ " has spotted player! Startled for " $ SneakToSlimAIPawn(Pawn).DetectReactionTime $ " seconds", true, 'Ravi');	
+		pawnWantsToMove = false;
+		Pawn.GroundSpeed = 0; //AI should not move when it is startled
+		MoveToward(chaseTarget, chaseTarget); //Rotate toward player
+		sleep(SneakToSlimAIPawn(Pawn).DetectReactionTime);	
+	}
 	setStateVariables("Follow");
 	goto 'Begin';
 }
+
+
+
+
+
+
+
 
 state Investigate {
 	local bool goToDestination;
@@ -220,16 +258,24 @@ Begin:
 	}
 	currentDestinationActor.Destroy(); //after destination has been reached, we don't need this actor anymore	
 	
-	//pawnWantsToMove = false;
-	//Pawn.GroundSpeed = 0;
-	//turnYaw(32764, 2);
-	//sleep(2);
-	//turnYaw(-32764, 2);
-	//sleep(2);	
+	pawnWantsToMove = false;
+	Pawn.GroundSpeed = 0;
+	turnYaw(32764, 2);
+	sleep(2);
+	turnYaw(-32764, 2);
+	sleep(2);	
 	setStateVariables("Patrol");
 	rotateTowardsMoveDirection = true;
+	alreadyStartled = 0;
 	GotoState('Patrol');
 }
+
+
+
+
+
+
+
 
 state MoveToLocation
 {
@@ -308,6 +354,12 @@ End:
 	PopState();
 }
 
+
+
+
+
+
+
 function checkPawnStuck()
 {
 	if( VSIZE(Pawn.Location - lastPawnLocation) > DISTANCE_EPSILON )
@@ -331,6 +383,11 @@ function checkPawnStuck()
 	lastPawnLocation = Pawn.Location;
 }
 
+
+
+
+
+
 function setStateVariables(string state)
 {
 	SneakToSlimAIPawn(Pawn).aiState = state;
@@ -350,6 +407,11 @@ function setStateVariables(string state)
 	}
 }
 
+
+
+
+
+
 function performPatrolChecks()
 {
 	if(SneakToSlimAIPawn(Pawn).MyNavigationPoints.Length == 0)
@@ -363,6 +425,11 @@ function performPatrolChecks()
 	}
 }
 
+
+
+
+
+
 function bool FindNavMeshPath(Vector destination)
 {
 	// Clear cache and constraints
@@ -375,6 +442,10 @@ function bool FindNavMeshPath(Vector destination)
 	
 	return NavigationHandle.FindPath();
 }
+
+
+
+
 
 public function bool investigateLocation(vector iLocation)
 {		
@@ -392,10 +463,19 @@ public function bool investigateLocation(vector iLocation)
 	}
 }
 
+
+
+
+
 function jump()
 {
 	Pawn.TakeDamage(0, none, Pawn.Location, Vector(Pawn.Rotation) * JUMP_FORCE, class'DamageType');
 }
+
+
+
+
+
 
 function setVisibleSneaktoSlimPawns()
 {
@@ -490,7 +570,7 @@ function setVisibleSneaktoSlimPawns()
 				}
 			}
 		}
-		
+
 		if(!playerWithinVisibleRange.bInvisibletoAI && playerWithinVisibleRange.underLight == true)
 		{
 			visiblePlayers.InsertItem(numberOfVisiblePlayers, playerWithinVisibleRange);
@@ -510,9 +590,9 @@ function setVisibleSneaktoSlimPawns()
 		playerWithinVisibleRange.underLight = false;	
 	}
 
-	if(numberOfVisiblePlayers == 0)
+	if(numberOfVisiblePlayers == 0 && SneakToSlimAIPawn(Pawn).aiState != "Investigate")
 	{
-		if (chaseTarget!=none)
+		if (chaseTarget!=none && (VSize(chaseTarget.Location - Pawn.Location) > SneakToSlimAIPawn(Pawn).lightRadius))
 		{
 			if (isCatching == false)
 			{
@@ -522,8 +602,8 @@ function setVisibleSneaktoSlimPawns()
 				`log(Pawn.Name $ ": Cannot see player anymore! Investigating last seen location: " $ lastSeenPlayerLocation, true, 'Ravi');
 				GoToState('Investigate');
 			}
+			visiblePlayers.Remove(0, visiblePlayers.Length); //remove all elements from this list
 		}
-		visiblePlayers.Remove(0, visiblePlayers.Length); //remove all elements from this list
 	}
 	//if we have a valid chaseTarget
 	else if( SneakToSlimAIPawn(Pawn).aiState != "Follow" && visiblePlayers.Length > 0 )
@@ -637,9 +717,18 @@ function float RotateTowardsLocation(vector nextMoveLocation)
 	return lerpedRotationTime/2; //this will be the sleep duration
 }
 
+function stopSeeingPlayers()
+{
+	self.ClearTimer('setVisibleSneaktoSlimPawns');
+}
+
+function resumeSeeingPlayers()
+{
+	self.SetTimer(VISION_CHECK_FREQUENCY, true, 'setVisibleSneaktoSlimPawns');	
+}
+
 defaultproperties
 {	
-	isCatching = false
 	NAVMESH_MAX_ITERATIONS = 50
 	STAMINA_CHECK_FREQUENCY = 0.3
 	VISION_CHECK_FREQUENCY = 0.05
@@ -652,4 +741,6 @@ defaultproperties
 	DISTANCE_EPSILON = 1
 	JUMP_FORCE = 25000
 	REACHED_DESTINATION_EPSILON = 100
+
+	totalCatches=0
 }

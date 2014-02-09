@@ -6,6 +6,7 @@ var() int PlayerBaseRadius;
 var StaticMeshComponent CurrentMesh;
 var particleSystemComponent baseParticle;
 var array<color> teamColor;
+var array<Material> teamMaterial;
 
 simulated event PostBeginPlay()
 {
@@ -16,15 +17,15 @@ simulated event PostBeginPlay()
 
 simulated function SetColor()
 {
-		local string materialName;
-		local Material baseMaterial;
+	//	local string materialName;
+		//local Material baseMaterial;
 	    `log("set coloring of player");
 		//CurrentMesh.SetMaterial(0, Material'mypackage.Materials.NodeBuddy_Target_copy');
-		materialName = "NodeBuddies.Materials.NodeBuddy_Player_";
-		materialName $= teamID;	
-		baseMaterial = Material(DynamicLoadObject(materialName, class'Material'));
+		//materialName = "NodeBuddies.Materials.NodeBuddy_Player_";
+		//materialName $= teamID;	
+		//baseMaterial = Material(DynamicLoadObject(materialName, class'Material'));
 		baseParticle.SetColorParameter('baseParticleColor', teamColor[teamID]);
-		CurrentMesh.SetMaterial(0, baseMaterial);
+		CurrentMesh.SetMaterial(0, teamMaterial[teamID]);
 		
 }
 
@@ -111,6 +112,11 @@ DefaultProperties
 	teamColor[1]=(R=255,G=219,B=1,A=255)
 	teamColor[2]=(R=0,G=108,B=255,A=255)
 	teamColor[3]=(R=255,G=235,B=170,A=255)
+
+	teamMaterial[0] = Material'NodeBuddies.Materials.NodeBuddy_Player_0'
+	teamMaterial[1] = Material'NodeBuddies.Materials.NodeBuddy_Player_1'
+	teamMaterial[2] = Material'NodeBuddies.Materials.NodeBuddy_Player_2'
+	teamMaterial[3] = Material'NodeBuddies.Materials.NodeBuddy_Player_3'
 
     bBlockActors=true
     bHidden=false
