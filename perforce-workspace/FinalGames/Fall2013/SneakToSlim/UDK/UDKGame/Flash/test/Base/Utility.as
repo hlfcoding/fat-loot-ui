@@ -9,6 +9,7 @@ package {
         public static function sendCommand(name:String, endpoint:String, value:String=''):void {
             trace('[COMMAND]', name, endpoint, value);
             fscommand(name, endpoint.concat(' ', value));
+            // NOTE: The below needs to be disabled for a preview build.
         }
 
     }
