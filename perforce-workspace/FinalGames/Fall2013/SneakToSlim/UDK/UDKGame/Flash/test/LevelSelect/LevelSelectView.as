@@ -20,7 +20,7 @@
         override public function set selectedModel(value:Object):void {
             super.selectedModel = value;
             if (selectedModel != null) {
-                Utility.sendCommand('mapSelect', 'selectGameMapInUdk', selectedModel.id);
+                Utility.sendCommand('selectGameMapInUdk', selectedModel.id);
             }
         }
 

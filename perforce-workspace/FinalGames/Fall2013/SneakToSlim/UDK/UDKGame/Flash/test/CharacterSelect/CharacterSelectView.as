@@ -31,7 +31,7 @@
             super.selectedModel = value;
             if (selectedModel != null) {
                 skillSelectView.source = selectedModel.skills;
-                Utility.sendCommand('characterSelect', 'selectCharacterInUdk', selectedModel.id);
+                Utility.sendCommand('selectCharacterInUdk', selectedModel.id);
             }
         }
 

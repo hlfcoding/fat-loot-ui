@@ -48,15 +48,15 @@
 
                 break; case rootMenuView.tutorialButton:
 
-                    Utility.sendCommand('playTutorial', 'playTutorialInUdk');
+                    Utility.sendCommand('playTutorialInUdk');
 
                 break; case rootMenuView.creditButton:
 
-                    Utility.sendCommand('showCredit', 'showCreditInUdk');
+                    Utility.sendCommand('showCreditInUdk');
 
                 break; case rootMenuView.quitButton:
 
-                    Utility.sendCommand('quitGame', 'quitGameInUdk');
+                    Utility.sendCommand('quitGameInUdk');
 
                 break; case hostOrJoinGameView.joinButton:
 
@@ -77,7 +77,7 @@
                 break; case hostGameView.hostButton:
 
                     gameModel.level = hostGameView.levelSelectView.selectedModel;
-                    Utility.sendCommand('hostGame', 'hostGameInUdk', gameModel.location);
+                    Utility.sendCommand('hostGameInUdk', gameModel.location);
 
                     load('JoinGameView', 'joinGameView');
                     joinGameView.levelPreview.model = gameModel.level;
@@ -86,7 +86,7 @@
                 break; case joinGameView.joinButton:
 
                     gameModel.level = joinGameView.levelPreview.model;
-                    Utility.sendCommand('joinGame', 'joinGameInUdk', gameModel.location);
+                    Utility.sendCommand('joinGameInUdk', gameModel.location);
 
                 break; default: break;
             }

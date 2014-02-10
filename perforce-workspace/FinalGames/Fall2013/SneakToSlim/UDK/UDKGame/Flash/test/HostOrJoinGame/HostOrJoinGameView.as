@@ -40,7 +40,7 @@
         }
 
         public function handleRefresh(event:ButtonEvent):void {
-            // TODO: Refresh.
+            Utility.sendCommand('requestGamesInUdk');
         }
 
     }

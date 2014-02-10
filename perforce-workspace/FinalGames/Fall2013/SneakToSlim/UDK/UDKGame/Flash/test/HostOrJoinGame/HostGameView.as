@@ -40,11 +40,11 @@ package  {
 
         public function onGameSettingChange(event:Event):void {
             var settingName:String = gameSettingName(event.target as UIComponent);
-            var systemNames:Object = gameSettingSystemNames(settingName);
+            var systemName:String = gameSettingSystemName(settingName);
             if (event.target is TextInput) {
                 var textInput:TextInput = event.target as TextInput;
                 gameModel[settingName] = textInput.text;
-                Utility.sendCommand(systemNames.command, systemNames.endpoint, textInput.text);
+                Utility.sendCommand(systemName, textInput.text);
             }
         }
 
@@ -57,17 +57,15 @@ package  {
             }
         }
 
-        protected function gameSettingSystemNames(name:String):Object {
-            var names:Object = {};
-            if (name.length > 0) {
-                names.command = name.concat('Set');
-                names.endpoint = 'set'.concat(
-                    name.charAt(0).toUpperCase(),
-                    name.substr(1),
-                    'InUdk'
-                );
+        protected function gameSettingSystemName(name:String):String {
+            if (!name.length) {
+                return '';
             }
-            return names;
+            return 'set'.concat(
+                name.charAt(0).toUpperCase(),
+                name.substr(1),
+                'InUdk'
+            );
         }
 
         public function viewWillAppear():void {}
