@@ -9,8 +9,8 @@ package {
         public static var levels:Array;
 
         public var level:Object;
-        public var players:Array;
         public var location:String;
+        public var players:Array;
 
         public var playerLimit:String;
         public var scoreLimit:String;

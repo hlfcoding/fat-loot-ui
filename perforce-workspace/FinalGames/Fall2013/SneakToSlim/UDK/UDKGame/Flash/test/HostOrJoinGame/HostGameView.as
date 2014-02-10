@@ -14,21 +14,21 @@ package  {
         public var hostButton:Button;
         public var levelSelectView:MovieClip;
 
-        public var timeLimitLabel:Label;
-        public var timeLimitInput:TextInput;
-        public var scoreLimitLabel:Label;
-        public var scoreLimitInput:TextInput;
         public var playerLimitLabel:Label;
         public var playerLimitInput:TextInput;
+        public var scoreLimitLabel:Label;
+        public var scoreLimitInput:TextInput;
+        public var timeLimitLabel:Label;
+        public var timeLimitInput:TextInput;
         // TODO: Click outside to blur.
 
         public var gameModel:GameModel;
 
         public function HostGameView() {
             super();
-            timeLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
-            scoreLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
             playerLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
+            scoreLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
+            timeLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
         }
 
         public function get navigationBackButton():Button {
@@ -50,9 +50,9 @@ package  {
 
         protected function gameSettingName(input:UIComponent):String {
             switch (input) {
-                case timeLimitInput: return 'timeLimit';
-                case scoreLimitInput: return 'scoreLimit';
-                case playerLimitInput: return 'playerLimit';
+                case playerLimitInput:  return 'playerLimit';
+                case scoreLimitInput:   return 'scoreLimit';
+                case timeLimitInput:    return 'timeLimit';
                 default: return '';
             }
         }
