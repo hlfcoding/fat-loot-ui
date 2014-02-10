@@ -23,7 +23,7 @@
             selectPreview.nameLabel.visible = false;
             skillSelectView.selectMenu.addEventListener(ListEvent.INDEX_CHANGE, onSkillSelect);
             // Commit.
-            source = GameModel.CHARACTERS;
+            source = GameModel.characters;
             init();
         }
 

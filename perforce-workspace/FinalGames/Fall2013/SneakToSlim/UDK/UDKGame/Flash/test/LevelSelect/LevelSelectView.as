@@ -13,7 +13,7 @@
             };
             selectPreview.nameLabel.visible = false;
             // Commit.
-            source = GameModel.LEVELS;
+            source = GameModel.levels;
             init();
         }
 

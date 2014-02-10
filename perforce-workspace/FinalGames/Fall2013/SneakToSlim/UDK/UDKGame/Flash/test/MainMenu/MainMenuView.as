@@ -9,6 +9,7 @@
     public class MainMenuView extends NavigableView {
 
         public static const DEBUG = true;
+        public static const USE_FIXTURES = true;
 
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
