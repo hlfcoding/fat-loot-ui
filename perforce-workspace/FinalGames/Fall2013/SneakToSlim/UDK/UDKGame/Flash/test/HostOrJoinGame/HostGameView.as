@@ -61,7 +61,7 @@ package  {
             if (!name.length) {
                 return '';
             }
-            return 'set'.concat(
+            return 'setGame'.concat(
                 name.charAt(0).toUpperCase(),
                 name.substr(1),
                 'InUdk'
