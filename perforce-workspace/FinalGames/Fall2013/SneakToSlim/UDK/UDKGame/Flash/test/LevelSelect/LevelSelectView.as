@@ -1,8 +1,12 @@
 ﻿package {
 
+    import flash.events.Event;
+
     public class LevelSelectView extends SelectView {
 
         public var gameModel:GameModel;
+
+        public static const SELECT:String = 'levelSelect';
 
         public function LevelSelectView() {
             super()
@@ -22,6 +26,7 @@
             if (selectedModel != null) {
                 Utility.sendCommand('selectGameMapInUdk', selectedModel.id);
             }
+            dispatchEvent(new Event(LevelSelectView.SELECT));
         }
 
     }

@@ -14,6 +14,7 @@ package  {
         public var hostButton:Button;
         public var levelSelectView:MovieClip;
 
+        public var gameNameInput:TextInput;
         public var playerLimitLabel:Label;
         public var playerLimitInput:TextInput;
         public var scoreLimitLabel:Label;
@@ -26,9 +27,11 @@ package  {
 
         public function HostGameView() {
             super();
+            gameNameInput.addEventListener(Event.CHANGE, onGameSettingChange);
             playerLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
             scoreLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
             timeLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
+            levelSelectView.addEventListener(LevelSelectView.SELECT, onLevelSelect);
         }
 
         public function get navigationBackButton():Button {
@@ -48,8 +51,13 @@ package  {
             }
         }
 
+        public function onLevelSelect(event:Event):void {
+            gameNameInput.defaultText = levelSelectView.selectedModel.name;
+        }
+
         protected function gameSettingName(input:UIComponent):String {
             switch (input) {
+                case gameNameInput:     return 'name';
                 case playerLimitInput:  return 'playerLimit';
                 case scoreLimitInput:   return 'scoreLimit';
                 case timeLimitInput:    return 'timeLimit';

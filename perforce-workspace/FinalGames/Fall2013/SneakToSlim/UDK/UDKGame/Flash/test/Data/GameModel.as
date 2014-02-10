@@ -10,6 +10,7 @@ package {
 
         public var level:Object;
         public var location:String;
+        public var name:String;
         public var players:Array;
 
         public var playerLimit:String;
