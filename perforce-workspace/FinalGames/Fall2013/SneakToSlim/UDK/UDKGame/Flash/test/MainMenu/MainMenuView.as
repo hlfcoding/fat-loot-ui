@@ -8,6 +8,8 @@
 
     public class MainMenuView extends NavigableView {
 
+        public static const DEBUG = true;
+
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
         public var hostOrJoinGameView:HostOrJoinGameView;

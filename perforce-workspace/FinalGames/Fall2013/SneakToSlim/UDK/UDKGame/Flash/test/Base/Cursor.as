@@ -7,7 +7,9 @@ package {
     public class Cursor extends MovieClip {
 
         public function Cursor() {
-            Mouse.hide();
+            if (!MainMenuView.DEBUG) {
+                Mouse.hide();
+            }
             mouseEnabled = false;
             addEventListener(Event.ENTER_FRAME, enterFrameHandler);
         }
