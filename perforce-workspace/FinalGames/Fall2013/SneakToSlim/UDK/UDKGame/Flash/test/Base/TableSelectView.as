@@ -28,8 +28,8 @@ package {
             if (selectPreview != null) {
                 selectMenu.addEventListener(ListEvent.ITEM_ROLL_OVER, handleItemFocus);
                 selectMenu.addEventListener(ListEvent.ITEM_ROLL_OUT, handleItemFocus);
-                selectMenu.addEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
             }
+            selectMenu.addEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
         }
 
         public function init() {
