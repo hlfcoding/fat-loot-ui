@@ -26,6 +26,7 @@ package  {
 
         protected var gameSettingDebouncer:Timer;
         protected var currentInput:UIComponent;
+
         // TODO: Click outside to blur.
 
         public var gameModel:GameModel;
@@ -58,14 +59,28 @@ package  {
                 return;
             // On debouncer completion, submit changes and reset.
             } else if (event.type === TimerEvent.TIMER_COMPLETE && currentInput != null) {
-                var settingName = gameSettingName(currentInput);
-                var systemName = gameSettingSystemName(settingName);
+                var settingName:String = gameSettingName(currentInput);
+                var systemName:String = gameSettingSystemName(settingName);
+                var value:String;
+                var textInput:TextInput;
                 if (currentInput is TextInput) {
-                    var textInput:TextInput = currentInput as TextInput;
-                    gameModel[settingName] = textInput.text;
+                    textInput = (currentInput as TextInput);
+                    value = textInput.text;
                 }
-                Utility.sendCommand(systemName, gameModel[settingName]);
-                currentInput = null;
+                if (isValid(currentInput, value)) {
+                    if (value === '') {
+                        if (textInput != null) {
+                            value = textInput.defaultText;
+                        }
+                    }
+                    gameModel[settingName] = value;
+                    Utility.sendCommand(systemName, gameModel[settingName]);
+                    currentInput = null;
+                } else {
+                    if (textInput != null) {
+                        textInput.text = '';
+                    }
+                }
             }
         }
 
@@ -92,6 +107,25 @@ package  {
                 name.substr(1),
                 'InUdk'
             );
+        }
+
+        protected function getValidators(input:UIComponent):Array {
+            switch (input) {
+                case playerLimitInput:  return [Utility.reNumeric];
+                case scoreLimitInput:   return [Utility.reNumeric];
+                case timeLimitInput:    return [Utility.reNumeric];
+                default:                return [];
+            }
+        }
+
+        protected function isValid(input:UIComponent, value:String):Boolean {
+            var validators:Array = getValidators(input);
+            for each (var validator:RegExp in validators) {
+                if (!validator.test(value)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public function viewWillAppear():void {}

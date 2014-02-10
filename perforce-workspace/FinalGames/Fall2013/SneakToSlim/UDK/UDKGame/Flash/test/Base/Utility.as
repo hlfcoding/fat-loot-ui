@@ -4,6 +4,8 @@ package {
 
     public class Utility {
 
+        public static const reNumeric:RegExp = /^\d+$/;
+
         public function Utility() {}
 
         public static function sendCommand(name:String, value:String=''):void {
