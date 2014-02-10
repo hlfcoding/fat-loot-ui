@@ -2,6 +2,8 @@ package  {
 
     import flash.display.MovieClip;
     import flash.events.Event;
+    import flash.events.TimerEvent;
+    import flash.utils.Timer;
 
     import scaleform.clik.controls.Button;
     import scaleform.clik.controls.Label;
@@ -21,12 +23,17 @@ package  {
         public var scoreLimitInput:TextInput;
         public var timeLimitLabel:Label;
         public var timeLimitInput:TextInput;
+
+        protected var gameSettingDebouncer:Timer;
+        protected var currentInput:UIComponent;
         // TODO: Click outside to blur.
 
         public var gameModel:GameModel;
 
         public function HostGameView() {
             super();
+            gameSettingDebouncer = new Timer(500, 1);
+            gameSettingDebouncer.addEventListener(TimerEvent.TIMER_COMPLETE, onGameSettingChange);
             gameNameInput.addEventListener(Event.CHANGE, onGameSettingChange);
             playerLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
             scoreLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
@@ -42,12 +49,23 @@ package  {
         }
 
         public function onGameSettingChange(event:Event):void {
-            var settingName:String = gameSettingName(event.target as UIComponent);
-            var systemName:String = gameSettingSystemName(settingName);
-            if (event.target is TextInput) {
-                var textInput:TextInput = event.target as TextInput;
-                gameModel[settingName] = textInput.text;
-                Utility.sendCommand(systemName, textInput.text);
+            // On first change event, update.
+            if (event.type !== TimerEvent.TIMER_COMPLETE && !gameSettingDebouncer.running) {
+                gameSettingDebouncer.start();
+                currentInput = event.target as UIComponent;
+            // On subsequent change events, debounce.
+            } else if (gameSettingDebouncer.running) {
+                return;
+            // On debouncer completion, submit changes and reset.
+            } else if (event.type === TimerEvent.TIMER_COMPLETE && currentInput != null) {
+                var settingName = gameSettingName(currentInput);
+                var systemName = gameSettingSystemName(settingName);
+                if (currentInput is TextInput) {
+                    var textInput:TextInput = currentInput as TextInput;
+                    gameModel[settingName] = textInput.text;
+                }
+                Utility.sendCommand(systemName, gameModel[settingName]);
+                currentInput = null;
             }
         }
 
