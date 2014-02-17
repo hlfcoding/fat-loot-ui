@@ -37,7 +37,7 @@ package {
             if (shouldAutoAssign) {
                 this[propertyName] = view;
             }
-            for each (var button:Button in view.navigationButtons) { // TODO: Unclear typing.
+            for each (var button:Button in view.navigationButtons) {
                 button.addEventListener(ButtonEvent.CLICK, handleNavigationRequest);
             }
             return view;
