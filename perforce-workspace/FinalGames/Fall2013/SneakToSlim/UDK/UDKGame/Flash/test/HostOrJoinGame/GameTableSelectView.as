@@ -15,9 +15,13 @@ package  {
                 return model.level;
             };
             // Commit.
-            columnNames = [ 'Map Name', 'Space', 'Location (IP)' ];
+            columnNames = ['Map Name', 'Space', 'Location (IP)'];
             source = GameModel.games;
             init();
+        }
+
+        override protected function get columnPropertyNames():Array {
+            return ['level', 'space', 'location'];
         }
 
         override public function formatItem(item:Object, index:int, source:Array):Object {

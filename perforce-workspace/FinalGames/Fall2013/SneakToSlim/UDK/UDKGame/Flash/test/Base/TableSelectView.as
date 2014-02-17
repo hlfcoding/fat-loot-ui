@@ -8,6 +8,7 @@ package {
     import scaleform.clik.controls.ListItemRenderer;
     import scaleform.clik.controls.ScrollBar;
     import scaleform.clik.data.DataProvider;
+    import scaleform.clik.events.IndexEvent;
     import scaleform.clik.events.ListEvent;
     import scaleform.clik.events.FocusHandlerEvent;
 
@@ -30,6 +31,7 @@ package {
                 selectMenu.addEventListener(ListEvent.ITEM_ROLL_OUT, handleItemFocus);
             }
             selectMenu.addEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
+            selectTopBar.addEventListener(IndexEvent.INDEX_CHANGE, handleSort);
         }
 
         public function init() {
@@ -63,6 +65,11 @@ package {
         public function set columnNames(names:Array):void {
             (selectTopBar.dataProvider as DataProvider).setSource(names);
         }
+
+        protected function get columnPropertyNames():Array { // Note: Implement.
+            return [];
+        }
+
         public function set source(source:Array):void {
             source.forEach(formatItem);
             collection.setSource(source);
@@ -91,6 +98,15 @@ package {
             if (event.type === ListEvent.INDEX_CHANGE) {
                 selectedModel = getModelAtIndex(event.index);
             }
+        }
+
+        public function handleSort(event:IndexEvent):void {
+            if (!columnPropertyNames.length) {
+                return;
+            }
+            var propertyName:String = columnPropertyNames[event.index];
+            (collection as Array).sortOn(propertyName);
+            selectMenu.invalidateData();
         }
 
         public function getModelAtIndex(index:uint):Object {
