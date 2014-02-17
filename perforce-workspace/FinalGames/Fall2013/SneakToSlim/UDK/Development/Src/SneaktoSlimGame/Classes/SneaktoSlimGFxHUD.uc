@@ -3,8 +3,8 @@ class SneaktoSlimGFxHUD extends GFxMoviePlayer;
 var int lastPlayerHealth, healthBarLength;
 var float screenSizeX, screenSizeY;
 var GFxObject HealthBar, InvisibilityIcon, PowerupBackdrop, InstructionText, CountdownText;
-var GFxObject player1Score, player2Score, player3Score, player4Score, PromptText;
-var GFxObject SpottedIcon, ClothIcon;
+var GFxObject player1Score, player2Score, player3Score, player4Score, PromptText, TutorialText;
+var GFxObject SpottedIcon, ClothIcon, ThunderIcon;
 var array<GFxObject> allFlashObjects;
 
 function Init(optional LocalPlayer player)
@@ -17,8 +17,12 @@ function Init(optional LocalPlayer player)
 	lastPlayerHealth = 100;
 
 	HealthBar = GetVariableObject("_root.stamina_bar");
+	TutorialText = GetVariableObject("_root.TutorialText");
+	TutorialText.GetObject("TutorialText").SetText("");
+	TutorialText.SetBool("visible", false);
 	InvisibilityIcon = GetVariableObject("_root.InvisibilityIcon");
 	ClothIcon = GetVariableObject("_root.Cloth_Icon");
+	ThunderIcon = GetVariableObject("_root.Thunder_Icon");
 	PowerupBackdrop = GetVariableObject("_root.PowerUpBackdrop");
 	InstructionText = GetVariableObject("_root.HowToUseInstruction");
 	CountdownText = GetVariableObject("_root.CountdownText");
@@ -37,10 +41,12 @@ function Init(optional LocalPlayer player)
 	allFlashObjects.AddItem(HealthBar);
 	allFlashObjects.AddItem(InvisibilityIcon);
 	allFlashObjects.AddItem(ClothIcon);
+	allFlashObjects.AddItem(ThunderIcon);
 	allFlashObjects.AddItem(PowerupBackdrop);
 	allFlashObjects.AddItem(InstructionText);
 	allFlashObjects.AddItem(CountdownText);
 	allFlashObjects.AddItem(PromptText);
+	allFlashObjects.AddItem(TutorialText);
 	allFlashObjects.AddItem(SpottedIcon);
 	allFlashObjects.AddItem(player1Score);
 	allFlashObjects.AddItem(player2Score);

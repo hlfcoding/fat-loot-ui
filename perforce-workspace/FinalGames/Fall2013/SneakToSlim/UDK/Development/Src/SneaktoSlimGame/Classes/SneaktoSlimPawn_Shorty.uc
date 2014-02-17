@@ -1,10 +1,12 @@
 class SneaktoSlimPawn_Shorty extends SneaktoSlimPawn;
 
-var() float SHORTY_DASH_SPEED;
-var() float MAX_DASH_TIME;
+var() float SHORTY_DASH_SPEED; //Speed at which Shorty starts dashing. He decelerates over time
+var() float MAX_DASH_TIME;     //Max duration Shorty can Dash in one sprint
+var() int DASH_ENERGY_CONSUMPTION_RATE; 
+var() float DASH_CHARGE_VS_MOVE_DURATION_FACTOR; //Duration charge key is pressed VS duration Shorty dashes
 var() float MIN_FIRECRACKER_CHARGE_TIME; //Player must hold the activate button at least this long to trigger a throw
 var() float MAX_FIRECRACKER_CHARGE_TIME; //Charging more than this has no effect. The peak distance is reached by this charge time
-var() int FIRECRACKER_SPEED_MULTIPLIER; //Firecracker start velocity is ChargeTime * Multiplier
+var() int FIRECRACKER_SPEED_MULTIPLIER; //Firecracker launch velocity is ChargeTime * Multiplier
 var() vector FIRECRACKER_THROW_DIRECTION; //Relative to where player is looking, what direction must the firecracker be thrown
 
 simulated event PostBeginPlay()
@@ -80,11 +82,14 @@ server reliable function listRoles()
 
 DefaultProperties
 {
+	FLWalkingSpeed=200.0
+	GroundSpeed=200.0;
+
 	Begin Object Class=SkeletalMeshComponent Name=ShortySkeletalMesh	
 		SkeletalMesh = SkeletalMesh'FLCharacter.Shorty.Shorty_skeletal'
-		AnimSets(0)=AnimSet'FLCharacter.Guard.Guard_Anims'
-		AnimTreeTemplate = AnimTree'FLCharacter.Guard.Guard_AnimTree'		
-		Translation=(Z=-48.0)
+		AnimSets(0)=AnimSet'FLCharacter.Shorty.Shorty_Anims'
+		AnimTreeTemplate = AnimTree'FLCharacter.Shorty.Shorty_AnimTree'		
+		Translation=(Z=-52.0)
 		LightEnvironment=MyLightEnvironment
 		CastShadow=true
 		AlwaysLoadOnClient=true
@@ -93,10 +98,17 @@ DefaultProperties
 	End Object
 	
 	Components.Add(ShortySkeletalMesh)
+	Mesh = ShortySkeletalMesh
 
-	SHORTY_DASH_SPEED = 500;
-	MAX_DASH_TIME = 4.0;
+	SHORTY_DASH_SPEED = 1000;
+	MAX_DASH_TIME = 2.0;
+	DASH_ENERGY_CONSUMPTION_RATE = 40;
+	DASH_CHARGE_VS_MOVE_DURATION_FACTOR = 1.5;
 	MIN_FIRECRACKER_CHARGE_TIME = 0.2;
 	MAX_FIRECRACKER_CHARGE_TIME = 0.6;	
 	FIRECRACKER_THROW_DIRECTION=(X=0,Y=0,Z=0.65)
+
+	characterName = "Shorty";
+
+	//Material'FLCharacter.GinsengBaby.GinsengBaby_material_0'
 }

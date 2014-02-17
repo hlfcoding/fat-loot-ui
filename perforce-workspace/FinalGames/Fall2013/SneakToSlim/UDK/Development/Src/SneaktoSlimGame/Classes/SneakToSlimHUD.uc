@@ -306,6 +306,7 @@ simulated event DrawHUD()
 	local int j, k;
 	local byte _tNumber;
 	//local byte _selfTNumber;
+	local sneaktoslimpawn current;
 
 	local MiniMap map;
 	//local String mapName;
@@ -314,8 +315,11 @@ simulated event DrawHUD()
 	//local Texture2D background;
 	//local TextureRenderTarget2D material;
 
+	local array<bool> existedTeam;
+
 	super.DrawHUD();
 
+	
 	if(PlayerOwner.Pawn!=none)
 	{
 		map =  SneaktoSlimPlayerController(SneaktoSlimPawn(PlayerOwner.Pawn).Controller).myMap;
@@ -387,9 +391,9 @@ simulated event DrawHUD()
 		Canvas.DrawColor=WhiteColor;
 		Canvas.Font=class'Engine'.static.GetLargeFont();
 
-		//Draws player's energy
-		//canvas.SetPos(Canvas.ClipX*0.1,Canvas.ClipY*0.9);
-		//canvas.DrawText("Current Energy: " @ int(SneaktoSlimPawn(PlayerOwner.Pawn).v_energy));
+		//Draws text
+		//canvas.SetPos(Canvas.ClipX*0.1,Canvas.ClipY*0.2);
+		//canvas.DrawText("");
 
 		//selfScoreMostLeft_i = 1;
 
@@ -430,50 +434,104 @@ simulated event DrawHUD()
 			}
 		}//end foreach
 
-		//draw score on hud at once
-		For(j = 0; j < scoreBoard.Length; j++)
+		for(j = 0; j < 4; j++)
+			existedTeam[j] = false;
+
+		ForEach WorldInfo.AllPawns(class'SneaktoSlimPawn', localPawn) 
 		{
-			switch(j)
+			existedTeam[localPawn.GetTeamNum()] = true;
+			switch(localPawn.GetTeamNum())
 			{
-				case 0: FlashHUD.player1Score.SetInt("newScore", scoreBoard[j]);
+				case 0: FlashHUD.player1Score.SetInt("newScore", scoreBoard[0]);
 						FlashHUD.player1Score.SetBool("isOn", true);
 						break;
-				case 1: FlashHUD.player2Score.SetInt("newScore", scoreBoard[j]);
+				case 1: FlashHUD.player2Score.SetInt("newScore", scoreBoard[1]);
 						FlashHUD.player2Score.SetBool("isOn", true);
 						break;
-				case 2: FlashHUD.player3Score.SetInt("newScore", scoreBoard[j]);
+				case 2: FlashHUD.player3Score.SetInt("newScore", scoreBoard[2]);
 						FlashHUD.player3Score.SetBool("isOn", true);
 						break;
-				case 3: FlashHUD.player4Score.SetInt("newScore", scoreBoard[j]);
+				case 3: FlashHUD.player4Score.SetInt("newScore", scoreBoard[3]);
 						FlashHUD.player4Score.SetBool("isOn", true);
 						break;
 			}
-			/*canvas.SetPos(Canvas.ClipX * (0.1 + j * 0.2), Canvas.ClipY * 0.1);
-			if(colorMarked) // color ppl
-			{
-				canvas.SetDrawColorStruct(teamColor[j]);
-			}
-			canvas.DrawText(allPplScore[j]);*/
-
-			//clean up
-			//todo: alpha--
-			//allPplScore[j] = "";
-
 		}
-		for(k = scoreBoard.Length; k < 4; k++)
+
+		For(j = 0; j < 4; j++) 
 		{
-			switch(k)
+			if(existedTeam[j] == false)
 			{
-				case 0: FlashHUD.player1Score.SetBool("isOn", false);
-						break;
-				case 1: FlashHUD.player2Score.SetBool("isOn", false);
-						break;
-				case 2: FlashHUD.player3Score.SetBool("isOn", false);
-						break;
-				case 3: FlashHUD.player4Score.SetBool("isOn", false);
-						break;
+				switch(j)
+				{
+					case 0: FlashHUD.player1Score.SetBool("isOn", false);
+							break;
+					case 1: FlashHUD.player2Score.SetBool("isOn", false);
+							break;
+					case 2: FlashHUD.player3Score.SetBool("isOn", false);
+							break;
+					case 3: FlashHUD.player4Score.SetBool("isOn", false);
+							break;
+				}
 			}
 		}
+
+
+
+		//draw score on hud at once
+		//For(j = 0; j < sneaktoslimgameinfo(worldinfo.Game).TeamOccupied.Length; j++)
+		//{
+		//	if(sneaktoslimgameinfo(worldinfo.Game).TeamOccupied[j] == true)
+		//	{
+		//		switch(j)
+		//		{
+		//			case 0: FlashHUD.player1Score.SetInt("newScore", scoreBoard[j]);
+		//					FlashHUD.player1Score.SetBool("isOn", true);
+		//					break;
+		//			case 1: FlashHUD.player2Score.SetInt("newScore", scoreBoard[j]);
+		//					FlashHUD.player2Score.SetBool("isOn", true);
+		//					break;
+		//			case 2: FlashHUD.player3Score.SetInt("newScore", scoreBoard[j]);
+		//					FlashHUD.player3Score.SetBool("isOn", true);
+		//					break;
+		//			case 3: FlashHUD.player4Score.SetInt("newScore", scoreBoard[j]);
+		//					FlashHUD.player4Score.SetBool("isOn", true);
+		//					break;
+		//		}
+		//	}
+		//}
+		
+		//For(j = 0; j < scoreBoard.Length; j++)
+		//{
+		//	switch(j)
+		//	{
+		//		case 0: FlashHUD.player1Score.SetInt("newScore", scoreBoard[j]);
+		//				FlashHUD.player1Score.SetBool("isOn", true);
+		//				break;
+		//		case 1: FlashHUD.player2Score.SetInt("newScore", scoreBoard[j]);
+		//				FlashHUD.player2Score.SetBool("isOn", true);
+		//				break;
+		//		case 2: FlashHUD.player3Score.SetInt("newScore", scoreBoard[j]);
+		//				FlashHUD.player3Score.SetBool("isOn", true);
+		//				break;
+		//		case 3: FlashHUD.player4Score.SetInt("newScore", scoreBoard[j]);
+		//				FlashHUD.player4Score.SetBool("isOn", true);
+		//				break;
+		//	}
+		//	/*canvas.SetPos(Canvas.ClipX * (0.1 + j * 0.2), Canvas.ClipY * 0.1);
+		//	if(colorMarked) // color ppl
+		//	{
+		//		canvas.SetDrawColorStruct(teamColor[j]);
+		//	}
+		//	canvas.DrawText(allPplScore[j]);*/
+
+		//	//clean up
+		//	//todo: alpha--
+		//	//allPplScore[j] = "";
+
+		//}
+
+		
+
 
 //draw MSG
 		DrawCascadeMsg();

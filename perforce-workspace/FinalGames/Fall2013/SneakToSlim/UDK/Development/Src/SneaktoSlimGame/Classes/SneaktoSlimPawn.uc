@@ -9,7 +9,9 @@ var MaterialInstanceConstant Mat;   //------------------------------------------
 var bool bInvulnerable;
 var float InvulnerableTimer;
 var bool playerHasFan;
-var SkeletalMeshComponent mesh1;
+var SneakToSlimMovingTreasure SpawnedProjectile;
+//var SkeletalMeshComponent Mesh;
+var vector meshTranslationOffset;
 
 var AnimNodePlayCustomAnim sprintNode;
 var AnimNodePlayCustomAnim bellyBumpNode;
@@ -26,6 +28,8 @@ var SkeletalMeshComponent mySkelComp;
 var SkeletalMeshComponent AISkelComp;
 var Array<Vector> TreasureSpawnPointLocations;
 var Array<MaterialInstanceConstant> teamMaterial;
+var Array<MaterialInstanceConstant> teamMaterialGB;
+var string characterName;
 
 //Player metrics
 var int totalTimesCaught;
@@ -148,7 +152,7 @@ replication {   //ARRANGE THESE ALPHABETICALLY
 		replicateAnimName,
 		s_energized,
 		stunTime,
-		v_energy,
+		//v_energy,
 		transparentNum,
 		disguiseNum,
 		endDisguiseNum,
@@ -168,6 +172,41 @@ simulated event PostBeginPlay()
     SetSpawnPointColor();
 	setTimer(0.3,false,'ServerRemindTreasureLocation');
 	setTimer(0.3,false,'ServerInitLight');
+}
+
+simulated exec function EnterMist(){
+	`log("Enter Mist!!!!!!!!!!!!!!");
+	removePowerUp();
+	self.bInvisibletoAI = true;
+	self.mistNum = 1;//need to be set to mistTrigger num
+}
+
+simulated exec function ExitMist(){
+	`log("Exit Mist!!!!!!!!!!!!!!");
+	//self.endinvisibleNum = self.GetTeamNum();
+	self.bInvisibletoAI = false;
+	self.mistNum = 0;
+}
+
+unreliable client function removePowerUp()
+{
+	self.hideCountdownTimer();
+	BuffedTimer = 0;
+	inputStringToCenterHUD(0);
+	`log("buff end "); 
+	`log(bUsingBuffed[0]);
+	if(bUsingBuffed[0] == 1)
+	{
+		`log('remove power-ups');
+		SneaktoSlimPlayerController(self.Controller).attemptToChangeState('EndInvisible');
+		SneaktoSlimPlayerController(self.Controller).GoToState('EndInvisible');
+	}
+	if(bUsingBuffed[1] == 1)
+	{
+		`log('remove power-ups');
+		SneaktoSlimPlayerController(self.Controller).attemptToChangeState('EndDisguised');
+		SneaktoSlimPlayerController(self.Controller).GoToState('EndDisguised');
+	}
 }
 
 unreliable server function incrementBumpCount()
@@ -231,6 +270,41 @@ reliable Client function ClientInitLightOff(SneaktoSlimLightContainer Container)
 unreliable client function setPlayerCount(int num)
 {
 	playerCount = num;
+}
+
+exec function skipLine()
+{
+	local SneaktoSlimGuideController guide;
+
+	foreach WorldInfo.AllControllers(class'SneaktoSlimGuideController', guide)
+	{
+		guide.skipLine();
+	}
+}
+
+unreliable client function hideTutorialTextObject()
+{
+	local SneaktoSlimGFxHUD myFlashHUD;
+
+	if(SneaktoSlimPlayerController(self.Controller).uiOn)
+	{
+		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
+		myFlashHUD.TutorialText.GetObject("TutorialText").SetText("");
+		myFlashHUD.TutorialText.SetBool("visible", false);
+	}
+
+}
+
+reliable client function displayTutorialText(String text)
+{
+	local SneaktoSlimGFxHUD myFlashHUD;
+
+	if(SneaktoSlimPlayerController(self.Controller).uiOn)
+	{
+		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
+		myFlashHUD.TutorialText.GetObject("TutorialText").SetText(text);
+		myFlashHUD.TutorialText.SetBool("visible", true);
+	}
 }
 
 unreliable client function showDemoTime(String text)
@@ -314,6 +388,13 @@ unreliable client function showPowerupUI(int num)
 		myFlashHUD.InstructionText.SetBool("isOn", true);
 		myFlashHUD.CountdownText.SetBool("isOn", true);
 	}
+	if(num == 3)
+	{
+		myFlashHUD.ThunderIcon.SetBool("isOn", true);
+		myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
+		myFlashHUD.InstructionText.SetBool("isOn", true);
+		myFlashHUD.CountdownText.SetBool("isOn", true);
+	}
 	}
 }
 
@@ -335,6 +416,13 @@ unreliable client function hidePowerupUI(int num)
 	if(num == 2)
 	{
 		myFlashHUD.ClothIcon.SetBool("isOn", false);
+		myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
+		myFlashHUD.InstructionText.SetBool("isOn", false);
+		setTimer(1,false,'SyncTreasure');
+	}
+	if(num == 2)
+	{
+		myFlashHUD.ThunderIcon.SetBool("isOn", false);
 		myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
 		myFlashHUD.InstructionText.SetBool("isOn", false);
 		setTimer(1,false,'SyncTreasure');
@@ -597,18 +685,18 @@ simulated event ReplicatedEvent(name VarName)
 			{
 				if(self.IsInState('Exhausted'))
 				{
-					sneaktoslimplayercontroller(self.controller).attempttochangestate('holdingtreasureexhausted');//to server
-					sneaktoslimplayercontroller(self.controller).gotostate('holdingtreasureexhausted');//local
+					sneaktoslimplayercontroller(self.controller).attempttochangestate('HoldingTreasureExhausted');//to server
+					sneaktoslimplayercontroller(self.controller).gotostate('HoldingTreasureExhausted');//local
 				}
 				else if(self.isinstate('sprinting'))
 				{
-					sneaktoslimplayercontroller(self.controller).attempttochangestate('holdingtreasuresprinting');//to server
-					sneaktoslimplayercontroller(self.controller).gotostate('holdingtreasuresprinting');//local
+					sneaktoslimplayercontroller(self.controller).attempttochangestate('HoldingTreasureSprinting');//to server
+					sneaktoslimplayercontroller(self.controller).gotostate('HoldingTreasureSprinting');//local
 				}
 				else
 				{
-					sneaktoslimplayercontroller(self.controller).attempttochangestate('holdingtreasurewalking');//to server
-					sneaktoslimplayercontroller(self.controller).gotostate('holdingtreasurewalking');//local
+					sneaktoslimplayercontroller(self.controller).attempttochangestate('HoldingTreasureWalking');//to server
+					sneaktoslimplayercontroller(self.controller).gotostate('HoldingTreasureWalking');//local
 				}
 			}
 			if (self.Class == class'SneaktoSlimPawn_Rabbit')
@@ -633,8 +721,9 @@ simulated event ReplicatedEvent(name VarName)
 				self.Mesh.DetachComponent(treasureLightComponent);
 			}				
 			`log("#@$WEREWR"$self.Mesh.GetSocketByName('treasureSocket'));			
-			self.Mesh.SetMaterial(1, none);
-			self.simulatedDrawPlayerColor();
+			//self.Mesh.SetMaterial(1, none);
+			//self.simulatedDrawPlayerColor();
+			self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
 			self.SetTreasureParticleEffectActive(false);			
 			SneaktoSlimPlayerController(self.Controller).DropTreasure();
 			//THE FOLLOWING CODE NOW HANDLED IN DroppingTreasure STATE, 
@@ -655,7 +744,7 @@ simulated event ReplicatedEvent(name VarName)
 	}
 	if(VarName == 'colorIndex')
 	{
-		simulatedDrawPlayerColor();
+		self.changeCharacterMaterial(self,self.colorIndex,"Character");
 	}
 	if(VarName == 'transparentNum')
 	{
@@ -713,14 +802,16 @@ simulated event ReplicatedEvent(name VarName)
 				{
 					if(CurrentPawn.Role == ROLE_AutonomousProxy)
 					{
-						CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.invisibleMaterial_2');
-						CurrentPawn.Mesh.SetMaterial(1, Material'FLCharacter.lady.invisibleMaterial_2');
+						CurrentPawn.changeCharacterMaterial(currentPawn,currentPawn.GetTeamNum(),"Invisible");
+						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
+						//CurrentPawn.Mesh.SetMaterial(1, Material'FLCharacter.Character.invisibleMaterial');
 					}
 					else if (CurrentPawn.Role == ROLE_SimulatedProxy)
 					{
-						CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.invisibleMaterial_2');
-						CurrentPawn.Mesh.SetMaterial(1, Material'FLCharacter.lady.invisibleMaterial_2');
-						//CurrentPawn.SetHidden(true);
+						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
+						//CurrentPawn.Mesh.SetMaterial(1, Material'FLCharacter.Character.invisibleMaterial');
+						//CurrentPawn.changeCharacterMaterial(currentPawn,currentPawn.GetTeamNum(),"Invisible");
+						CurrentPawn.SetHidden(true);
 						//CurrentPawn.Mesh.SetOnlyOwnerSee(true);
 					}
 				}
@@ -731,7 +822,7 @@ simulated event ReplicatedEvent(name VarName)
 	}
 	if(VarName == 'endinvisibleNum')
 	{
-		`log("fuck you all");
+		//`log("fuck you all");
 		if(endinvisibleNum >= 0)
 		{	
 			ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
@@ -742,9 +833,15 @@ simulated event ReplicatedEvent(name VarName)
 					{
 						
 						 //MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum(), class'MaterialInstanceConstant'));
-						CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
+						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
 						//CurrentPawn.Mesh.SetMaterial(1,  MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum(), class'MaterialInstanceConstant')));
-						CurrentPawn.Mesh.SetMaterial(1,teamMaterial[currentPawn.GetTeamNum()]);
+						//CurrentPawn.Mesh.SetMaterial(1,teamMaterial[currentPawn.GetTeamNum()]);
+
+						CurrentPawn.changeCharacterMaterial(currentPawn,currentPawn.GetTeamNum(),"Character");
+						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
+						//CurrentPawn.Mesh.SetMaterial(1,teamMaterial[currentPawn.GetTeamNum()]);
+
+
 					}
 					else if (CurrentPawn.Role == ROLE_SimulatedProxy)
 					{
@@ -770,17 +867,18 @@ simulated event ReplicatedEvent(name VarName)
 
 					if(CurrentPawn.mistNum == self.mistNum)
 					{
-						CurrentPawn.mesh1.SetHidden(false);
-						CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.invisibleMaterial_2');
-						CurrentPawn.Mesh.SetMaterial(1, Material'FLCharacter.lady.invisibleMaterial_2');
+						CurrentPawn.Mesh.SetHidden(false);
+						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
+						//CurrentPawn.Mesh.SetMaterial(1, Material'FLCharacter.Character.invisibleMaterial');
+						changeCharacterMaterial(CurrentPawn,CurrentPawn.GetTeamNum(),"Invisible");
 					}
 					else if(CurrentPawn.mistNum != 0 && CurrentPawn.mistNum != self.mistNum)
 					{
-						CurrentPawn.mesh1.SetHidden(true);
+						CurrentPawn.Mesh.SetHidden(true);
 					}
 					else if(CurrentPawn.mistNum == 0)
 					{
-						CurrentPawn.mesh1.SetHidden(false);
+						CurrentPawn.Mesh.SetHidden(false);
 					}
 				}
 			}
@@ -794,13 +892,14 @@ simulated event ReplicatedEvent(name VarName)
 					{
 						if(CurrentPawn.mistNum == self.mistNum)
 						{
-							self.mesh1.SetHidden(false);
-							self.Mesh.SetMaterial(0, Material'FLCharacter.lady.invisibleMaterial_2');
-							self.Mesh.SetMaterial(1, Material'FLCharacter.lady.invisibleMaterial_2');
+							self.Mesh.SetHidden(false);
+							//self.Mesh.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
+							//self.Mesh.SetMaterial(1, Material'FLCharacter.Character.invisibleMaterial');
+							CurrentPawn.changeCharacterMaterial(currentPawn,currentPawn.GetTeamNum(),"Invisible");
 						}
 						else
 						{
-							self.mesh1.SetHidden(true);
+							self.Mesh.SetHidden(true);
 						}
 					}
 				}
@@ -816,22 +915,32 @@ simulated event ReplicatedEvent(name VarName)
 				{
 					if(CurrentPawn.mistNum == self.mistNum)
 					{
-						CurrentPawn.mesh1.SetHidden(false);
-						CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
-						CurrentPawn.Mesh.SetMaterial(1,  MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum(), class'MaterialInstanceConstant')));
+						CurrentPawn.Mesh.SetHidden(false);
+						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.GinsengBaby.GinsengBaby_material_0');
+
+						changeCharacterMaterial(CurrentPawn,CurrentPawn.GetTeamNum(),"Character");
+
+						//`log('FLCharacter.lady.lady_material_' $ '1');
+						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
+						//CurrentPawn.Mesh.SetMaterial(1,  MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum(), class'MaterialInstanceConstant')));
+						//CurrentPawn.Mesh.SetMaterial(1,  Material  ("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum()));
+						
 					}
 					else if(CurrentPawn.mistNum != 0)
 					{
-						CurrentPawn.mesh1.SetHidden(true);
+						CurrentPawn.Mesh.SetHidden(true);
 					}
 				}
 			}
 			//I am the simulated guest
 			else if(self.Role == ROLE_SimulatedProxy)
 			{
-				self.mesh1.SetHidden(false);
-				self.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
-				self.Mesh.SetMaterial(1,  MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ self.GetTeamNum(), class'MaterialInstanceConstant')));
+				self.Mesh.SetHidden(false);
+
+				//self.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
+				//self.Mesh.SetMaterial(1,  MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ self.GetTeamNum(), class'MaterialInstanceConstant')));
+				self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
+
 			}
 		}
 	}
@@ -877,11 +986,13 @@ simulated function simulatedDrawPlayerColor()
 	local string materialName;
 	local MaterialInstanceConstant baseMaterial;
 
-	materialName = "FLCharacter.lady.lady_material_";
-	materialName $= self.colorIndex;	
-	baseMaterial = MaterialInstanceConstant(DynamicLoadObject(materialName, class'MaterialInstanceConstant'));
+	//materialName = "FLCharacter.lady.lady_material_";
+	//materialName $= self.colorIndex;	
+	//baseMaterial = MaterialInstanceConstant(DynamicLoadObject(materialName, class'MaterialInstanceConstant'));
 	
-	self.Mesh.SetMaterial(1,baseMaterial);
+	//self.Mesh.SetMaterial(1,baseMaterial);
+
+	self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
 	`log("simulated get team"@self.GetTeamNum());
 }
 
@@ -943,7 +1054,11 @@ reliable client function clientBumpParticle(int teamNumber)
 	{
 		`log("clientBumpParticle" $ current.GetTeamNum());
 		if(current.GetTeamNum() == teamNumber)
+		{
 			WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.hitEffect',current.Location);
+			PlaySound(SoundCue'flsfx.Player_Hit_Cue');
+		}
+			
 	}
 }
 
@@ -1079,6 +1194,8 @@ function vector RandomTreasureLocation(vector PawnLocation){
 	local int signX;
 	local int signY;
 	local vector treasureLoc;
+	local vector ZTestStart;
+	local vector ZTestEnd;
 	signX = Rand(2);
 	signY = Rand(2);
 	x = Rand(50);
@@ -1095,10 +1212,35 @@ function vector RandomTreasureLocation(vector PawnLocation){
 	else{
 		treasureLoc.Y = PawnLocation.Y-y;
 	}
-	treasureLoc.Z = 16;
+    
+	treasureLoc.Z = 100;
 	
 	return treasureLoc;
 	
+}
+
+reliable server function ServerMovingTreasure(vector TreasureMovingDirection){
+    MovingTreasure(myTreasure,TreasureMovingDirection);
+}
+
+simulated function MovingTreasure(SneakToSlimTreasure RealTreasure, vector TreasureMovingDirection){
+	SpawnedProjectile = Spawn(class'SneakToSlimMovingTreasure', Self,,self.location );
+	SpawnedProjectile.MyPawn = self;
+	SpawnedProjectile.Speed = 500;
+	SpawnedProjectile.Init(TreasureMovingDirection);
+	
+}
+
+reliable client simulated function ClientMovingTreasure(vector TreasurDestination){
+	local SneakToSlimTreasure currenttreasure;
+	
+	foreach allActors(class 'SneakToSlimTreasure', currenttreasure)
+	{
+		`log("ther is atreasue client" $ currenttreasure);	
+		currenttreasure.turnOn();	
+		currenttreasure.SetLocation(TreasurDestination);
+	}
+
 }
 
 simulated function dropTreasure(){
@@ -1107,89 +1249,37 @@ simulated function dropTreasure(){
 	local vector hitLocation;
 	local vector hitNormal;	
     local vector DropCenterLocation;
+	local vector ZTestStart;
+	local vector ZTestEnd;
+	local vector TreasureMovingDirection;
+	local vector ThrowDirection;
+	ThrowDirection.X =0.1;
+	ThrowDirection.Y =0.1;
+	ThrowDirection.Z = 1;
+	TreasureMovingDirection = Normal(/*-vector(self.Rotation) + */ThrowDirection);
 	`log("drop simulate");
 	`log("drop name:"@self.Name);
     DropCenterLocation = self.Location;
-	//DropTreasureLocation = RandomTreasureLocation(DropCenterLocation);
-    //while(string(Trace(hitLocation, hitNormal, DropCenterLocation, DropTreasureLocation, true,,).Class) == "StaticMeshActor"){
-	if (Role == Role_Authority){
-        DropTreasureLocation = RandomTreasureLocation(DropCenterLocation);
+    ZTestStart = DropCenterLocation;
+	ZTestEnd = DropCenterLocation;
+    ZTestStart.Z = 10000;
+	ZTestEnd.Z = -10000;
+	
+    if(Role == Role_Authority){
+		MovingTreasure(myTreasure,TreasureMovingDirection);
     }
-         //}
-    //}
-
+	else{
+		ServerMovingTreasure(TreasureMovingDirection);
+	}
 
 	if(isGotTreasure == true)
 	{
 		isGotTreasure = false;
-        
-		/*if (Role < Role_Authority)
-		{
-			`log("Jump To Server!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			serverDropTreasure(DropTreasureLocation);   
-		}*/
-		//else 
-		if (Role == Role_Authority)
-		{
-
-		    myTreasure.SetLocation(self.Location);		
-			myTreasure.turnOn();
-			myTreasure.SetCollision(false, false);
-			//myTreasure.SetLocation(DropTreasureLocation);
-			//myTreasure.SetHidden(true);
-			myTreasure.movetoDropLocation(DropTreasureLocation);
-			myTreasure = NONE;
-
-
-			foreach allActors(class 'sneaktoslimpawn', current)
-			{
-				`log("PAWN!!!!!!!!!!!!!!!!"@current.GetTeamNum());
-	   		   current.clientDropTreasure(DropCenterLocation,DropTreasureLocation);
-			}
-		}
 	}	
 }
 
-client reliable function clientDropTreasure(Vector StartLocation, Vector DropTreasureLocation)
-{	
-	local SneakToSlimTreasure currenttreasure;
-	
-	`log("drop client");
-	`log("drop name:"@self.Name);
-	`log("drop location"@DropTreasureLocation);
-    `log("I have treasure!!!!!!!!!!!");
-	`log("this is my treasure"@self.myTreasure);
 
-	foreach allActors(class 'SneakToSlimTreasure', currenttreasure)
-	{
-		`log("ther is atreasue client" $ currenttreasure);
-		//currenttreasure.SetLocation(self.Location);		
-		currenttreasure.turnOn();	
-		currenttreasure.SetLocation(StartLocation);
-		`log("treasure "@currenttreasure @"is not ticking " @currenttreasure.bTickIsDisabled);
-		currenttreasure.SetCollision(false, false);
-		currenttreasure.movetoDropLocation(DropTreasureLocation);
-	}
-}
 
-/*server reliable function serverDropTreasure(Vector DropTreasureLocation)
-{	
-	local sneaktoslimpawn current;
-	`log("drop server");
-	`log("drop name:"@self.Name);
-	`log("drop location"@self.Location);	
-	//myTreasure.SetLocation(self.Location);			
-	myTreasure.turnOn();
-	myTreasure.SetCollision(false, false);
-	myTreasure.movetoDropLocation(DropTreasureLocation);
-	myTreasure = NONE;
-
-    foreach allActors(class 'sneaktoslimpawn', current)
-	{
-		`log("PAWN!!!!!!!!!!!!!!!!"@current.GetTeamNum());
-	   	current.clientDropTreasure(DropTreasureLocation);
-	}	
-}*/
 
 exec function ExecTreasureLocation()
 {
@@ -1339,9 +1429,12 @@ unreliable client function showCountdownTimer(int number)
 //Sets flash object to be invisible when tick method tells it to
 unreliable client function hideCountdownTimer()
 {
-	if(SneaktoSlimPlayerController(self.Controller).uiOn)
+	if(self.Controller != none)
 	{
-	SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD.CountdownText.SetBool("isOn", false);
+		if(SneaktoSlimPlayerController(self.Controller).uiOn)
+		{
+			SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD.CountdownText.SetBool("isOn", false);
+		}
 	}
 }
 
@@ -1389,6 +1482,7 @@ event Tick(float DeltaTime)
 	//serverCheckBBuffed();
 
 	//`log(self.bBuffed);
+
 	if(SneaktoSlimPlayerController(self.Controller).myMap != NONE)
 	{
 		//if(SneaktoSlimPlayerController(self.Controller).myMap.isOn)
@@ -1443,18 +1537,35 @@ event Tick(float DeltaTime)
 
 	if(bUsingBuffed[1] == 0 && bUsingBuffed[0] == 0)
 	{
-		self.hideCountdownTimer();
+		//self.hideCountdownTimer();
 		BuffedTimer = 0;
 	}
 }
 
-reliable client function clientMeshTranslation(int zValue, int teamNum)
+reliable client function clientMeshTranslation(bool downOrUp, int teamNum)
 {
 	local sneaktoslimpawn CurrentPawn;
-	ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+	if(downOrUp)
 	{
-		if(CurrentPawn.Class == class 'sneaktoslimpawn_ginsengbaby' && CurrentPawn.GetTeamNum() == teamNum)
-			CurrentPawn.Mesh.SetTranslation(sneaktoslimplayercontroller_ginsengbaby(CurrentPawn.Controller).myOffset);
+		ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+		{
+			if(CurrentPawn.Class == class 'sneaktoslimpawn_ginsengbaby' && CurrentPawn.GetTeamNum() == teamNum)
+			{
+				CurrentPawn.meshTranslationOffset.Z = -90;
+				sneaktoslimpawn_ginsengbaby(CurrentPawn).Mesh.SetTranslation(CurrentPawn.meshTranslationOffset);
+			}
+		}
+	}
+	else
+	{
+		ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+		{
+			if(CurrentPawn.Class == class 'sneaktoslimpawn_ginsengbaby' && CurrentPawn.GetTeamNum() == teamNum)
+			{
+				CurrentPawn.meshTranslationOffset.Z = -48;
+				sneaktoslimpawn_ginsengbaby(CurrentPawn).Mesh.SetTranslation(CurrentPawn.meshTranslationOffset);
+			}
+		}
 	}
 }
 
@@ -1961,6 +2072,58 @@ reliable client function clientPlayerPlayCustomAnim
     }
 }
 
+
+//This function is used for manage material switching.
+simulated function changeCharacterMaterial(SneaktoSlimPawn currentPawn, int teamID, string materialType)
+{
+
+	local string materialName;
+
+
+	if(teamID == 255)
+		return;
+
+	if(materialType == "Character")
+	{
+		if(currentPawn.characterName == "FatLady")
+		{
+			CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
+			CurrentPawn.Mesh.SetMaterial(1,  MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ teamID, class'MaterialInstanceConstant')));
+		}
+		else
+		{
+			materialName = "FLCharacter." $ currentPawn.characterName $ "." $ currentPawn.characterName $ "_material_" $ teamID;
+			CurrentPawn.Mesh.SetMaterial(0,  Material(DynamicLoadObject(materialName, class'Material')));
+			CurrentPawn.Mesh.SetMaterial(1,  Material(DynamicLoadObject(materialName, class'Material')));
+		}
+	}
+	else if(materialType == "Guards")
+	{
+		
+	}
+	else if(materialType == "Invisible")
+	{
+		//materialName = "FLCharacter.lady.lady_material_" $  teamID;
+		//`log("change invisible material");
+		CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
+		CurrentPawn.Mesh.SetMaterial(1, Material'FLCharacter.Character.invisibleMaterial');
+	}
+	//MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum(), class'MaterialInstanceConstant'));
+	//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
+	//CurrentPawn.Mesh.SetMaterial(1,  MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum(), class'MaterialInstanceConstant')));
+	//CurrentPawn.Mesh.SetMaterial(1,teamMaterial[currentPawn.GetTeamNum()]);
+}
+
+unreliable client function ClientCreateExplosion(vector loc)
+{
+			WorldInfo.MyEmitterPool.SpawnEmitter(
+			ParticleSystem'flparticlesystem.fireCracker', 
+			loc, 
+			rot(0,0,0), 
+			None);
+}
+
+
 defaultproperties
 {
 	bJumpCapable = false;
@@ -2028,6 +2191,10 @@ defaultproperties
 	teamMaterial[1] = MaterialInstanceConstant 'FLCharacter.lady.lady_material_1'
 	teamMaterial[2] = MaterialInstanceConstant 'FLCharacter.lady.lady_material_2'
 	teamMaterial[3] = MaterialInstanceConstant 'FLCharacter.lady.lady_material_3'
+	teamMaterialGB[0] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
+	teamMaterialGB[1] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
+	teamMaterialGB[2] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
+	teamMaterialGB[3] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
 
 	Begin Object Class=SkeletalMeshComponent Name=AISkeletalMesh	
 		SkeletalMesh = SkeletalMesh'FLCharacter.Guard.Guard'
@@ -2043,11 +2210,7 @@ defaultproperties
 
 	AISkelComp = AISkeletalMesh
     Components.Add(InitialSkeletalMesh)	
-	mesh1 = InitialSkeletalMesh	
-	Mesh = InitialSkeletalMesh
-	/*Components.Add(AISkeletalMesh)	
-	mesh1 = AISkeletalMesh	
-	Mesh = AISkeletalMesh*/
+	Mesh = InitialSkeletalMesh	
 
 	Begin Object Name=CollisionCylinder
 		CollisionRadius=15.000000
@@ -2059,7 +2222,7 @@ defaultproperties
 	FLSprintingSpeed=350.0
 	FLExhaustedSpeed=75.0
 
-	GroundSpeed=200.0;
+	GroundSpeed=150.0;
 	AccelRate = 500;
 	JumpZ = 300.0
 	v_energy = 100;
@@ -2085,6 +2248,7 @@ defaultproperties
 	underLight = false;
 	playerHasFan = true;	
 	invincibleTime = 3.0
+	meshTranslationOffset = (X=0, Y=0, Z=-80)
 	
 	MaxStepHeight = 25
 	

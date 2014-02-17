@@ -7,6 +7,7 @@ var StaticMeshComponent myMesh;
 var repNotify float myX;
 var repNotify float myY;
 var repNotify float myZ;
+var repNotify bool TreasureLanded;
 var DynamicLightEnvironmentComponent LightEnvironment;
 var Array<Vector> SpawnPoints;
 var Array<SneaktoSlimTreasureSpawnPoint> SpawnPointsReference;
@@ -18,16 +19,20 @@ var Vector treasureTargetLocation;
 
 replication {
 	if (bNetDirty)
-		myX,myY,myZ, CurrentSpawnPointIndex;
+		myX,myY,myZ, CurrentSpawnPointIndex,TreasureLanded;
 }
 
 simulated event ReplicatedEvent(name VarName) 
 {
 	local vector newLocation;
-	newLocation.X = myX;
-	newLocation.Y = myY;
-	newLocation.Z = myZ;
-	self.SetLocation(newLocation);
+	if(VarName == 'myX'){
+	    newLocation.X = myX;
+	    newLocation.Y = myY;
+	    newLocation.Z = myZ;
+	    self.SetLocation(newLocation);
+	}
+	if(VarName == 'TreasureLanded'){
+	}
 }
 
 reliable Server function ServerSetToLocationPoint(int Index)
@@ -236,6 +241,6 @@ DefaultProperties
 	RemoteRole=ROLE_AutonomousProxy
 	bAlwaysRelevant=true
 	CurrentSpawnPointIndex = 255;
-
+    TreasureLanded = false;
 	treasureVelocity = 500.0
 }

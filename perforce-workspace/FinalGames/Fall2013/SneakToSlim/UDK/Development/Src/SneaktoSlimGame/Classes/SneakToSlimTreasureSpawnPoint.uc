@@ -31,7 +31,8 @@ simulated function SneaktoSlimTreasure SpawnTreasure()
 {
 	`log("Spawn Index~~~~~~~~~~~~~~~~~~~~~~~~~~"@BoxIndex);
 	MyTreasure = spawn(class'SneaktoSlimTreasure',,,self.Location);
-	MyTreasure.ShutDown();
+	//MyTreasure.ShutDown();
+	MyTreasure.SetHidden(true);
 	isHaveTreasure = true;
     ParticalEffect.SetActive(true);
 	LightBeamEffectRef.SetHidden(false);
@@ -84,8 +85,8 @@ simulated function SetParticalEffectActive(bool flag){
 
 simulated function bool UsedBy(Pawn User)
 {
-	local bool used;
-	used = super.UsedBy(User);
+	//local bool used;
+	//used = super.UsedBy(User);
 	
     if(isHaveTreasure == true)
     {

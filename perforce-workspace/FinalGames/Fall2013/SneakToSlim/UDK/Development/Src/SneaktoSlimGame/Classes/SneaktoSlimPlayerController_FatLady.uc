@@ -184,28 +184,31 @@ simulated state Sprinting extends PlayerWalking
 	// when player input 'Left Shift', also overwrite the same func in playerWalking
 	simulated exec function FL_useBuff()
 	{
-		//no "super" because we have to rewtire/ override!
-		sneaktoslimpawn(self.Pawn).checkServerFLBuff(sneaktoslimpawn(self.Pawn).enumBuff.bBuffed, true);
-		
-		if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
+		if(sneaktoslimpawn(self.Pawn).mistNum == 0)
 		{
-			sneaktoslimpawn(self.Pawn).bBuffed= 0;
-			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-			sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used 
+			//no "super" because we have to rewtire/ override!
+			sneaktoslimpawn(self.Pawn).checkServerFLBuff(sneaktoslimpawn(self.Pawn).enumBuff.bBuffed, true);
+		
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
+			{
+				sneaktoslimpawn(self.Pawn).bBuffed= 0;
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used 
 
-			attemptToChangeState('InvisibleSprinting');
-			GoToState('InvisibleSprinting');
-		}
-		if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
-		{			
-			sneaktoslimpawn(self.Pawn).bBuffed = 0;
+				attemptToChangeState('InvisibleSprinting');
+				GoToState('InvisibleSprinting');
+			}
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
+			{			
+				sneaktoslimpawn(self.Pawn).bBuffed = 0;
 
-			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-			sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
 
-			attemptToChangeState('DisguisedSprinting');
-			GoToState('DisguisedSprinting');
+				attemptToChangeState('DisguisedSprinting');
+				GoToState('DisguisedSprinting');
 
+			}
 		}
 	}
 
@@ -249,6 +252,7 @@ simulated state Sprinting extends PlayerWalking
 			if(sneaktoslimpawn(self.Pawn).v_energy > sneaktoslimpawn(self.Pawn).PerSpeedEnergy)
 			{
 				ClearTimer('EnergyRegen');
+				ClearTimer('StartEnergyRegen');
 				//current.startSpeedUpAnim();
 				SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,true,0.5,0.5,true,false);
 				sneaktoslimpawn(self.Pawn).v_energy = sneaktoslimpawn(self.Pawn).v_energy - sneaktoslimpawn(self.Pawn).PerSpeedEnergy;

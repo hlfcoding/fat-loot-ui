@@ -1,9 +1,10 @@
 class SneaktoSlimPlayerController_GinsengBaby extends SneaktoslimPlayerController
 	config(Game);
 
-var vector myOffset;
 var float ENERGY_UPDATE_FREQUENCY;
 var float burstChargeTime;
+var float energyConsumptionFactor; //To know if player is Bursting while Burrowed
+var bool burstComplete;
 
 exec function showFatLootClassName()
 {
@@ -34,11 +35,6 @@ simulated state PlayerWalking
 			return;
 		else
 		{
-			//myOffset.X = 0;//sneaktoslimpawn(self.Pawn).Location.X;
-			//myOffset.Y = 0;//sneaktoslimpawn(self.Pawn).Location.Y;
-			//myOffset.Z = -80;//sneaktoslimpawn(self.Pawn).Location.Z - 15;
-			////sneaktoslimpawn(self.Pawn).SetPhysics(PHYS_FLYING);
-			//sneaktoslimpawn(self.Pawn).Mesh.SetTranslation(myOffset);
 			if(Role < ROLE_Authority)
 				attemptToChangeState('Burrow');
 			GoToState('Burrow');
@@ -58,34 +54,13 @@ Begin:
 	if(debugStates) logState();
 }
 
-exec function changeMeshTranslation(int zValue)
-{
-	myOffset.X = 0;//sneaktoslimpawn(self.Pawn).Location.X;
-	myOffset.Y = 0;//sneaktoslimpawn(self.Pawn).Location.Y;
-	myOffset.Z = zValue;//sneaktoslimpawn(self.Pawn).Location.Z - 15;
-	//sneaktoslimpawn(self.Pawn).SetPhysics(PHYS_FLYING);
-	sneaktoslimpawn(self.Pawn).Mesh.SetTranslation(myOffset);
-	serverChangeMeshTranslation(zValue);
-}
 
-reliable server function serverChangeMeshTranslation(int zValue)
-{
-	myOffset.X = 0;//sneaktoslimpawn(self.Pawn).Location.X;
-	myOffset.Y = 0;//sneaktoslimpawn(self.Pawn).Location.Y;
-	myOffset.Z = zValue;//sneaktoslimpawn(self.Pawn).Location.Z - 15;
-	//sneaktoslimpawn(self.Pawn).SetPhysics(PHYS_FLYING);
-	sneaktoslimpawn(self.Pawn).Mesh.SetTranslation(myOffset);
-}
-
+/************************ BURROW STATE **********************************/
 simulated state Burrow extends PlayerWalking
 {
 	simulated exec function OnPressSecondSkill()   //reveal
 	{
-		//TO-DO
-		//whether under wall or objects
-		myOffset.Z = -48;//sneaktoslimpawn(self.Pawn).Location.Z - 15;
-		//sneaktoslimpawn(self.Pawn).SetPhysics(PHYS_Walking);
-		sneaktoslimpawn(self.Pawn).Mesh.SetTranslation(myOffset);
+		//TO-DO		//whether under wall or objects		
 		if(Role < ROLE_Authority)
 			attemptToChangeState('PlayerWalking');
 		GoToState('PlayerWalking');
@@ -98,12 +73,27 @@ simulated state Burrow extends PlayerWalking
 			return;
 		
 		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
-		burstChargeTime = WorldInfo.TimeSeconds;		
+		energyConsumptionFactor = 1.5;
+		burstChargeTime = WorldInfo.TimeSeconds;
+		SetTimer(0.01, true, 'drawBurstAOE');		
+	}
+
+	simulated function drawBurstAOE()
+	{
+		local float burstRadius;
+		local vector cylinderStartPoint;
+		cylinderStartPoint = Pawn.Location + vect(0,0,-35);
+
+		burstRadius = SneaktoSlimPawn_GinsengBaby(Pawn).calculateBurstRadius(WorldInfo.TimeSeconds - burstChargeTime);
+		if(burstRadius > 0)
+			DrawDebugCylinder(cylinderStartPoint, cylinderStartPoint + vect(0,0,2), burstRadius-10, 25, 255, 255, 255, false);
 	}
 
 	simulated exec function OnReleaseFirstSkill()
 	{
 		burstChargeTime = WorldInfo.TimeSeconds - burstChargeTime;
+		energyConsumptionFactor = 1;
+		ClearTimer('drawBurstAOE');
 		if(Role < ROLE_Authority)
 			attemptToChangeState('Burst');  //to server
 		GoToState('Burst');  //local
@@ -111,11 +101,11 @@ simulated state Burrow extends PlayerWalking
 
 	simulated function UpdateEnergy()
 	{
-		SneaktoSlimPawn(Pawn).v_energy -= ENERGY_UPDATE_FREQUENCY * SneaktoSlimPawn(Pawn).PerDashEnergy;
-		if(SneaktoSlimPawn(Pawn).v_energy < 30)
-		{			
+		SneaktoSlimPawn(Pawn).v_energy -= ENERGY_UPDATE_FREQUENCY * SneaktoSlimPawn(Pawn).PerDashEnergy * energyConsumptionFactor;
+		if(SneaktoSlimPawn(Pawn).v_energy < SneaktoSlimPawn(Pawn).PerDashEnergy)
+		{
 			//SneaktoSlimPawn(Pawn).v_energy = 0;
-			OnPressFirstSkill(); //forcibly stop the charge			
+			OnPressSecondSkill(); //forcibly stop the charge			
 		}
 	}
 
@@ -123,38 +113,33 @@ simulated state Burrow extends PlayerWalking
 	{   	
 		`log("Stopping energy regen", true, 'Ravi');
 		ClearTimer('EnergyRegen');
-		SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');		
+		ClearTimer('StartEnergyRegen');
+		SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');
+		sneaktoslimpawn_ginsengbaby(self.Pawn).toggleDustParticle(true);
 	}
 
 	event EndState(Name NextStateName)
 	{
-		sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;		
+		sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(false, self.GetTeamNum());
+		sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;	
+		sneaktoslimpawn_ginsengbaby(self.Pawn).toggleDustParticle(false);
 		`log("Restarting energy regen", true, 'Ravi');
 		ClearTimer('UpdateEnergy');
 		SetTimer(2, false, 'StartEnergyRegen');
 	}
 
-	simulated function meshTranslation(int zValue)
-	{
-		myOffset.X = 0;//sneaktoslimpawn(self.Pawn).Location.X;
-		myOffset.Y = 0;//sneaktoslimpawn(self.Pawn).Location.Y;
-		myOffset.Z = zValue;
-		sneaktoslimpawn(self.Pawn).Mesh.SetTranslation(myOffset);
-	}
-
 Begin:
-	sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(-80, self.GetTeamNum());
+	sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(true, self.GetTeamNum());
 	sneaktoslimpawn(self.Pawn).bInvisibletoAI = true;
 	if(debugStates) logState();
 }
 
+
+/************************ BURST STATE **********************************/
 simulated state Burst
 {
-	local bool burstComplete;
-
 	simulated event BeginState(name prevState)
 	{
-		`log("burst charge time: " $ burstChargeTime, true, 'Ravi');
 		burstComplete = false;
 	}
 
@@ -180,18 +165,59 @@ simulated state Burst
 		}
 	}
 
+	simulated exec function OnPressSecondSkill()
+	{
+		if(burstComplete)
+		{					
+			//Player can't sprint if pause menu is on 
+			if(pauseMenuOn)
+				return;
+
+			SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+			resumeSprintTimer();
+
+			if(sneaktoslimpawn(self.Pawn).v_energy <= 20)
+				return;
+			else
+			{				
+				if(Role < ROLE_Authority)
+					attemptToChangeState('Burrow');
+				GoToState('Burrow');				
+			}
+		}
+	}
+
 Begin:	
 	if(debugStates) logState();	
-	myOffset.Z = -48;
-	sneaktoslimpawn(self.Pawn).Mesh.SetTranslation(myOffset);
+	sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(false, self.GetTeamNum());
 	ClearTimer('EnergyRegen');
-	SneaktoSlimPawn_GinsengBaby(self.Pawn).BabyBurst();
-	SetTimer(2, false, 'StartEnergyRegen');
-	burstComplete = true;
+	ClearTimer('StartEnergyRegen');
+
+	if( Role < Role_Authority )
+	{
+		ServerStartBurst(burstChargeTime);		
+		BurstTheBaby(burstChargeTime);
+	}
+
+	SetTimer(2, false, 'StartEnergyRegen');	
+}
+
+reliable server function ServerStartBurst(float chargeTime)
+{
+	BurstTheBaby(chargeTime);
+}
+
+simulated function BurstTheBaby(float chargeTime)
+{
+	if(!burstComplete)
+	{
+		SneaktoSlimPawn_GinsengBaby(Pawn).BabyBurst(chargeTime);
+		burstComplete = true;
+	}
 }
 
 defaultproperties
 {	
 	ENERGY_UPDATE_FREQUENCY = 0.2
-	myOffset = (X=0, Y=0, Z=-80)
+	energyConsumptionFactor = 1
 }

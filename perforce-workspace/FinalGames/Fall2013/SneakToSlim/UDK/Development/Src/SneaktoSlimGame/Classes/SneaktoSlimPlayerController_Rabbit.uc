@@ -64,6 +64,7 @@ simulated state Diving// extends CustomizedPlayerWalking
 	local vector hitNormal;
 	local TraceHitInfo hitDiveInfo;
 	local float distRabbittoTracehit;
+	//local vector jumpHeight;
 	simulated function Rabbit_Dive()
 	{
 		sneaktoslimpawn(self.Pawn).v_energy -= perDiveEnergy;
@@ -71,8 +72,8 @@ simulated state Diving// extends CustomizedPlayerWalking
 		endDive = Normal(vector(self.Pawn.Rotation)) * distanceDive + startDive;
 		Trace(hitLocation, hitNormal, endDive, startDive, false, , hitDiveInfo, );
 		distRabbittoTracehit = VSize(hitLocation - startDive);
-		//if(distRabbittoTracehit > distanceDive)
-		//{
+		if(distRabbittoTracehit > distanceDive)
+		{
 			//self.Pawn.Mesh.SetTranslation(myOffset);
 			//self.Pawn.Mesh.SetTranslation(endDive);
 		`log(vector(self.Pawn.Rotation));
@@ -85,19 +86,29 @@ simulated state Diving// extends CustomizedPlayerWalking
 			//myOffset.Z = -48;
 			//self.Pawn.Mesh.SetTranslation(myOffset);
 			//myOffset.Z = -80;
-		//}
-		//else
-		//{
+		}
+		else
+		{
 		//	self.Pawn.Mesh.SetTranslation(myOffset);
 		//	self.Pawn.SetLocation(hitLocation + myOffset);
 		//	myOffset.Z = -48;
 		//	self.Pawn.Mesh.SetTranslation(myOffset);
 		//	myOffset.Z = -80;
-		//}
+			Blink(hitLocation);
+		}
 	}
 Begin:
 	if(debugStates) logState();
+
+	sneaktoslimpawn(self.Pawn).stopAllTheLoopAnimation();
+	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customVanish', 'Vanish', 1.f, true, 0.1f, 0.1f, false, true);
+	sleep(0.8);
+
 	Rabbit_Dive();
+	//jumpHeight.X = 0;
+	//jumpHeight.Y = 0;
+	//jumpHeight.Z = 1;
+	//sneaktoslimpawn(self.Pawn).TakeDamage(0, none, self.Pawn.Location, jumpHeight * 1500, class 'DamageType');
 	attemptToChangeState('PlayerWalking');
 	GoToState('PlayerWalking');
 }

@@ -49,6 +49,14 @@ function bool setMapTexture()
 	local Texture2D icon;
 	local int mapIndex;
 
+	//Hides minimap for tutorial level
+	if(mapName == "tutorialsmall")
+	{
+		Map.SetBool("visible", false);
+		playerIcon.SetBool("visible", false);
+		return false;
+	}
+
 	if(mapTexture == NONE)
 	{
 		//Sets player icon image
@@ -234,7 +242,7 @@ function TickMap(float DeltaTime)
 				playerIcon.SetFloat("y", transformedY);
 			}
 		}
-		else
+		//else
 			//`log("Scaleform map conversions not set to this map");
 	}
 }

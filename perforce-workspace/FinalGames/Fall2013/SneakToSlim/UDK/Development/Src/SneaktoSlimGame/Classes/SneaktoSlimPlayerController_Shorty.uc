@@ -103,6 +103,7 @@ simulated state ChargingFireCracker
 		if(Role < ROLE_Authority)
 		{
 			ClearTimer('EnergyRegen');
+			ClearTimer('StartEnergyRegen');
 			SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');
 		}
 	}
@@ -162,12 +163,12 @@ Begin:
 /******************************* FIRECRACKER STATES END *****************************/
 
 
-/******************************* CHARGE STATES START *****************************/
-simulated state ChargingDash //extends CustomizedPlayerWalking
+/******************************* DASH STATES START *****************************/
+simulated state ChargingDash
 {
 	simulated function UpdateEnergy()
 	{
-		SneaktoSlimPawn(Pawn).v_energy -= ENERGY_UPDATE_FREQUENCY * SneaktoSlimPawn(Pawn).PerDashEnergy * 2;
+		SneaktoSlimPawn(Pawn).v_energy -= ENERGY_UPDATE_FREQUENCY * SneaktoSlimPawn_Shorty(Pawn).DASH_ENERGY_CONSUMPTION_RATE;
 		if(SneaktoSlimPawn(Pawn).v_energy < 0)
 		{
 			SneaktoSlimPawn(Pawn).v_energy = 0;
@@ -176,14 +177,14 @@ simulated state ChargingDash //extends CustomizedPlayerWalking
 	}
 
 	simulated event BeginState(Name LastStateName)
-	{
-		//`log("Starting Charge Dash");
+	{		
 		secondSkillUsed = false;
 		dashChargeTime = WorldInfo.TimeSeconds; //time when charging started		
 		Pawn.GroundSpeed = 0;
 		if(Role < ROLE_Authority)
 		{
 			ClearTimer('EnergyRegen');
+			ClearTimer('StartEnergyRegen');
 			SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');
 		}
 	}
@@ -200,7 +201,6 @@ simulated state ChargingDash //extends CustomizedPlayerWalking
 
 simulated state Dashing
 {
-	local float decelerationMultiplier;
 	local float dashStartTime;
 	local float cappedChargeTime;
 
@@ -209,7 +209,7 @@ simulated state Dashing
 		secondSkillUsed = true;
 		dashChargeTime = WorldInfo.TimeSeconds - dashChargeTime;
 		dashStartTime = WorldInfo.TimeSeconds;
-		cappedChargeTime = FMin(dashChargeTime/1.5, SneaktoSlimPawn_Shorty(Pawn).MAX_DASH_TIME);
+		cappedChargeTime = FMin(dashChargeTime * SneaktoSlimPawn_Shorty(Pawn).DASH_CHARGE_VS_MOVE_DURATION_FACTOR, SneaktoSlimPawn_Shorty(Pawn).MAX_DASH_TIME);
 	}
 
 	simulated function PlayerMove( float DeltaTime )
@@ -259,14 +259,13 @@ simulated state Dashing
 	}
 
 Begin:
-	//`log("Charge time: " $ dashChargeTime, true, 'Ravi');
 	
 	Pawn.GroundSpeed = SneaktoSlimPawn_Shorty(Pawn).SHORTY_DASH_SPEED;
 	Pawn.bForceMaxAccel = true;	
 	sleep(cappedChargeTime);	
 	GotoState('PlayerWalking');
 }
-/******************************* CHARGE STATES END *****************************/
+/******************************* DASH STATES END *****************************/
 
 simulated function StopDashing()
 {
@@ -284,6 +283,7 @@ reliable server function ServerGotoState(name state)
 reliable server function ServerStopEnergyRegen()
 {
 	ClearTimer('EnergyRegen');
+	ClearTimer('StartEnergyRegen');
 }
 
 reliable server function ServerStartThrow(float chargeTime, int locX, int locY, int locZ, float dirX, float dirY, float dirZ)

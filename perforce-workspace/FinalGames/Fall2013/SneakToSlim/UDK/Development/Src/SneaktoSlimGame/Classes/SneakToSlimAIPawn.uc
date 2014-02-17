@@ -119,7 +119,7 @@ DefaultProperties
 	DetectDistance = 1000.0
 	DetectReactionTime = 0.0
 	HoldTime = 1.0
-	MaxInvestigationDistance = 3000.0
+	MaxInvestigationDistance = 1000.0
 	bNoEncroachCheck = true     //Enables pawns to move even when overlapping	
 	lightRadius = 400
 	MaxChaseStamina = 100

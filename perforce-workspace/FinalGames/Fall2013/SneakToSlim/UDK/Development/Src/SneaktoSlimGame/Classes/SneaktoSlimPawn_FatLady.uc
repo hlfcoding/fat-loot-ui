@@ -1,15 +1,17 @@
 class SneaktoSlimPawn_FatLady extends SneaktoSlimPawn;
 
-//simulated event ReplicatedEvent(name VarName)
-//{
-//	if( VarName == 'isGotTreasure')
-//	{
-//		if(self.isGotTreasure == true)
-//		{
-//			
-//		}
-//	}
-//}
+simulated event PostBeginPlay()
+{
+	local SneakToSlimGuideController pc;
+
+    super.PostBeginPlay();
+
+	foreach WorldInfo.AllControllers(class 'SneakToSlimGuideController', pc)
+	{
+		pc.talkingTo = self;
+		pc.changeToTutorialState('HowToMove');	
+	}
+}
 
 event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 {	
@@ -87,10 +89,10 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 //REPLICATE IN OTHER PAWNS WITH ACCORDING LOGIC
 event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vector HitNormal)
 {
-	local SneaktoSlimSpawnPoint base;
-	base = SneaktoSlimSpawnPoint(Other);	
+	local SneaktoSlimSpawnPoint playerBase;
+	playerBase = SneaktoSlimSpawnPoint(Other);	
 
-	if(base != none)
+	if(playerBase != none)
 	{	
 		`log("Pawn touching SpawnPoint");
 		if (SneaktoSlimPlayerController(self.Controller).IsInState('HoldingTreasureExhausted'))
@@ -113,6 +115,7 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 
 DefaultProperties
 {
+	characterName = "FatLady";
 }
 
 

@@ -912,7 +912,55 @@ unreliable server function prepForQuit()
 		f.Destroy();
 	}
 }
+ 
+function GetTriggerUseList(float interactDistanceToCheck, float crosshairDist, float minDot, bool bUsuableOnly, out array<Trigger> out_useList)
+{
+    local int Idx;
+    local vector cameraLoc;
+    local rotator cameraRot;
+    local Trigger checkTrigger;
+    local SeqEvent_Used UseSeq;
+ 
+    if (Pawn != None)
+    {
+        // grab camera location/rotation for checking crosshairDist
+        GetPlayerViewPoint(cameraLoc, cameraRot); 
+        // search of nearby actors that have use events 
+        foreach Pawn.CollidingActors(class'Trigger',checkTrigger,interactDistanceToCheck) 
+        { 
+            for (Idx = 0; Idx < checkTrigger.GeneratedEvents.Length; Idx++)
+			{
+				UseSeq = SeqEvent_Used(checkTrigger.GeneratedEvents[Idx]);
 
+				if( ( UseSeq != None )
+					// if bUsuableOnly is true then we must get true back from CheckActivate (which tests various validity checks on the player and on the trigger's trigger count and retrigger conditions etc)
+					&& ( !bUsuableOnly || ( checkTrigger.GeneratedEvents[Idx].CheckActivate(checkTrigger,Pawn,true)) )
+					// check to see if we are looking at the object
+					&& ( Normal(checkTrigger.Location-cameraLoc) dot vector(cameraRot) >= minDot )
+
+					// if this is an aimToInteract then check to see if we are aiming at the object and we are inside the InteractDistance (NOTE: we need to do use a number close to 1.0 as the dot will give a number that is very close to 1.0 for aiming at the target)
+					&& ( ( ( UseSeq.bAimToInteract && IsAimingAt( checkTrigger, 0.98f ) && ( VSize(Pawn.Location - checkTrigger.Location) <= UseSeq.InteractDistance ) ) )
+					      // if we should NOT aim to interact then we need to be close to the trigger
+			  || ( !UseSeq.bAimToInteract && ( VSize(Pawn.Location - checkTrigger.Location) <= UseSeq.InteractDistance ) )  // this should be UseSeq.InteractDistance
+						  )
+				   )
+				{
+					out_useList[out_useList.Length] = checkTrigger;
+
+					// don't bother searching for more events
+					Idx = checkTrigger.GeneratedEvents.Length;
+				}
+			}
+
+			//If it's a usable actor and it hasn't already been added to the list, let's add it. 
+			if ((out_useList.Length == 0 || out_useList[out_useList.Length-1] != checkTrigger))
+			{
+				out_useList[out_useList.Length] = checkTrigger;
+			}
+        }
+    }
+}
+ 
 exec simulated function clientChangeState(name stateName)
 {
 	attemptToChangeState(stateName);
@@ -1037,41 +1085,44 @@ simulated state PlayerWalking
 	// when player input 'Left Shift'
 	simulated exec function FL_useBuff()
 	{
-		sneaktoslimpawn(self.Pawn).checkServerFLBuff(sneaktoslimpawn(self.Pawn).enumBuff.bBuffed, true);
-		
-		if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
+		if(sneaktoslimpawn(self.Pawn).mistNum == 0)
 		{
-			SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
+			sneaktoslimpawn(self.Pawn).checkServerFLBuff(sneaktoslimpawn(self.Pawn).enumBuff.bBuffed, true);
+		
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
+			{
+				SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
 
-			sneaktoslimpawn(self.Pawn).serverResetBBuffed();
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 
-			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-			sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used , kept for "countdown"  at this moment
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used , kept for "countdown"  at this moment
 
-			attemptToChangeState('InvisibleWalking');
-			GoToState('InvisibleWalking');
-		}
-		if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
-		{			
-			SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
+				attemptToChangeState('InvisibleWalking');
+				GoToState('InvisibleWalking');
+			}
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
+			{			
+				SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
 
-			sneaktoslimpawn(self.Pawn).serverResetBBuffed();
-			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-			sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
 
-			attemptToChangeState('DisguisedWalking');
-			GoToState('DisguisedWalking');
-		}
-		if(sneaktoslimpawn(self.Pawn).bBuffed == 3) 
-		{			
-			SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
+				attemptToChangeState('DisguisedWalking');
+				GoToState('DisguisedWalking');
+			}
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 3) 
+			{			
+				SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
 
-			sneaktoslimpawn(self.Pawn).serverResetBBuffed();
-			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-			sneaktoslimpawn(self.Pawn).bUsingBuffed[2] = 1;//should not be used 
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				sneaktoslimpawn(self.Pawn).bUsingBuffed[2] = 1;//should not be used 
 
-			attemptToChangeState('UsingThunderFan');
-			GoToState('UsingThunderFan');
+				attemptToChangeState('UsingThunderFan');
+				GoToState('UsingThunderFan');
+			}
 		}
 	}
 
@@ -1269,8 +1320,9 @@ simulated state EndInvisible
 	{
 		//if(!sneaktoslimpawn(self.Pawn).hiddenInVase)
 		//	sneaktoslimpawn(self.Pawn).SetHidden(false);
-		sneaktoslimpawn(self.Pawn).Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
-		sneaktoslimpawn(self.Pawn).simulatedDrawPlayerColor();
+		sneaktoslimpawn(self.Pawn).changeCharacterMaterial(sneaktoslimpawn(self.Pawn),self.GetTeamNum(),"Character");
+		//sneaktoslimpawn(self.Pawn).Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
+		//sneaktoslimpawn(self.Pawn).simulatedDrawPlayerColor();
 		sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;
 	}
 
@@ -1322,32 +1374,35 @@ simulated state Exhausted extends PlayerWalking
 
 	simulated exec function FL_useBuff()
 	{
-		//no "super" because we have to rewtire/ override!
-		sneaktoslimpawn(self.Pawn).checkServerFLBuff(sneaktoslimpawn(self.Pawn).enumBuff.bBuffed, true);
-		
-		if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
+		if(sneaktoslimpawn(self.Pawn).mistNum == 0)
 		{
-			SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
+		//no "super" because we have to rewtire/ override!
+			sneaktoslimpawn(self.Pawn).checkServerFLBuff(sneaktoslimpawn(self.Pawn).enumBuff.bBuffed, true);
+		
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
+			{
+				SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
 
-			sneaktoslimpawn(self.Pawn).bBuffed= 0;
-			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-			sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used 
+				sneaktoslimpawn(self.Pawn).bBuffed= 0;
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used 
 
-			attemptToChangeState('InvisibleExhausted');
-			GoToState('InvisibleExhausted');
-		}
-		if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
-		{			
-			SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
+				attemptToChangeState('InvisibleExhausted');
+				GoToState('InvisibleExhausted');
+			}
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
+			{			
+				SneaktoSlimPawn(self.Pawn).totalTimesPowerupsUsed++;
 
-			sneaktoslimpawn(self.Pawn).bBuffed = 0;
+				sneaktoslimpawn(self.Pawn).bBuffed = 0;
 
-			//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-			sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
 
-			attemptToChangeState('DisguisedExhausted');
-			GoToState('DisguisedExhausted');
+				attemptToChangeState('DisguisedExhausted');
+				GoToState('DisguisedExhausted');
 
+			}
 		}
 	}
 
@@ -1703,7 +1758,7 @@ simulated function ExhaustedCheck()
 		if(sneaktoslimpawn(self.Pawn).v_energy >= 20.0)
 			GoToState('PlayerWalking');
 	}
-	else if (self.IsInState('PlayerWalking') && !self.IsInState('Sprinting'))
+	else if (self.IsInState('PlayerWalking') && !self.IsInState('Sprinting') && !self.IsInState('Burrow'))
 	{
 		if(sneaktoslimpawn(self.Pawn).v_energy < 20.0)
 			GoToState('Exhausted');

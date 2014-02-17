@@ -23,7 +23,7 @@ function setDestinationNode()
 	super.Touch(other, otherComp, hitLoc, hitNormal);
 }*/
 
-function bool UsedBy(Pawn User)
+simulated function bool UsedBy(Pawn User)
 {
 	//Spawn(class 'soundSphere',,,self.Location);
     super.UsedBy(User);

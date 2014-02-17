@@ -409,8 +409,6 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	local int SupposeTeam;
 	local bool IsSpectator;
 
-	local string fuckyou;
-
 	SupposeTeam=FindTheFirstEmptyTeam();
 	if(SupposeTeam==-1)
 	{
@@ -611,7 +609,9 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 event PostBeginPlay()
 {
 	local SneaktoSlimTreasure tmpTreasureBox;
-	TreasureInit();
+	if(Role == Role_Authority){
+	    TreasureInit();
+	}
 	ClothInit();
 	foreach AllActors(class 'SneaktoSlimTreasure',tmpTreasureBox)
 	{

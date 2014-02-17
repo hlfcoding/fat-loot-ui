@@ -69,8 +69,8 @@ simulated function ChangeBuff(int type){
 //function bool UsedBy(Pawn User)
 simulated function bool UsedBy(Pawn User)
 {
-	local bool used;
-	used = super.UsedBy(User);
+	//local bool used;
+	//used = super.UsedBy(User);
 
 		//Only use power if user is currently not using a power
 	     if(BuffType !=0){

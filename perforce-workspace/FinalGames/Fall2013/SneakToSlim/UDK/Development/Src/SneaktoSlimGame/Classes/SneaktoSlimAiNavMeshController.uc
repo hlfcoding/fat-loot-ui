@@ -91,14 +91,18 @@ state Patrol
 	pawnWantsToMove = true;
 	SneakToSlimAIPawn(Pawn).aiState = "Patrol";	
 	performPatrolChecks();	
-	setMoveTarget();	
+	setMoveTarget();
+	currentDestinationActor = Spawn(class'SneakToSlimDestination',,,MoveTarget.Location,,,);
+
 	
 	if(MoveTarget == none)
 	{
-		`log(Pawn.Name $ ": Cannot find any pathnode that is directly reachable!", true, 'Ravi');
+		`log(Pawn.Name $ ": Cannot find any pathnode that is reachable!", true, 'Ravi');
 		GotoState('Idle');
 	}
 	moveDestination = MoveTarget.Location;
+	Sleep(RotateTowardsLocation(MoveTarget.Location));
+	//MoveToward(MoveTarget, MoveTarget);
 	PushState('MoveToLocation');	
 
 	//After reaching destination
@@ -129,6 +133,8 @@ state Patrol
 		rotateTowardsMoveDirection = true;
 	}
 
+	currentDestinationActor.Destroy(); //after destination has been reached, we don't need this actor anymore	
+
 
 	goto 'Begin';
 }
@@ -146,6 +152,8 @@ Begin:
 	if(visiblePlayers.Length > 0)
 	{			
 		MoveTarget = chaseTarget;
+		currentDestinationActor = Spawn(class'SneakToSlimDestination',,,chaseTarget.Location,,,);
+
 		//if AI is close enough to player, player is caught
 		if((VSize(chaseTarget.Location - Pawn.Location) < SneakToSlimAIPawn(Pawn).CatchDistance))
 		{
@@ -178,11 +186,14 @@ Begin:
 		{
 			if( isWithinLineOfSight(MoveTarget)) 
 			{
-				//MoveToward(MoveTarget, MoveTarget);
-				PushState('MoveToLocation');
+				Sleep(RotateTowardsLocation(MoveTarget.Location));
+				MoveToward(MoveTarget, MoveTarget);
+				//PushState('MoveToLocation');
 			}
 			else
 			{
+				Sleep(RotateTowardsLocation(MoveTarget.Location));
+				//MoveToward(MoveTarget, MoveTarget);
 				PushState('MoveToLocation');
 			}
 		}
@@ -192,6 +203,7 @@ Begin:
 End:	
 	chaseTarget = none;
 	isCatching = false;
+	currentDestinationActor.Destroy(); //after destination has been reached, we don't need this actor anymore	
 	setStateVariables("Patrol");
 	alreadyStartled = 0;
 	GoToState('Patrol');
@@ -226,7 +238,6 @@ Begin:
 	SneakToSlimAIPawn(Pawn).aiState = "Investigate";
 	pawnWantsToMove = false;
 	Pawn.GroundSpeed = 0;
-	Sleep(SneakToSlimAIPawn(Pawn).DetectReactionTime);
 	pawnWantsToMove = true;
 	rotateTowardsMoveDirection = true;
 
@@ -235,17 +246,18 @@ Begin:
 	currentDestinationActor = Spawn(class'SneakToSlimDestination',,,investigationLocation,,,);
 	MoveTarget = currentDestinationActor;
 	
-	if(isWithinLineOfSight(MoveTarget))
+	if(isWithinLineOfSight(currentDestinationActor))
 	{
-		Sleep(RotateTowardsLocation(MoveTarget.Location));
-		MoveToward(MoveTarget, MoveTarget);
+		MoveToward(currentDestinationActor, currentDestinationActor);
+		//PushState('MoveToLocation');
 	}
-	else if( FindNavMeshPath(MoveTarget.Location) )
+	else if( FindNavMeshPath(currentDestinationActor.Location) )
 	{	
 		if(NavigationHandle.CalculatePathDistance() < SneakToSlimAIPawn(Pawn).MaxInvestigationDistance)
 		{
-			`log(Pawn.Name $ ": Investigating location: " $ MoveTarget.Location, true, 'Ravi');
+			`log(Pawn.Name $ ": Investigating location: " $ currentDestinationActor.Location, true, 'Ravi');
 			PushState('MoveToLocation');
+			//MoveToward(MoveTarget, MoveTarget);
 		}
 		else //too far away. 
 		{
@@ -284,16 +296,17 @@ state MoveToLocation
 	local Vector tempDestination;
 Begin:
 	pawnWantsToMove = true;
-	NavigationHandle.SetFinalDestination(MoveTarget.Location);
+	NavigationHandle.SetFinalDestination(currentDestinationActor.Location);
 		
-	if( !isWithinLineOfSight(MoveTarget) ) 
+	if( !isWithinLineOfSight(currentDestinationActor) ) 
 	{
-		if( !FindNavMeshPath(MoveTarget.Location) ) //calculate path
+		if( !FindNavMeshPath(currentDestinationActor.Location) ) //calculate path
 		{	
-			`log(Pawn.Name $ ": Could not find a path to " $ MoveTarget.Name, true, 'Ravi');
+			`log(Pawn.Name $ ": Could not find a path to " $ currentDestinationActor.Name, true, 'Ravi');
 			if(SneakToSlimAIPawn(Pawn).aiState == "Follow")
 			{
-				MoveToward(MoveTarget, MoveTarget);
+				PushState('MoveToLocation');
+				//MoveToward(MoveTarget, MoveTarget);
 			}
 			else
 			{
@@ -306,7 +319,6 @@ Begin:
 			if(rotateTowardsMoveDirection)
 			{
 				NavigationHandle.GetNextMoveLocation(aiNextMoveLocation, 0);
-				Sleep(RotateTowardsLocation(aiNextMoveLocation));
 				rotateTowardsMoveDirection = false; //rotate only first time the path is found
 			}
 			//FlushPersistentDebugLines();
@@ -317,34 +329,38 @@ Begin:
 	{	
         if(rotateTowardsMoveDirection)
 		{
-			Sleep(RotateTowardsLocation(MoveTarget.Location));
-			rotateTowardsMoveDirection = false; //rotate only first time the path is found
+			pawnWantsToMove = false;
+			Sleep(RotateTowardsLocation(currentDestinationActor.Location));
+			pawnWantsToMove = true;
+			//rotateTowardsMoveDirection = false; //rotate only first time the path is found
 		}		
-		MoveToward(MoveTarget, MoveTarget);
+		MoveToward(currentDestinationActor, currentDestinationActor);
+		//PushState('MoveToLocation');
 	}
 
 	navmeshIteration=0;
 	//Move towards destination using calculated path
-	while( MoveTarget != None && !Pawn.ReachedDestination(MoveTarget) )
+	while( currentDestinationActor != None && !Pawn.ReachedDestination(currentDestinationActor) )
 	{	
 		if( NavigationHandle.GetNextMoveLocation(tempDestination, Pawn.GetCollisionRadius()) )
 		{			
 			if (!NavigationHandle.SuggestMovePreparation(tempDestination,self))
 			{
-				sleep(RotateTowardsLocation(tempDestination));
+				//PushState('MoveToLocation');
 				MoveTo(tempDestination);
 			}
 		}
 
-		if( MoveTarget!= none && isWithinLineOfSight(MoveTarget) ) //destination is reachable directly
+		if( currentDestinationActor!= none && isWithinLineOfSight(currentDestinationActor) ) //destination is reachable directly
 		{
-			MoveToward(MoveTarget, MoveTarget);			
+			MoveToward(currentDestinationActor, currentDestinationActor);
+			//PushState('MoveToLocation');
 			break; //get out of loop
 		}
 		navmeshIteration++;
 		if(navmeshIteration > NAVMESH_MAX_ITERATIONS)
 		{
-			`log(Pawn.Name $ ": Reached max navmesh iteration limit trying to reach " $ MoveTarget.Name, true, 'Ravi');
+			`log(Pawn.Name $ ": Reached max navmesh iteration limit trying to reach " $ currentDestinationActor.Name, true, 'Ravi');
 			break; //stop searching for path
 		}
 	}
@@ -404,6 +420,7 @@ function setStateVariables(string state)
 	else if(state == "Investigate")
 	{		
 		Pawn.GroundSpeed = SneakToSlimAIPawn(Pawn).ChaseSpeed;
+
 	}
 }
 
@@ -650,7 +667,7 @@ function setMoveTarget()
 					) //has to be a PathNode not higher than pawn .. valid in DemoDay level. Will have to change if level has platforms at different heights
 					continue;
 				
-				if (isWithinLineOfSight(possibleDestination))
+				if (isWithinLineOfSight(possibleDestination) || FindNavMeshPath(possibleDestination.Location))
 				{					
 					reachablePathnodes.AddItem(possibleDestination);
 				}
