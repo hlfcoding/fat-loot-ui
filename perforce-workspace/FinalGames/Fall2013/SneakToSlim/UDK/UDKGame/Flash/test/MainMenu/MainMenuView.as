@@ -98,6 +98,20 @@
             return view;
         }
 
+        // UDK endpoints.
+
+        public function set games(games:Array):void {
+            GameModel.games = games;
+        }
+
+        public function set characters(characters:Array):void {
+            GameModel.characters = characters;
+        }
+
+        public function set levels(levels:Array):void {
+            GameModel.levels = levels;
+        }
+
     }
 
 }
