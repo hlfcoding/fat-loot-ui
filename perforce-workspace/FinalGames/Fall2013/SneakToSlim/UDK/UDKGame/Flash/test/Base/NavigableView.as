@@ -44,13 +44,30 @@ package {
         }
         public function teardownView(view:MovieClip):void {}
 
-        public function get currentView():MovieClip { return _navigationStack[_navigationStack.length - 1]; }
-        public function get previousView():MovieClip { return _navigationStack[_navigationStack.length - 2]; }
+        public function get currentView():MovieClip {
+            if (!_navigationStack.length) {
+                return undefined;
+            }
+            return _navigationStack[_navigationStack.length - 1];
+        }
+        public function get previousView():MovieClip {
+            if (_navigationStack.length <= 1) {
+                return undefined;
+            }
+            return _navigationStack[_navigationStack.length - 2];
+        }
 
-        public function get rootView():MovieClip { return _navigationStack[0]; }
+        public function get rootView():MovieClip {
+            if (!_navigationStack.length) {
+                return undefined;
+            }
+            return _navigationStack[0];
+        }
         public function set rootView(value:MovieClip):void {
-            _navigationStack[0] = value;
-            navigate(value);
+            if (navigateToRoot()) {
+                _navigationStack[0] = value;
+                navigate(value);
+            }
         }
 
         public function handleNavigationRequest(sender:Object):void {}
@@ -61,6 +78,9 @@ package {
             }
             if (transition == null) {
                 transition = defaultTransition;
+            }
+            if (toView == null) {
+                return false;
             }
             // Update stack and buttons.
             var toViewIndex:int = _navigationStack.indexOf(toView);
@@ -87,14 +107,22 @@ package {
                 fromView.viewDidDisappear();
                 removeChild(fromView);
             }
-            addChild(view);
+            addChild(toView);
             toView.viewWillAppear();
             transitionIn(toView, transition);
             toView.viewDidAppear();
             return true;
         }
-        public function navigateBack(sender:Object):Boolean {
+        public function navigateBack(sender:Object=null):Boolean {
             return navigate(previousView);
+        }
+        public function navigateToRoot(sender:Object=null):Boolean {
+            while (_navigationStack.length) {
+                if (!navigateBack(sender)) {
+                    return false;
+                }
+            }
+            return true;
         }
         protected function transitionIn(view:MovieClip, transition:String):void {
             view.visible = true;

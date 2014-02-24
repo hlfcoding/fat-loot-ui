@@ -37,58 +37,67 @@
         }
 
         override public function handleNavigationRequest(sender:Object):void {
-            if (!(sender is Event)) {
+            var toViewName:String;
+            var isRestoreRequest:Boolean = false;
+            // Handle natural navigation:
+            if (sender is Event) {
+                switch (sender.target) {
+                    // From root menu.
+                    case rootMenuView.networkedGameButton:
+                        toViewName = 'hostOrJoinGameView';
+                        break;
+                    case rootMenuView.tutorialButton:   Utility.sendCommand('playTutorialInUdk'); break;
+                    case rootMenuView.creditButton:     Utility.sendCommand('showCreditInUdk'); break;
+                    case rootMenuView.quitButton:       Utility.sendCommand('quitGameInUdk'); break;
+                    // From host-or-join view.
+                    case hostOrJoinGameView.joinButton:
+                        toViewName = 'joinGameView';
+                        var selectedModel:Object = hostOrJoinGameView.gameTableView.selectedModel;
+                        gameModel.level = GameModel.getLevelById(selectedModel.level);
+                        gameModel.location = selectedModel.location;
+                        break;
+                    case hostOrJoinGameView.hostButton:
+                        toViewName = 'hostGameView';
+                        break;
+                    // From host view.
+                    case hostGameView.hostButton:
+                        toViewName = 'joinGameView';
+                        gameModel.level = hostGameView.levelSelectView.selectedModel;
+                        Utility.sendCommand('hostGameInUdk', gameModel.location);
+                        break;
+                    // From join view.
+                    case joinGameView.joinButton:
+                        gameModel.level = joinGameView.levelPreview.model;
+                        Utility.sendCommand('joinGameInUdk', gameModel.location);
+                        break;
+                    default: break;
+                }
+            // Handle restores.
+            } else if (sender is String) {
+                isRestoreRequest = true;
+                toViewName = sender as String;
+            }
+            if (toViewName == null) {
                 return;
             }
-            switch (sender.target) {
-                case rootMenuView.networkedGameButton:
-
-                    load('HostOrJoinGameView', 'hostOrJoinGameView');
-                    navigate(hostOrJoinGameView);
-
-                break; case rootMenuView.tutorialButton:
-
-                    Utility.sendCommand('playTutorialInUdk');
-
-                break; case rootMenuView.creditButton:
-
-                    Utility.sendCommand('showCreditInUdk');
-
-                break; case rootMenuView.quitButton:
-
-                    Utility.sendCommand('quitGameInUdk');
-
-                break; case hostOrJoinGameView.joinButton:
-
-                    var selectedModel:Object = hostOrJoinGameView.gameTableView.selectedModel;
-                    gameModel.level = GameModel.getLevelById(selectedModel.level);
-                    gameModel.location = selectedModel.location;
-
-                    load('JoinGameView', 'joinGameView');
+            var toViewClassName:String = toViewName.substr(0, 1).toUpperCase().concat(toViewName.substr(1));
+            // Load and store view.
+            load(toViewClassName, toViewName);
+            // Setup view as needed.
+            switch (toViewName) {
+                case 'joinGameView':
                     joinGameView.levelPreview.model = gameModel.level;
-                    navigate(joinGameView);
-
-                break; case hostOrJoinGameView.hostButton:
-
-                    load('HostGameView', 'hostGameView');
+                    break;
+                case 'hostGameView':
                     hostGameView.gameModel = gameModel;
-                    navigate(hostGameView);
-
-                break; case hostGameView.hostButton:
-
-                    gameModel.level = hostGameView.levelSelectView.selectedModel;
-                    Utility.sendCommand('hostGameInUdk', gameModel.location);
-
-                    load('JoinGameView', 'joinGameView');
-                    joinGameView.levelPreview.model = gameModel.level;
-                    navigate(joinGameView);
-
-                break; case joinGameView.joinButton:
-
-                    gameModel.level = joinGameView.levelPreview.model;
-                    Utility.sendCommand('joinGameInUdk', gameModel.location);
-
-                break; default: break;
+                    break;
+                default: break;
+            }
+            // Navigate.
+            if (isRestoreRequest) {
+                this.rootView = this[toViewName];
+            } else {
+                navigate(this[toViewName]);
             }
         }
 
@@ -117,6 +126,11 @@
         }
         public function set gameModel(value:GameModel):void {
             _gameModel = value as GameModel;
+        }
+
+        public function restore(toViewName:String, toGameModel:Object):void {
+            gameModel = toGameModel as GameModel;
+            handleNavigationRequest(toViewName);
         }
 
     }
