@@ -17,7 +17,7 @@
         public var hostGameView:HostGameView;
         public var joinGameView:JoinGameView;
 
-        protected var gameModel:GameModel; // TODO: Sync all changes to shared game model.
+        protected var _gameModel:GameModel; // TODO: Sync all changes to shared game model.
 
         public function MainMenuView() {
             super();
@@ -110,6 +110,13 @@
 
         public function set levels(levels:Array):void {
             GameModel.levels = levels;
+        }
+
+        public function get gameModel():GameModel {
+            return _gameModel;
+        }
+        public function set gameModel(value:GameModel):void {
+            _gameModel = value as GameModel;
         }
 
     }
