@@ -17,10 +17,13 @@ package {
         public var selectMenu:TileList; // TODO: Support focusing.
         public var selectPreview:PreviewView;
 
+        public var hasBackgroundImage:Boolean;
+
         protected var _selectedModel:Object;
 
         public function SelectView() {
             super();
+            hasBackgroundImage = false;
             collection = DataProvider(selectMenu.dataProvider);
             collection.itemRendererName = 'SelectItemRenderer';
             selectMenu.rowHeight = selectMenu.height;
@@ -43,6 +46,12 @@ package {
         }
 
         public function set source(source:Array):void {
+            if (hasBackgroundImage) {
+                // Makeshift way of passing this through.
+                for each (var data:Object in source) {
+                    data.hasBackgroundImage = hasBackgroundImage;
+                }
+            }
             collection.setSource(source);
             selectMenu.columnWidth = selectMenu.width / collection.length;
             selectMenu.selectedIndex = 0;

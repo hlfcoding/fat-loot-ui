@@ -14,6 +14,7 @@
         public function CharacterSelectView() {
             super()
             // Configure.
+            hasBackgroundImage = true;
             skillSelectView.selectMenu.labelFunction =
             selectMenu.labelFunction = function(item:Object):String {
                 var model:Object = item;

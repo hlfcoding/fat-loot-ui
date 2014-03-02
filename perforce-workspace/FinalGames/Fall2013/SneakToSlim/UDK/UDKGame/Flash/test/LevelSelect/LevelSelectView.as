@@ -11,6 +11,7 @@
         public function LevelSelectView() {
             super()
             // Configure.
+            hasBackgroundImage = true;
             selectMenu.labelFunction = function(item:Object):String {
                 var model:Object = item;
                 return model.name;
