@@ -13,7 +13,7 @@
 
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
-        public var hostOrJoinGameView:HostOrJoinGameView;
+        public var hostOrJoinGameView:HostOrJoinGameView; // Also known as Lobby.
         public var hostGameView:HostGameView;
         public var joinGameView:JoinGameView;
 
@@ -37,6 +37,7 @@
         }
 
         override public function handleNavigationRequest(sender:Object):void {
+            var commandName:String;
             var toViewName:String;
             var isRestoreRequest:Boolean = false;
             // Handle natural navigation:
@@ -45,6 +46,7 @@
                     // From root menu.
                     case rootMenuView.networkedGameButton:
                         toViewName = 'hostOrJoinGameView';
+                        Utility.sendCommand('lobbyScreen');
                         break;
                     case rootMenuView.tutorialButton:   Utility.sendCommand('playTutorialInUdk'); break;
                     case rootMenuView.creditButton:     Utility.sendCommand('showCreditInUdk'); break;
@@ -55,20 +57,26 @@
                         var selectedModel:Object = hostOrJoinGameView.gameTableView.selectedModel;
                         gameModel.level = GameModel.getLevelById(selectedModel.level);
                         gameModel.location = selectedModel.location;
+                        Utility.sendCommand('joinGameScreen');
                         break;
                     case hostOrJoinGameView.hostButton:
                         toViewName = 'hostGameView';
+                        Utility.sendCommand('hostGameScreen');
                         break;
                     // From host view.
                     case hostGameView.hostButton:
                         toViewName = 'joinGameView';
                         gameModel.level = hostGameView.levelSelectView.selectedModel;
                         Utility.sendCommand('hostGameInUdk', gameModel.location);
+                        Utility.sendCommand('joinGameScreen_Host');
                         break;
                     // From join view.
                     case joinGameView.joinButton:
                         gameModel.level = joinGameView.levelPreview.model;
-                        Utility.sendCommand('joinGameInUdk', gameModel.location);
+                        commandName = 'joinGameInUdk'.concat(
+                            (previousView is HostGameView) ? '_Host' : '_NonHost'
+                        );
+                        Utility.sendCommand(commandName, gameModel.location);
                         break;
                     default: break;
                 }
@@ -105,6 +113,30 @@
             var view:MovieClip = super.load(className, propertyName);
             view['gameModel'] = gameModel;
             return view;
+        }
+
+        override public function navigateBack(sender:Object=null):Boolean {
+            var didNavigate:Boolean = super.navigateBack(sender);
+            if (didNavigate && sender is Event) {
+                var commandName:String = 'backTo';
+                switch (sender.target) {
+                    case hostOrJoinGameView.backButton:
+                        commandName += 'RootMenu';
+                        break;
+                    case hostGameView.backButton:
+                        commandName += 'Lobby_Host';
+                        break;
+                    case joinGameView.backButton:
+                        commandName += (currentView is HostGameView) ?
+                            'HostGame_Host' : 'Lobby_NonHost';
+                        break;
+                    default: break;
+                }
+                if (commandName != 'backTo') {
+                    Utility.sendCommand(commandName);
+                }
+            }
+            return didNavigate;
         }
 
         // UDK endpoints.
