@@ -31,7 +31,7 @@ simulated function SneaktoSlimTreasure SpawnTreasure()
 {
 	`log("Spawn Index~~~~~~~~~~~~~~~~~~~~~~~~~~"@BoxIndex);
 	MyTreasure = spawn(class'SneaktoSlimTreasure',,,self.Location);
-	//MyTreasure.ShutDown();
+	MyTreasure.ShutDown();
 	MyTreasure.SetHidden(true);
 	isHaveTreasure = true;
     ParticalEffect.SetActive(true);
@@ -39,15 +39,14 @@ simulated function SneaktoSlimTreasure SpawnTreasure()
 	ChestLight.SetLightProperties(5.f);
 	ChestLight.SetEnabled(true);
 	PromtText = "Press E to Get the treasure";
+	PromtTextXbox = "Press A to Get the treasure";
 	return MyTreasure;
 }
 
 
 
-simulated function SetTreasureFlag(bool flag){
-	`log("Change Flag~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@isHaveTreasure);
+reliable server function SetTreasureFlag(bool flag){
 	isHaveTreasure = flag;
-    `log("Change Flag~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@isHaveTreasure);
 }
 
 simulated event ReplicatedEvent(name VarName){
@@ -73,12 +72,14 @@ simulated function SetParticalEffectActive(bool flag){
 		ChestLight.SetEnabled(true);
 		myEmissiveLightCube.SetMaterial(0,EmissiveMaterialOn);
 		PromtText = "Press E to Get the treasure";
+		PromtTextXbox = "Press 'A' to Get the treasure";
 	 } else
 	 {
 		ChestLight.SetLightProperties(0.f);
 		ChestLight.SetEnabled(false);
 		myEmissiveLightCube.SetMaterial(0,EmissiveMaterialOff);
 		PromtText = "";
+		PromtTextXbox = "";
 	 }
 }
 
@@ -90,10 +91,11 @@ simulated function bool UsedBy(Pawn User)
 	
     if(isHaveTreasure == true)
     {
+		`log("GetTreasure!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		MyTreasure.giveTreasure(SneaktoSlimPawn(User),self);
-		MyTreasure = none;
-		SetTreasureFlag(false);
-		`log("???????????????????????Treasure!!!!!!!!!!!!!!!!!!!!!"@isHaveTreasure);
+		if(role == role_authority){
+		    isHaveTreasure=false;
+		}
 	}
 	return true;
 }
@@ -163,6 +165,7 @@ DefaultProperties
 
     isHaveTreasure = false;
 	PromtText = "";
+	PromtTextXbox = ""
  
 	bNoDelete=false// if this is set to true we can never spawn it using spawn point
 	RemoteRole=ROLE_AutonomousProxy

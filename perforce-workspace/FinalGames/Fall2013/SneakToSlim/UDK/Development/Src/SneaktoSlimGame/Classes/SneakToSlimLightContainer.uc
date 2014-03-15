@@ -76,6 +76,7 @@ DefaultProperties
 {
 	displayName = "switch";
 	PromtText = "Press E to toggle light";
+	PromtTextXbox = "Press 'A' to toggle light";
 	eqGottenText = ""
 
 	Begin Object Class=SkeletalMeshComponent Name=LightContainerSkeletalMesh

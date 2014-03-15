@@ -1,4 +1,6 @@
-class SneaktoSlimPlayerController_Menu extends GamePlayerController;
+class SneaktoSlimPlayerController_Menu extends GamePlayerController
+	DLLBind(DllTest);
+
 
 var string characterName;
 var string mapName;
@@ -12,25 +14,13 @@ var int timeLimit;
 var int scoreLimit;
 var int playerNumLimit;
 
-exec function selectMapInUdk(string inputString)
-{
-	if(inputString != "Null")
-		mapName = inputString;
-}
+dllimport final function runWindowsCommand(out string s);
 
-exec function selectClientorServerInUdk(string inputString)
-{
-	if(inputString != "Null")
-		gameMode = inputString;
-
-	//`log("open " $mapName$"?"$"Character="$characterName);
-	
-	if(gameMode == "Server")
-		ConsoleCommand("open server " $mapName$" -log");
-	else if(gameMode == "Client")
-		ConsoleCommand("open 127.0.0.1"$"?"$"Character="$characterName);
-}
-
+//exec function selectMapInUdk(string inputString)
+//{
+//	if(inputString != "Null")
+//		mapName = inputString;
+//}
 //Menu One//
 //start tutorial
 exec function startTutorialLevel()
@@ -67,10 +57,23 @@ exec function joinRoom()
 }
 
 //Menu Three
-exec function selectMap(string inMapName)
+exec function selectGameMapInUDK(string inMapName)
 {
 	`log("selectMap");
-	mapName = inMapName;
+
+	gameMode = "Server";
+
+	if(inMapName == "Mansion")
+		mapName = "DemoDay";
+	else if(inMapName == "Mist")
+		mapName = "FLMist";
+	else if(inMapName == "Temple")
+		mapName = "FLTempleMap";
+	else if(inMapName == "Pit")
+		mapName = "DemoDay";
+	else
+		mapName = inMapName;
+
 }
 
 exec function selectTimeLimit(int inTimeLimit)
@@ -93,17 +96,54 @@ exec function selectScoremLimit(int inScoreLimit)
 
 exec function createRoom()
 {
-	`log("createRoom");
+	local string urlAddress;
+	
 	//public self ip address, player number, map
 	//ConsoleCommand("open "$"map"$"?"$"Character="$characterName);
+
+	urlAddress = "start ..\\udk.exe server "$mapName$" -log";
+
+	`log(urlAddress);
+
+	runWindowsCommand(urlAddress);
 }
 
 //menu 4
 exec function selectCharacterInUdk(string inCharacterName)
 {
-	`log("selectCharacterInUdk ");
+	`log("selectCharacterInUdk "$inCharacterName);
 	characterName = inCharacterName;
 	//change character's model
+}
+
+exec function playTutorialInUdk()
+{
+	ConsoleCommand("open TutorialSmall?Character=FatLady");
+}
+
+
+exec function joinGameInUdk(string inIpAddress)
+{
+
+	local string urlAddress;
+	local string windowsCmd;
+
+	//public self ip address, player number, map
+	//ConsoleCommand("open "$"map"$"?"$"Character="$characterName);
+
+	`log("open 127.0.0.1"$"?Character="$characterName$" -log");
+
+	if(gameMode == "Client")
+	{
+		`log("wyliya");
+		ConsoleCommand("open 127.0.0.1"$"?Character="$characterName);
+	}
+	else if(gameMode == "Server")
+	{
+		createRoom();
+		ConsoleCommand("open 127.0.0.1"$"?Character="$characterName);
+	}
+
 }
 
 exec function readyButton()
@@ -112,14 +152,11 @@ exec function readyButton()
 	//boardcast ready status
 }
 
-
-
-
 DefaultProperties
 {
 	characterName = "FatLady"
-	mapName = "DemoDay"
-	gameMode = "Server"
+	mapName = "Null"
+	gameMode = "Client"
 
 
 	targetIPAddress = "127.0.0.1";

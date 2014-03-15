@@ -6,6 +6,40 @@ var float roarTime;
 var int perDiveEnergy;
 var float distanceDive;
 var vector myOffset;
+var float TELEPORT_DURATION;
+var bool RoarLinesIsOn;
+
+exec function toggleRoarLines()
+{
+	if (RoarLinesIsOn == false)
+	{
+		SetTimer(0.01, true, 'showRoarLines');
+		RoarLinesIsOn = true;
+	}
+	else
+	{
+		clearTimer('showRoarLines');
+		RoarLinesIsOn = false;
+	}
+}
+
+simulated function showRoarLines()
+{
+	local Vector selfLocation;
+	local Rotator selfRotation, selfRotationL, selfRotationR;
+
+	selfLocation = SneaktoSlimPawn(self.Pawn).Location;
+	selfRotation = SneaktoSlimPawn(self.Pawn).Rotation;
+	selfRotationL = selfRotation;
+	selfRotationL.Yaw -= DegToUnrRot*15;
+	
+	selfRotationR = selfRotation;
+	selfRotationR.Yaw += DegToUnrRot*15;
+
+
+	DrawDebugLine(selfLocation, selfLocation + (300 * Vector(selfRotationL)), 0, 80, 200, false);
+	DrawDebugLine(selfLocation, selfLocation + (300 * Vector(selfRotationR)), 0, 80, 200, false);
+}
 
 exec function showFatLootClassName()
 {
@@ -32,6 +66,7 @@ simulated state PlayerWalking
 			return;
 		else
 		{
+			SneaktoSlimPawn(self.Pawn).incrementBumpCount();
 			attemptToChangeState('Roaring');
 			GoToState('Roaring');
 		}
@@ -46,8 +81,9 @@ simulated state PlayerWalking
 			return;
 		else
 		{
-			attemptToChangeState('Diving');
-			GoToState('Diving');
+			SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+			attemptToChangeState('Teleport');
+			GoToState('Teleport');
 		}
 	}
 
@@ -56,76 +92,131 @@ Begin:
 	if(debugStates) logState();
 }
 
-simulated state Diving// extends CustomizedPlayerWalking
+simulated state Teleport
 {
-	local vector endDive;
-	local vector startDive;
-	local vector hitLocation;
-	local vector hitNormal;
-	local TraceHitInfo hitDiveInfo;
-	local float distRabbittoTracehit;
-	//local vector jumpHeight;
-	simulated function Rabbit_Dive()
+	local Name walkingOrHoldingTreasure;
+	
+	event BeginState (Name LastStateName)
 	{
+		if(sneaktoslimpawn(self.Pawn).v_energy <= perDiveEnergy)
+			return;
+
 		sneaktoslimpawn(self.Pawn).v_energy -= perDiveEnergy;
-		startDive = self.Pawn.Location;
-		endDive = Normal(vector(self.Pawn.Rotation)) * distanceDive + startDive;
-		Trace(hitLocation, hitNormal, endDive, startDive, false, , hitDiveInfo, );
-		distRabbittoTracehit = VSize(hitLocation - startDive);
-		if(distRabbittoTracehit > distanceDive)
+		walkingOrHoldingTreasure = LastStateName;
+		SwitchToCamera('Fixed');
+		Pawn.GroundSpeed = SneaktoSlimPawn_Rabbit(Pawn).TELEPORT_SPEED;
+		Pawn.bForceMaxAccel = true;	
+		SneaktoSlimPawn_Rabbit(Pawn).AccelRate = SneaktoSlimPawn_Rabbit(Pawn).TELEPORT_ACCELERATION;
+		SneaktoSlimPawn_Rabbit(Pawn).SetCollisionType(COLLIDE_NoCollision);
+		//if(Role < ROLE_Authority)
+		//{
+			ClearTimer('EnergyRegen');
+			ClearTimer('StartEnergyRegen');			
+		//}
+	}
+	
+	simulated function PlayerMove( float DeltaTime )
+	{
+		local vector		NewAccel;
+		local eDoubleClickDir	DoubleClickMove;
+		local rotator		OldRotation;
+		local vector        viewDirection;
+
+		viewDirection = vector(Pawn.Rotation);
+		if( Pawn == None )
 		{
-			//self.Pawn.Mesh.SetTranslation(myOffset);
-			//self.Pawn.Mesh.SetTranslation(endDive);
-		`log(vector(self.Pawn.Rotation));
-		`log(Normal(vector(self.Pawn.Rotation)));
-		`log(distanceDive);
-		`log(startDive);
-			`log(endDive);
-			//self.Pawn.SetLocation(endDive);
-			Blink(endDive);
-			//myOffset.Z = -48;
-			//self.Pawn.Mesh.SetTranslation(myOffset);
-			//myOffset.Z = -80;
+			GoToState('Dead');
 		}
 		else
 		{
-		//	self.Pawn.Mesh.SetTranslation(myOffset);
-		//	self.Pawn.SetLocation(hitLocation + myOffset);
-		//	myOffset.Z = -48;
-		//	self.Pawn.Mesh.SetTranslation(myOffset);
-		//	myOffset.Z = -80;
-			Blink(hitLocation);
+			NewAccel = 10 * viewDirection * DeltaTime * SneaktoSlimPawn_Rabbit(Pawn).TELEPORT_SPEED;
+			NewAccel.Z = 0; //no vertical movement				
+
+			if (IsLocalPlayerController())
+			{
+				AdjustPlayerWalkingMoveAccel(NewAccel);
+			}
+			DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
+			OldRotation = Rotation;
+			UpdateRotation( DeltaTime );
+
+			if( Role < ROLE_Authority ) // save this move and replicate it
+			{
+				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
+			}
+			else
+			{
+				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
+			}
 		}
 	}
+
+	simulated function ResetValues()
+	{
+		SneaktoSlimPawn_Rabbit(Pawn).SetCollisionType(COLLIDE_BlockAll);
+		SneaktoSlimPawn_Rabbit(Pawn).AccelRate = SneaktoSlimPawn_Rabbit(Pawn).NORMAL_ACCELERATION;
+		Pawn.GroundSpeed = SneaktoSlimPawn_Rabbit(Pawn).FLWalkingSpeed;
+		Pawn.bForceMaxAccel = false;
+	}
+
+	simulated event EndState(name nextState)
+	{
+		ResetValues();
+		SwitchToCamera('ThirdPerson');
+		//if(Role < ROLE_Authority)
+		//{			
+			SetTimer(2, false, 'StartEnergyRegen');
+		//}
+	}
+
 Begin:
-	if(debugStates) logState();
-
-	sneaktoslimpawn(self.Pawn).stopAllTheLoopAnimation();
-	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customVanish', 'Vanish', 1.f, true, 0.1f, 0.1f, false, true);
-	sleep(0.8);
-
-	Rabbit_Dive();
-	//jumpHeight.X = 0;
-	//jumpHeight.Y = 0;
-	//jumpHeight.Z = 1;
-	//sneaktoslimpawn(self.Pawn).TakeDamage(0, none, self.Pawn.Location, jumpHeight * 1500, class 'DamageType');
-	attemptToChangeState('PlayerWalking');
-	GoToState('PlayerWalking');
-}
-
-unreliable server function Blink(vector endLocation)
-{
-	self.Pawn.SetLocation(endLocation);
+	if(debugStates) logState();	
+	sleep(TELEPORT_DURATION);	
+	ResetValues();
+	sleep(0.15); //wait for camera to catch up
+	if(walkingOrHoldingTreasure == 'HoldingTreasureWalking')
+	{
+		attemptToChangeState('HoldingTreasureWalking');
+		GoToState('HoldingTreasureWalking');
+	}
+	else
+	{
+		attemptToChangeState('PlayerWalking');
+		GoToState('PlayerWalking');
+	}
 }
 
 simulated state Roaring extends CustomizedPlayerWalking
 {
+
+	event BeginState (Name LastStateName)
+	{
+		if (LastStateName == 'InvisibleExhausted' || LastStateName == 'InvisibleWalking')
+		{
+			attemptToChangeState('EndInvisible');
+			GoToState('EndInvisible');
+		}
+		else if (LastStateName == 'DisguisedExhausted' || LastStateName == 'DisguisedWalking')
+		{
+			attemptToChangeState('EndDisguised');
+			GoToState('EndDisguised');
+		}
+		ClearTimer('EnergyRegen');
+		ClearTimer('StartEnergyRegen');	
+	}
+
 	simulated function Rabbit_Roar()
 	{
 		local SneaktoSlimPawn victim;
 		`log("Rabbit_Roar!!");
 
+		if(sneaktoslimpawn(self.Pawn).v_energy <= perRoarEnergy)
+			return;
+
 		SneaktoSlimPawn(self.Pawn).v_energy -= perRoarEnergy;
+		
+		if(Role == Role_Authority)
+			SneaktoSlimPawn(self.Pawn).callClientRoarParticle(SneaktoSlimPawn_Rabbit(self.Pawn).GetTeamNum());
 
 		foreach self.Pawn.VisibleCollidingActors(class'SneaktoSlimPawn', victim, 300)
 		{
@@ -144,7 +235,10 @@ simulated state Roaring extends CustomizedPlayerWalking
 		attemptToChangeState('PlayerWalking');
 	}
 
-
+	simulated event EndState(name nextState)
+	{
+		SetTimer(2, false, 'StartEnergyRegen');
+	}
 
 Begin:
 	Rabbit_Roar();
@@ -157,9 +251,11 @@ Begin:
 
 defaultproperties
 {
-	perRoarEnergy = 50;
-	roarTime = 1.0f;
-	perDiveEnergy = 10;
-	distanceDive = 150.0;
+	perRoarEnergy = 45;
+	roarTime = 0.2f;
+	perDiveEnergy = 35;
+	distanceDive = 225.0;
 	myOffset = (X=0, Y=0, Z=-90)
+	TELEPORT_DURATION = 0.2f
+	RoarLinesIsOn = false
 }

@@ -98,7 +98,7 @@ Begin:
 				if( chaseTarget.isGotTreasure == true )
 				{
 					`log(Pawn.Name $ ": Dropping treasure from " $ chaseTarget.name, true, 'Ravi');
-					chaseTarget.dropTreasure();
+					chaseTarget.dropTreasure(Normal(vector(self.rotation)));
 				}
 				foreach WorldInfo.AllNavigationPoints (class'PlayerStart', playerBase)
 				{					

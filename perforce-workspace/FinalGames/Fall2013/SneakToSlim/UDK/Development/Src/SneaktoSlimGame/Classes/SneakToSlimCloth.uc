@@ -124,6 +124,7 @@ DefaultProperties
 {
 	displayName = "Cloth";
 	PromtText = "pick up Cloth";
+	PromtTextXbox = "pick up Cloth"
 	eqGottenText = "[Buff] Cloth"
 
 	Begin Object Class=StaticMeshComponent Name=MyStaticMeshComponent

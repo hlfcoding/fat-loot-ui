@@ -1,5 +1,64 @@
 class SneaktoSlimPawn_FatLady extends SneaktoSlimPawn;
 
+simulated event ReplicatedEvent(name VarName)
+{
+	local SneaktoSlimPawn pa;
+	super.ReplicatedEvent(VarName);
+	if( VarName == 'isGotTreasure')
+	{
+		if(self.isGotTreasure == true)
+		{
+			foreach WorldInfo.AllPawns(class 'SneaktoSlimPawn', pa)
+			{
+				pa.showCharacterHasTreasure(self.GetTeamNum());
+			}
+
+			`log("authority"$ self.Role);
+			`log(self.Mesh.GetSocketByName('treasureSocket'));
+			if (self.Mesh.GetSocketByName('treasureSocket') != None){
+				self.Mesh.AttachComponentToSocket(treasureComponent , 'treasureSocket');
+				self.Mesh.AttachComponentToSocket(treasureLightComponent , 'treasureSocket');
+			}			
+			SetTreasureParticleEffectActive(true);
+
+			if(SneaktoSlimPlayerController_FatLady(Self.Controller).IsInState('Exhausted'))
+			{
+				SneaktoSlimPlayerController_FatLady(Self.Controller).attemptToChangeState('HoldingTreasureExhausted');//to server
+				SneaktoSlimPlayerController_FatLady(Self.Controller).GotoState('HoldingTreasureExhausted');//local
+				`log("Going to HT_Exhausted");
+			}
+			else if(SneaktoSlimPlayerController_FatLady(Self.Controller).IsInState('Sprinting'))
+			{
+				SneaktoSlimPlayerController_FatLady(Self.Controller).attemptToChangeState('HoldingTreasureSprinting');//to server
+				SneaktoSlimPlayerController_FatLady(Self.Controller).GotoState('HoldingTreasureSprinting');//local
+				`log("Going to HT_Sprinting");
+			}
+			else
+			{
+				SneaktoSlimPlayerController_FatLady(Self.Controller).attemptToChangeState('HoldingTreasureWalking');//to server
+				SneaktoSlimPlayerController_FatLady(Self.Controller).GotoState('HoldingTreasureWalking');//local
+				`log("Going to HT_Walking");
+			}
+
+		}
+		else
+		{
+			foreach WorldInfo.AllPawns(class 'SneaktoSlimPawn', pa)
+			{
+				pa.showCharacterLostTreasure(self.GetTeamNum());
+			}
+
+			if (self.Mesh.IsComponentAttached(treasureComponent)){
+				self.Mesh.DetachComponent(treasureComponent);
+				self.Mesh.DetachComponent(treasureLightComponent);
+			}				
+			self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
+			self.SetTreasureParticleEffectActive(false);			
+			SneaktoSlimPlayerController_FatLady(self.Controller).DropTreasure();
+		}
+	}
+}
+
 simulated event PostBeginPlay()
 {
 	local SneakToSlimGuideController pc;
@@ -8,10 +67,15 @@ simulated event PostBeginPlay()
 
 	foreach WorldInfo.AllControllers(class 'SneakToSlimGuideController', pc)
 	{
-		pc.talkingTo = self;
-		pc.changeToTutorialState('HowToMove');	
+		//Forces
+		if(!pc.isActive)
+		{
+			pc.talkingTo = self;
+			pc.changeToTutorialState('HowToMove');	
+		}
+		break;
 	}
-}
+ }
 
 event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 {	
@@ -29,7 +93,7 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 			{
 				victim = SneaktoSlimPawn(Other);
 				if(victim.isGotTreasure){            //if the victim is holding treasure...
-					victim.dropTreasure();         //...she drops it.
+					victim.dropTreasure(Normal(vector(self.rotation)));         //...she drops it.
 				}
 				`log("bump Particle");		
 				
@@ -94,7 +158,7 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 
 	if(playerBase != none)
 	{	
-		`log("Pawn touching SpawnPoint");
+		//`log("Pawn touching SpawnPoint");
 		if (SneaktoSlimPlayerController(self.Controller).IsInState('HoldingTreasureExhausted'))
 		{
 			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('Exhausted');

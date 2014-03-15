@@ -3,8 +3,6 @@
  */
 class SneaktoSlimGameInfo extends GameInfo;
 
-var bool isGotTreasure;
-
 var byte newPlayerNumber;
 
 var array <PlayerStart> PlayerStartPointsUsed;
@@ -13,14 +11,14 @@ var array<SneaktoSlimTreasure> myTreasureBox;
 
 var array<bool> TeamOccupied;
 
-var color GameInfoTeamColor[4];
+
 var array<SneakToSlimTreasureSpawnPoint> TreasureSpawnList;
 var array<SneakToSlimClothSpawner> ClothSpawnList;
 
 var sneaktoslimplayercontroller sneaktoslimplayercontroller;
 var sneaktoslimPawn sneaktoslimPawnArchetype;
 
-var int demoTime;
+var int timePerMatch;
 var string uniqueMatchDate;     //Randomly generated number to associate files with a certain game
 
 /**
@@ -30,7 +28,7 @@ var string uniqueMatchDate;     //Randomly generated number to associate files w
  */
 event PreBeginPlay()
 {
-	demoTime = 0;
+	timePerMatch = 300;
 	uniqueMatchDate = TimeStamp();
 	uniqueMatchDate = Repl(uniqueMatchDate, ":", ";");    //.txt format doesn't allow colons in filenames
 	uniqueMatchDate = Repl(uniqueMatchDate, "/", ",");    //.txt format doesn't allow slashs in filenames
@@ -50,7 +48,8 @@ function GameOver()
 	`log("Time up.");
 	foreach WorldInfo.AllPawns(class'SneaktoSlimPawn', pawn)
 	{
-		//pawn.showWinnerText();
+		//TODO: send each pawn to "level select room"
+		pawn.showDemoTime("Up!");
 	}
 }
 
@@ -111,17 +110,17 @@ event Tick(float deltaTime)
 
 	if(currentTime != -1)
 	{
-		if((demoTime - currentTime) % 60 < 10)
+		if((timePerMatch - currentTime) % 60 < 10)
 		{
-			time = (demoTime - currentTime) / 60 $ ":0" $ (demoTime - currentTime) % 60;
+			time = (timePerMatch - currentTime) / 60 $ ":0" $ (timePerMatch - currentTime) % 60;
 		}
 		else
 		{
-			time = (demoTime - currentTime) / 60 $ ":" $ (demoTime - currentTime) % 60;
+			time = (timePerMatch - currentTime) / 60 $ ":" $ (timePerMatch - currentTime) % 60;
 		}
 		foreach WorldInfo.AllPawns(class'SneaktoSlimPawn', pawn)
 		{
-			//pawn.showDemoTime(time);
+			pawn.showDemoTime(time);
 		}
 	}
 	else
@@ -150,7 +149,7 @@ event PostLogin( PlayerController NewPlayer )
 	else if (WorldInfo.IsInSeamlessTravel() || NewPlayer.HasClientLoadedCurrentWorld())
 	{
 		if(NumPlayers == 0)
-			SetTimer(demoTime, false, 'GameOver',);
+			SetTimer(timePerMatch, false, 'GameOver',);
 		NumPlayers++;
 	}
 	else
@@ -279,7 +278,7 @@ function int FindTheFirstEmptyTeam()
 		if(TeamOccupied[i]==false)
 			return i;
 	}
-	return -1;
+	return 4;
 }
 
 function int FindTeamTotalNumber()
@@ -315,13 +314,12 @@ function InitTeamInfos()
 	}
 
 	// Create the teams
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < 5; ++i)
 	{
 		SneaktoSlimGameReplicationInfo.SetTeam(i, Spawn(class'SneaktoSlimTeamInfo'));
 		if (SneaktoSlimGameReplicationInfo.Teams[i] != None)
 		{
 			SneaktoSlimGameReplicationInfo.Teams[i].TeamIndex = i;
-			SneaktoSlimGameReplicationInfo.Teams[i].TeamColor = GameInfoTeamColor[i];
 		}
 	}
 }
@@ -409,11 +407,20 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	local int SupposeTeam;
 	local bool IsSpectator;
 
+
+	// Get URL options.
+	InName     = Left(ParseOption ( Options, "Name"), 20);
+
+	InCharacter = ParseOption(Options, "Character");
+	NewPlayer.SetCharacter(InCharacter);
+
+	//get suppose team
 	SupposeTeam=FindTheFirstEmptyTeam();
-	if(SupposeTeam==-1)
+	if(InCharacter == "Spectator")
 	{
-		`log("the team is full");
-		IsSpectator=true;
+		`log("enter spectator mode");
+		//IsSpectator=true;
+		SupposeTeam = 4;
 		//return None;
 	}
 
@@ -432,16 +439,12 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	bPerfTesting = ( ParseOption( Options, "AutomatedPerfTesting" ) ~= "1" );
 	bSpectator = bPerfTesting || ( ParseOption( Options, "SpectatorOnly" ) ~= "1" );
 
-	// Get URL options.
-	InName     = Left(ParseOption ( Options, "Name"), 20);
-
-	InCharacter = ParseOption(Options, "Character");
-	NewPlayer.SetCharacter(InCharacter);
+	
 
 	//InTeam     = GetIntOption( Options, "Team", 255 ); // default to "no team"
-	if(IsSpectator==true)
-		InTeam=255;
-	else
+	//if(IsSpectator==true)
+	//	InTeam= 255;
+	//else
 		InTeam = SupposeTeam;
 	
 	//InAdminName= ParseOption ( Options, "AdminName");
@@ -510,6 +513,17 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 		NewPlayer = Spawn(class 'SneaktoSlimPlayerController_Shorty',,, StartSpot.Location, SpawnRotation);
 		NewPlayer.Pawn = Spawn(class 'SneaktoSlimPawn_Shorty',,,StartSpot.Location,SpawnRotation);
 	}
+	else if (InCharacter == "Spectator")
+	{
+		NewPlayer = Spawn(class 'SneaktoSlimPlayerController_Spectator',,, StartSpot.Location, SpawnRotation);
+		NewPlayer.Pawn = Spawn(class 'SneaktoSlimPawn_Spectator',,,StartSpot.Location,SpawnRotation);
+	}
+	else if (InCharacter == "Menu")
+	{
+		NewPlayer = Spawn(class 'SneaktoSlimGame.SneaktoSlimPlayerController_Menu',,, StartSpot.Location, SpawnRotation);
+		NewPlayer.Pawn = Spawn(class 'SneaktoSlimGame.SneaktoSlimPawn_Menu',,,StartSpot.Location,SpawnRotation);
+		HUDType=class'Engine.HUD'; //disable in-game HUD
+	}
 	else
 	{
 		NewPlayer = Spawn(class 'SneaktoSlimPlayerController',,, StartSpot.Location, SpawnRotation);
@@ -517,7 +531,7 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	}
 
 	//attach PlayerReplicationInfo
-	if(!IsSpectator)
+	if(!IsSpectator && InTeam < 4)
 	{
 		NewPlayer.PlayerReplicationInfo = GameReplicationInfo.PRIArray[GameReplicationInfo.PRIArray.Length-1];
 		NewPlayer.PlayerReplicationInfo.SetPlayerTeam(GameReplicationInfo.Teams[SupposeTeam]);
@@ -528,10 +542,8 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	else
 	{
 		NewPlayer.PlayerReplicationInfo = GameReplicationInfo.PRIArray[GameReplicationInfo.PRIArray.Length-1];
-		//NewPlayer.PlayerReplicationInfo.SetPlayerTeam(GameReplicationInfo.Teams[SupposeTeam]);
-		//NewPlayer.PlayerReplicationInfo.Team.TeamIndex=SupposeTeam;
-		//TeamOccupied[SupposeTeam]=true;
-		//newPlayerNumber=FindTeamTotalNumber();
+		NewPlayer.PlayerReplicationInfo.SetPlayerTeam(GameReplicationInfo.Teams[SupposeTeam]);
+		NewPlayer.PlayerReplicationInfo.Team.TeamIndex=SupposeTeam;
 	}
 	
 	//`Log("team "@NewPlayer.PlayerReplicationInfo.Team.TeamIndex@" in, total number "@newPlayerNumber@" supposed to be"@SupposeTeam);
@@ -755,6 +767,9 @@ function SearchDestroyPlayer(Controller Exiting)
 	{
 		if(SneaktoSlimPlayerController(Current.Controller)==none)
 		{
+			if(Current.isGotTreasure == true){
+				Current.LostTreasure();
+			}
 			Current.Destroy();
 			`Log("find one");
 		}
@@ -765,13 +780,13 @@ function SearchDestroyPlayer(Controller Exiting)
 
 defaultproperties
 {
-	isGotTreasure=false;
 	HUDType=class'SneaktoSlimGame.SneaktoSlimHUD'
 	PlayerControllerClass=class'SneaktoSlimGame.SneaktoSlimPlayerController'
 	DefaultPawnClass=class'SneaktoSlimGame.SneaktoSlimPawn'
 	bDelayedStart=false
 	newPlayerNumber=0
 	sneaktoslimPawnArchetype = SneaktoSlimPawn'FLCharacter.FLPawnArchetype'
+	GameReplicationInfoClass=class'SneaktoSlimGameReplicationInfo'
 }
 
 

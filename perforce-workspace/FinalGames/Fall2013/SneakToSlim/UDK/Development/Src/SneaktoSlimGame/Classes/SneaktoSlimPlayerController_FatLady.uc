@@ -14,14 +14,14 @@ simulated state PreBellyBump extends CustomizedPlayerWalking
 	{
 		if (LastStateName == 'Sprinting')
 		{
-			OnReleaseSecondSkill();
+			SpeedDown();
 		}
 		else if (LastStateName == 'InvisibleExhausted' || LastStateName == 'InvisibleSprinting' || LastStateName == 'InvisibleWalking')
 		{
 			attemptToChangeState('EndInvisible');
 			GoToState('EndInvisible');
 		}
-		else if (LastStateName == 'DisguisedExhausted' || LastStateName == 'DisguisedSprinting' || LastStateName == 'DisguisedWalking')
+		else if (LastStateName == 'DisguisedExhausted' || /*LastStateName == 'DisguisedSprinting' || */LastStateName == 'DisguisedWalking')
 		{
 			attemptToChangeState('EndDisguised');
 			GoToState('EndDisguised');
@@ -40,7 +40,7 @@ Begin:
 		//!sneaktoslimpawn(self.Pawn).vaseIMayBeUsing.occupied )
 	{
 		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customBumpReady','preBump', 4.f, true, 0, 0, false);
-		FinishAnim(AnimNodePlayCustomAnim(sneaktoslimpawn(self.pawn).mySkelComp.FindAnimNode('customBumpReady')).GetCustomAnimNodeSeq());
+		FinishAnim(AnimNodePlayCustomAnim(sneaktoslimpawn(self.pawn).Mesh.FindAnimNode('customBumpReady')).GetCustomAnimNodeSeq());
 		GoToState('InBellyBump');
 	}
 	GoToState('Playerwalking');
@@ -83,7 +83,7 @@ Begin:
 
 	letsBellyBump();
 	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customBumping','bumping', 1.f, true, 0, 0, false);
-	FinishAnim(AnimNodePlayCustomAnim(sneaktoslimpawn(self.pawn).mySkelComp.FindAnimNode('customBumping')).GetCustomAnimNodeSeq());
+	FinishAnim(AnimNodePlayCustomAnim(sneaktoslimpawn(self.pawn).Mesh.FindAnimNode('customBumping')).GetCustomAnimNodeSeq());
 	
 	GoToState('FinishBellyBump');
 }
@@ -98,7 +98,7 @@ Begin:
 	SetTimer(2, false, 'StartEnergyRegen');
 
 	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customLand','postbump', 0.1f, true, 0, 0.2, false);
-	FinishAnim(AnimNodePlayCustomAnim(sneaktoslimpawn(self.pawn).mySkelComp.FindAnimNode('customLand')).GetCustomAnimNodeSeq());
+	FinishAnim(AnimNodePlayCustomAnim(sneaktoslimpawn(self.pawn).Mesh.FindAnimNode('customLand')).GetCustomAnimNodeSeq());
 
 	GoToState('Playerwalking');
 }
@@ -164,10 +164,10 @@ simulated state Sprinting extends PlayerWalking
 		{
 			GoToState('InvisibleSprinting');
 		}
-		else if (LastStateName == 'DisguisedWalking' || LastStateName == 'DisguisedExhausted')
-		{
-			GoToState('DisguisedSprinting');
-		}
+		//else if (LastStateName == 'DisguisedWalking' || LastStateName == 'DisguisedExhausted')
+		//{
+		//	GoToState('DisguisedSprinting');
+		//}
 		else
 		{
 			`log("state " $ LastStateName $ " trying to go through state Sprinting", true, 'LOG');
@@ -191,6 +191,7 @@ simulated state Sprinting extends PlayerWalking
 		
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
 			{
+				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
 				sneaktoslimpawn(self.Pawn).bBuffed= 0;
 				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
 				sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used 
@@ -200,13 +201,16 @@ simulated state Sprinting extends PlayerWalking
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
 			{			
+				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
 				sneaktoslimpawn(self.Pawn).bBuffed = 0;
 
 				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
 				sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
-
-				attemptToChangeState('DisguisedSprinting');
-				GoToState('DisguisedSprinting');
+				OnReleaseSecondSkill();
+				ApplySprintingSpeed();
+				SetTimer(0.05, true, 'removeEnergyWithTime');
+				attemptToChangeState('DisguisedWalking');
+				GoToState('DisguisedWalking');
 
 			}
 		}
@@ -218,7 +222,7 @@ simulated state Sprinting extends PlayerWalking
 		{
 			SetTimer(0.05, true, 'EnergyCheck');
 			//SwitchToShoulderCam();        //ANDYCAM
-			SwitchToCamera('ShoulderCam');
+			
 			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLSprintingSpeed;
 			sneaktoslimpawn(self.Pawn).s_energized = 1;
 		}
@@ -254,6 +258,7 @@ simulated state Sprinting extends PlayerWalking
 				ClearTimer('EnergyRegen');
 				ClearTimer('StartEnergyRegen');
 				//current.startSpeedUpAnim();
+				SwitchToCamera('ShoulderCam');
 				SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,true,0.5,0.5,true,false);
 				sneaktoslimpawn(self.Pawn).v_energy = sneaktoslimpawn(self.Pawn).v_energy - sneaktoslimpawn(self.Pawn).PerSpeedEnergy;
 				if (sneaktoslimpawn(self.Pawn).v_energy < 0)
@@ -269,6 +274,8 @@ simulated state Sprinting extends PlayerWalking
 		else
 		{
 			SetTimer(2, false, 'StartEnergyRegen');
+			if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
 			SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5f);
 		}
 	}
@@ -279,48 +286,6 @@ Begin:
 	//SwitchToShoulderCam();    //ANDYCAM
 	Speedup();
 }
-
-simulated state InvisibleWalking
-{
-	simulated exec function use()           //E-button
-	{
-		attemptToChangeState('EndInvisible');
-		GoToState('EndInvisible');
-		super.Use();
-	}
-
-	exec function OnPressFirstSkill()
-	{
-		//Player can't belly bump if pause menu is on
-		if(pauseMenuOn)
-			return;
-
-		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
-		//breaks invisibility
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
-	}
-
-	//override from playerWalking
-	simulated exec function OnPressSecondSkill()
-	{
-		//Player can't sprint if pause menu is on 
-		if(pauseMenuOn)
-			return;
-
-		SneaktoSlimPawn(self.Pawn).incrementSprintCount();
-		resumeSprintTimer();
-		attemptToChangeState('InvisibleSprinting');//to server
-		GoToState('InvisibleSprinting');//local
-	}
-
-
-Begin:
-	if(debugStates) logState();
-
-	goInvisible();
-}
-
 
 simulated state InvisibleSprinting extends Sprinting
 {
@@ -377,171 +342,50 @@ Begin:
 
 }
 
-simulated state InvisibleExhausted
-{
-	simulated exec function use()           //E-button
-	{
-		attemptToChangeState('EndInvisible');
-		GoToState('EndInvisible');
-	}
+//simulated state DisguisedSprinting extends Sprinting
+//{
+//	simulated exec function use()           //E-button
+//	{
+//		attemptToChangeState('EndDisguised');
+//		GoToState('EndDisguised');
+//	}
 
-	simulated exec function OnReleaseSecondSkill()
-	{
-		pauseSprintTimer();
-	}
+//	exec function OnPressFirstSkill()
+//	{
+//		//Player can't belly bump if pause menu is on
+//		if(pauseMenuOn)
+//			return;
 
-	exec function OnPressFirstSkill()
-	{
-		//Player can't belly bump if pause menu is on
-		if(pauseMenuOn)
-			return;
+//		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
+//		//breaks Disguise
+//		attemptToChangeState('PreBellyBump');
+//		GoToState('PreBellyBump');
+//	}
 
-		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
-		//breaks invisibility
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
-	}
+//	simulated exec function OnReleaseSecondSkill()
+//	{
+//		pauseSprintTimer();
 
-	event EndState(Name NextStateName)
-	{
-		//current.playerPlayOrStopCustomAnim('customTired','Tired',1.f,false,0,0.5);
-		//current.playerPlayOrStopCustomAnimStruct(current.tiredNodeInfo, false);
-		//current.toggleTiredAnimation(false);
-		sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-	}
+//		ServerSpeedDown();
+//		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+//					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+//		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
+//		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+//		{
+//			ClearTimer('EnergyCheck');
+//			SetTimer(2, false, 'StartEnergyRegen');
+//			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
+//			sneaktoslimpawn(self.Pawn).s_energized = 0;
+//		}
+//		attemptToChangeState('DisguisedWalking');
+//		GoToState('DisguisedWalking');
+//	}
 
-Begin:
-	if(debugStates) logState();
-
-
-	goInvisible();
-	sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLExhaustedSpeed;
-	//current.playerPlayOrStopCustomAnim('customTired','Tired',1.f,true,0,0.5);
-}
-
-simulated state DisguisedWalking
-{
-	simulated exec function use()           //E-button
-	{
-		attemptToChangeState('EndDisguised');
-		GoToState('EndDisguised');
-	}
-
-	exec function OnPressFirstSkill()
-	{
-		//Player can't belly bump if pause menu is on
-		if(pauseMenuOn)
-			return;
-
-		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
-		//breaks Disguise
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
-	}
-
-	simulated exec function OnPressSecondSkill()
-	{
-		//Player can't sprint if pause menu is on 
-		if(pauseMenuOn)
-			return;
-
-		SneaktoSlimPawn(self.Pawn).incrementSprintCount();
-		resumeSprintTimer();
-		attemptToChangeState('DisguisedSprinting');//to server
-		GoToState('DisguisedSprinting');//local
-	}
-
-Begin:
-	if(debugStates) logState();
-	goDisguised();
-}
-
-simulated state DisguisedSprinting extends Sprinting
-{
-	simulated exec function use()           //E-button
-	{
-		attemptToChangeState('EndDisguised');
-		GoToState('EndDisguised');
-	}
-
-	exec function OnPressFirstSkill()
-	{
-		//Player can't belly bump if pause menu is on
-		if(pauseMenuOn)
-			return;
-
-		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
-		//breaks Disguise
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
-	}
-
-	simulated exec function OnReleaseSecondSkill()
-	{
-		pauseSprintTimer();
-
-		ServerSpeedDown();
-		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
-		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
-		{
-			ClearTimer('EnergyCheck');
-			SetTimer(2, false, 'StartEnergyRegen');
-			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-			sneaktoslimpawn(self.Pawn).s_energized = 0;
-		}
-		attemptToChangeState('DisguisedWalking');
-		GoToState('DisguisedWalking');
-	}
-
-Begin:
-	if(debugStates) logState();
-	Speedup();
-	goDisguised();
-}
-
-//Child of PlayerWalking, entered when player has <20% energy, and exited when >=20%
-simulated state DisguisedExhausted
-{
-	simulated exec function use()           //E-button
-	{
-		attemptToChangeState('EndDisguised');
-		GoToState('EndDisguised');
-	}
-
-	exec function OnPressFirstSkill()
-	{
-		//Player can't belly bump if pause menu is on
-		if(pauseMenuOn)
-			return;
-
-		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
-		//breaks Disguise
-		attemptToChangeState('PreBellyBump');
-		GoToState('PreBellyBump');
-	}
-
-	simulated exec function OnReleaseSecondSkill()
-	{
-		pauseSprintTimer();
-	}
-
-	event EndState(Name NextStateName)
-	{
-		//SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customTired','Tired',1.f,false,0,0.5);
-		//current.toggleTiredAnimation(false);
-		sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-	}
-
-Begin:
-	if(debugStates) logState();
-
-	goDisguised();
-	sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLExhaustedSpeed;
-	//SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customTired','Tired',1.f,true,0,0.5);
-	//current.toggleTiredAnimation(true);
-}
+//Begin:
+//	if(debugStates) logState();
+//	Speedup();
+//	goDisguised();
+//}
 
 simulated state HoldingTreasureSprinting extends Sprinting
 {

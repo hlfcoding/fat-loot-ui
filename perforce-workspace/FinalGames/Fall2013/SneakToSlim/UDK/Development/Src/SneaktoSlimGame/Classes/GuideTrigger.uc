@@ -1,31 +1,28 @@
 class GuideTrigger extends ITrigger;
 
 var SneaktoSlimGuideController guideController;
-var bool IsInInteractionRange;
+var SneaktoSlimPawn fatlady;
 
 event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hitNormal)
 {
-	super.Touch(other, otherComp, hitLoc, hitNormal);
+	//super.Touch(other, otherComp, hitLoc, hitNormal);
 
-	if (Pawn(Other) != none)
-    {
+	//if (Pawn(Other) != none)
+   // {
         //Ideally, we should also check that the touching pawn is a player-controlled one.
         //PlayerController(Pawn(Other).Controller).myHUD.AddPostRenderedActor(self);
-        IsInInteractionRange = true;
-    }
+    //}
 
 }
 
 event UnTouch(Actor other)
 {
-	super.UnTouch(other);
+	//super.UnTouch(other);
 
-	if (Pawn(Other) != none)
-    {
+	//if (Pawn(Other) != none)
+   // {
         //PlayerController(Pawn(Other).Controller).myHUD.RemovePostRenderedActor(self);
-        IsInInteractionRange = false;
-    }
-
+   // }
 }
 
 /*simulated event PostRenderFor(PlayerController PC, Canvas Canvas, Vector CameraPosition, Vector CameraDir)
@@ -46,17 +43,44 @@ simulated function bool UsedBy(Pawn User)
 	
 	used = super.UsedBy(User);
 
-	if (IsInInteractionRange)
-    {
-        //Passes tag name to guide's player controller and activates scripted event
-		if(guideController != none)
-		{
-			guideController.talkingTo = SneakToSlimPawn(User);
-			guideController.changeToTutorialState(self.Tag);
-			return true;
-		}
-    }
+    //Passes tag name to guide's player controller and activates scripted event
+	if(guideController != none)
+	{
+		guideController.talkingTo = SneakToSlimPawn(User);
+		guideController.changeToTutorialState(self.Tag);
+		return true;
+	}
     return used;
+}
+
+//Inefficiently checks if tutorial player is within range of this trigger and prints prompt text if so
+event Tick(float deltaTime)
+{
+	local SneaktoSlimPawn pa;
+	local bool isInRange;
+
+	isInRange = false;
+	foreach CollidingActors(class'SneaktoSlimPawn', pa, 100)
+	{
+		fatlady = pa;
+		isInRange = true;
+	}
+
+	if(fatlady != none)
+	{
+		if(isInRange)
+		{
+			if(SneaktoSlimPlayerController(fatlady.Controller).PlayerInput.bUsingGamepad)
+				PromtText = "Press 'A' to talk.";
+			else
+				PromtText = "Click 'e' to talk.";
+			fatlady.showPromptUI(self.PromtText);
+		}
+		else
+			fatlady.hidePromptUI();
+	}
+
+	super.Tick(deltaTime);
 }
 
 DefaultProperties
@@ -65,17 +89,7 @@ DefaultProperties
 	bNoDelete = false
 
 	displayName = "Guide";
-	PromtText = "Press 'e' to talk."
 	eqGottenText = ""
 
-	Begin Object Class=CylinderComponent NAME=MyMesh
-		CollideActors= true
-		CollisionRadius=25.000000
-        CollisionHeight=44.000000 
-	End Object
-
-    //set collision component
-    CollisionComponent=MyMesh
-	Components.Add(MyMesh)
-	bBlockPlayers = true
+	bBlockPlayers = true      //Needed?
 }

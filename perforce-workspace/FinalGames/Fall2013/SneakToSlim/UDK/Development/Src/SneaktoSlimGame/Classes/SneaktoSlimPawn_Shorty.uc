@@ -8,12 +8,68 @@ var() float MIN_FIRECRACKER_CHARGE_TIME; //Player must hold the activate button 
 var() float MAX_FIRECRACKER_CHARGE_TIME; //Charging more than this has no effect. The peak distance is reached by this charge time
 var() int FIRECRACKER_SPEED_MULTIPLIER; //Firecracker launch velocity is ChargeTime * Multiplier
 var() vector FIRECRACKER_THROW_DIRECTION; //Relative to where player is looking, what direction must the firecracker be thrown
+var() int FIRECRACKER_EXPLOSION_DETECT_RADIUS; //The area in which guards will react to, and investigate the firecracker
+var() int FIRECRACKER_EXPLOSION_AFFECT_RADIUS; //The area in which players will be stunned
+var int DASH_ACCELERATION;
+var int NORMAL_ACCELERATION;
+var ParticleSystemComponent shortySprintParticleComp;
 
 simulated event PostBeginPlay()
 {   
 	self.mySkelComp.SetScale(0); //don't show fat lady model
 	FIRECRACKER_SPEED_MULTIPLIER = 2.6 * 250 / MAX_FIRECRACKER_CHARGE_TIME;
     Super.PostBeginPlay();
+}
+
+simulated event ReplicatedEvent(name VarName)
+{
+	local SneaktoSlimPawn pa;
+	super.ReplicatedEvent(VarName);
+	if( VarName == 'isGotTreasure')
+	{
+		if(self.isGotTreasure == true)
+		{
+			foreach WorldInfo.AllPawns(class 'SneaktoSlimPawn', pa)
+			{
+				pa.showCharacterHasTreasure(self.GetTeamNum());
+			}
+
+			`log("authority"$ self.Role);
+			`log(self.Mesh.GetSocketByName('treasureSocket'));
+			if (self.Mesh.GetSocketByName('treasureSocket') != None){
+				self.Mesh.AttachComponentToSocket(treasureComponent , 'treasureSocket');
+				self.Mesh.AttachComponentToSocket(treasureLightComponent , 'treasureSocket');
+			}			
+			SetTreasureParticleEffectActive(true);
+
+			if(SneaktoSlimPlayerController_Shorty(Self.Controller).IsInState('Exhausted'))
+			{
+				SneaktoSlimPlayerController_Shorty(Self.Controller).attempttochangestate('HoldingTreasureExhausted');//to server
+				SneaktoSlimPlayerController_Shorty(Self.Controller).gotostate('HoldingTreasureExhausted');//local
+			}
+			else
+			{
+				SneaktoSlimPlayerController_Shorty(Self.Controller).attempttochangestate('HoldingTreasureWalking');//to server
+				SneaktoSlimPlayerController_Shorty(Self.Controller).gotostate('HoldingTreasureWalking');//local
+			}
+
+		}
+		else
+		{
+			foreach WorldInfo.AllPawns(class 'SneaktoSlimPawn', pa)
+			{
+				pa.showCharacterLostTreasure(self.GetTeamNum());
+			}
+
+			if (self.Mesh.IsComponentAttached(treasureComponent)){
+				self.Mesh.DetachComponent(treasureComponent);
+				self.Mesh.DetachComponent(treasureLightComponent);
+			}				
+			self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
+			self.SetTreasureParticleEffectActive(false);			
+			SneaktoSlimPlayerController_Shorty(Self.Controller).DropTreasure();
+		}
+	}
 }
 
 event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
@@ -28,7 +84,7 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 			victim = SneaktoSlimPawn(Other);
 			if(victim.isGotTreasure)
 			{            
-				victim.dropTreasure();
+				victim.dropTreasure(Normal(vector(self.rotation)));
 			}
 			checkOtherFLBuff(victim);
 
@@ -51,9 +107,25 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 	}	
 }
 
-simulated event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
+event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vector HitNormal)
 {
-	//`log("Touched an actor", true, 'Ravi');	
+	local SneaktoSlimSpawnPoint playerBase;
+	playerBase = SneaktoSlimSpawnPoint(Other);	
+
+	if(playerBase != none)
+	{	
+		//`log("Pawn touching SpawnPoint");
+		if (SneaktoSlimPlayerController(self.Controller).IsInState('HoldingTreasureExhausted'))
+		{
+			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('Exhausted');
+			SneaktoSlimPlayerController(self.Controller).GoToState('Exhausted');//local
+		}
+		if (SneaktoSlimPlayerController(self.Controller).IsInState('HoldingTreasureWalking'))
+		{
+			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('PlayerWalking');
+			SneaktoSlimPlayerController(self.Controller).GoToState('PlayerWalking');//local
+		}
+	}		
 }
 
 simulated event HitWall (Object.Vector HitNormal, Actor Wall, PrimitiveComponent WallComp)
@@ -80,9 +152,22 @@ server reliable function listRoles()
 	}
 }
 
+simulated function toggleSprintParticle(bool flag)
+{
+	shortySprintParticleComp.SetActive(flag);
+}
+
+//event Tick(float DeltaTime)
+//{
+//	//`log(self.Controller.GetStateName());
+//	//`log(self.GroundSpeed);
+//	`log(self.v_energy);
+//}
+
 DefaultProperties
 {
 	FLWalkingSpeed=200.0
+	FLSprintingSpeed=400.0
 	GroundSpeed=200.0;
 
 	Begin Object Class=SkeletalMeshComponent Name=ShortySkeletalMesh	
@@ -96,17 +181,37 @@ DefaultProperties
 		AlwaysLoadOnServer=true
 		bOwnerNoSee=false		
 	End Object
+
+	Begin Object Class=ParticleSystemComponent Name=shortyChargeSmoke
+        Template=ParticleSystem'flparticlesystem.shortySprintParticle'
+		Translation=(Z=-42.0)
+        bAutoActivate=false		
+	End Object
+
+	shortySprintParticleComp = shortyChargeSmoke
+
+	Components.Add(shortyChargeSmoke)
 	
 	Components.Add(ShortySkeletalMesh)
 	Mesh = ShortySkeletalMesh
 
-	SHORTY_DASH_SPEED = 1000;
-	MAX_DASH_TIME = 2.0;
+	Begin Object Name=CollisionCylinder
+		CollisionRadius=15.000000
+        CollisionHeight=48.000000
+    End Object
+	CylinderComponent=CollisionCylinder
+
+	NORMAL_ACCELERATION = 500;
+	DASH_ACCELERATION = 4000;
+	SHORTY_DASH_SPEED = 800;
+	MAX_DASH_TIME = 1.5;
 	DASH_ENERGY_CONSUMPTION_RATE = 40;
-	DASH_CHARGE_VS_MOVE_DURATION_FACTOR = 1.5;
+	DASH_CHARGE_VS_MOVE_DURATION_FACTOR = 1;
 	MIN_FIRECRACKER_CHARGE_TIME = 0.2;
 	MAX_FIRECRACKER_CHARGE_TIME = 0.6;	
 	FIRECRACKER_THROW_DIRECTION=(X=0,Y=0,Z=0.65)
+	FIRECRACKER_EXPLOSION_DETECT_RADIUS = 1000
+	FIRECRACKER_EXPLOSION_AFFECT_RADIUS = 100
 
 	characterName = "Shorty";
 

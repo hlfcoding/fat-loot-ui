@@ -123,6 +123,16 @@ simulated function PostBeginPlay()
 	FlashMap.mapPath = "SneaktoSlimImages." $ FlashMap.mapName $ "TopDownMap";
 }
 
+//Called every tick since playerowner isn't set up instantly in postbegin play
+//Skips if hud is already set when inner function completes
+unreliable server function setCharacterHUD()
+{
+	if(!FlashHUD.isHUDSet)
+		FlashHUD.setHealthBarHead(SneakToSlimPawn(PlayerOwner.Pawn).characterName);
+	if(!FlashMap.isHUDSet)
+		FlashMap.setMiniMapHead(SneakToSlimPawn(PlayerOwner.Pawn).characterName);
+}
+
 //Calculates current map dimensions based on distance between corner nodes set in editor
 //See "Nick P." for more details
 function findMapDimensions()
@@ -176,6 +186,49 @@ function findMapDimensions()
 	}
 	//Same code as if(demoday)
 	else if(WorldInfo.GetMapName() == "fltemplemap")
+	{
+		//Breaks if map corners at not placed in editor
+		if(corners.Length != 4)
+		{
+			`log("WARNING: Corners not placed in map");
+			return;
+		}
+
+		//Gets specify tag corners
+		for(i = 0; i < 4; i++)
+		{
+			//Rotates points in odd, confusing axis to standard xy coordinate system
+			//Top down view of corners in editor
+			//(Actual) to  (Expected/Pecieved)
+			//BR   TR  -->  TL   TR
+			//BL   TL  -->  BL   BR
+			prime.X = corners[i].Location.Y;    //Rotate point -90 deg (clockwise about origin)
+			prime.Y = -corners[i].Location.X;
+			prime2.X = prime.X;     //Vertical flip about y axis
+			prime2.Y = -prime.Y;
+			cornerPoints[i] = prime2;
+
+			if(corners[i].Tag == 'topLeftCorner')
+				topLeft = cornerPoints[i];
+			if(corners[i].Tag == 'topRightCorner')
+				topRight = cornerPoints[i];
+			if(corners[i].Tag == 'bottomLeftCorner')
+				bottomLeft = cornerPoints[i];
+		}
+
+		//translate corner nodes so that topLeft point is at (0,0) and save into mutable array
+		for(k = 0; k < 4; k++)
+		{
+			cornerPoints[k].X += -topLeft.X;
+			cornerPoints[k].Y += -topLeft.Y;
+		}
+
+		//Distance formula
+		mapWidth = sqrt(square(topLeft.X - topRight.X) + square(topLeft.Y - topRight.Y));
+		mapHeight = sqrt(square(topLeft.X - bottomLeft.X) + square(topLeft.Y - bottomLeft.Y));
+	}
+	//Same code as if(demoday)
+	else if(WorldInfo.GetMapName() == "flmist")
 	{
 		//Breaks if map corners at not placed in editor
 		if(corners.Length != 4)
@@ -290,6 +343,21 @@ function Vector WorldPointTo2DScreenPoint(Vector point3D)
 		screenPoint.X = prime2.X;
 		screenPoint.Y = prime2.Y;
 	}
+	//same
+	else if(FlashMap.mapName == "flmist")
+	{
+		prime.X = point3D.Y;    //Rotate point -90 deg (clockwise about origin)
+		prime.Y = -point3D.X;
+		prime2.X = prime.X;     //Vertical flip about y axis
+		prime2.Y = -prime.Y;
+		prime2.X += -topLeft.X; //Translate to topLeft origin
+		prime2.Y += -topLeft.Y;
+		prime2.X = abs(prime2.X)/mapWidth;  //0 to 1 ratio of location point 
+		prime2.Y = abs(prime2.Y)/mapHeight; //relative to map dimensions.
+
+		screenPoint.X = prime2.X;
+		screenPoint.Y = prime2.Y;
+	}
 	else
 	{
 		screenPoint.X = -1;
@@ -319,9 +387,10 @@ simulated event DrawHUD()
 
 	super.DrawHUD();
 
-	
 	if(PlayerOwner.Pawn!=none)
 	{
+		self.setCharacterHUD(); //Tells server HUD to set the player hud once the playerowner pawn is non-null
+
 		map =  SneaktoSlimPlayerController(SneaktoSlimPawn(PlayerOwner.Pawn).Controller).myMap;
 		if(FlashMap != NONE/* && map.isOn*/)
 		{
@@ -457,6 +526,7 @@ simulated event DrawHUD()
 			}
 		}
 
+		//Nick: Activates when player no longer exists/quits
 		For(j = 0; j < 4; j++) 
 		{
 			if(existedTeam[j] == false)
@@ -464,12 +534,16 @@ simulated event DrawHUD()
 				switch(j)
 				{
 					case 0: FlashHUD.player1Score.SetBool("isOn", false);
+							FlashHUD.player1Score.GetObject("Coin").SetBool("visible", false);
 							break;
 					case 1: FlashHUD.player2Score.SetBool("isOn", false);
+							FlashHUD.player2Score.GetObject("Coin").SetBool("visible", false);
 							break;
 					case 2: FlashHUD.player3Score.SetBool("isOn", false);
+							FlashHUD.player3Score.GetObject("Coin").SetBool("visible", false);
 							break;
 					case 3: FlashHUD.player4Score.SetBool("isOn", false);
+							FlashHUD.player4Score.GetObject("Coin").SetBool("visible", false);
 							break;
 				}
 			}

@@ -9,7 +9,6 @@ var bool secondSkillUsed;
 var float FIRECRACKER_INDICATOR_SPEED;
 var bool fireCrackerCheatModeOn;
 
-
 simulated event PostBeginPlay()
 {
 	ServerStopEnergyRegen();
@@ -22,7 +21,7 @@ simulated event Possess(Pawn inPawn, bool bVehicleTransition)
 	`log("Pawn " $ Pawn.Name $ " is attached to controller " $ self.Name, true, 'Ravi');
     Pawn.SetMovementPhysics();
 
-    FIRECRACKER_INDICATOR_SPEED = 13.5 / 250 * SneaktoSlimPawn_Shorty(inPawn).FIRECRACKER_SPEED_MULTIPLIER;
+    FIRECRACKER_INDICATOR_SPEED = 1.3 / 250 * SneaktoSlimPawn_Shorty(inPawn).FIRECRACKER_SPEED_MULTIPLIER;
 	clientSetFirecrackerIndicatorSpeed(FIRECRACKER_INDICATOR_SPEED);
 	`log("Indicator speed is " $ FIRECRACKER_INDICATOR_SPEED, true,'Ravi');
 }
@@ -49,12 +48,19 @@ exec function OnPressFirstSkill()
 
 exec function OnReleaseFirstSkill()
 {
-	if( !firstSkillUsed )
+	if( !firstSkillUsed && SneaktoSlimPawn(Pawn).v_energy > 20.0)
 	{
+		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
+
 		if(Role < ROLE_Authority)
 			ServerGotoState('ThrowingFireCracker');
 
 		GotoState('ThrowingFireCracker');
+	}
+	else
+	{
+		ServerGotoState('PlayerWalking');
+		GotoState('PlayerWalking');	
 	}
 }
 
@@ -75,16 +81,18 @@ exec function OnReleaseSecondSkill()
 		if(Role < ROLE_Authority)
 			ServerGotoState('Dashing');
 
+		SneaktoSlimPawn(self.Pawn).incrementSprintCount();
 		GotoState('Dashing');
 	}
 }
 
 /******************************* FIRECRACKER STATES START *****************************/
 simulated state ChargingFireCracker
-{
-	local SneakToSlimSpotLight splight;
+{	
 	local float timeSpentInState;
-
+	local int numFactor;
+	local SneakToSlimSpotLight splight;
+	
 	simulated function UpdateEnergy()
 	{
 		SneaktoSlimPawn(Pawn).v_energy -= ENERGY_UPDATE_FREQUENCY * SneaktoSlimPawn(Pawn).PerDashEnergy * 2;
@@ -100,41 +108,54 @@ simulated state ChargingFireCracker
 		firstSkillUsed = false;
 		fireCrackerChargeTime = WorldInfo.TimeSeconds; //time when charging started		
 		Pawn.GroundSpeed = 0;
-		if(Role < ROLE_Authority)
-		{
-			ClearTimer('EnergyRegen');
-			ClearTimer('StartEnergyRegen');
-			SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');
-		}
+		Pawn.SetRotation ( self.Rotation ); //Make shorty face same direction as camera is looking
+		ClearTimer('EnergyRegen');
+		ClearTimer('StartEnergyRegen');
+		SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');
+
+		SneaktoSlimPawn_Shorty(Pawn).playerPlayOrStopCustomAnim('CustomthrowReady', 'Throw_Ready', 1.0f, true, 0, 100, false, false);
 	}
 
 	simulated event EndState(Name NextStateName)
 	{
-		ClearTimer('MoveLight');
+		ClearTimer('ShowFireCrackerLandLocation');
+		Pawn.GroundSpeed = SneaktoSlimPawn_Shorty(Pawn).FLWalkingSpeed;	
+		SneaktoSlimPawn_Shorty(Pawn).playerPlayOrStopCustomAnim('CustomthrowReady', 'Throw_Ready', 100.0f, true, 0, 0, false, false);		
 		if(splight != none)
 			splight.Destroy();
 
-		if(Role < ROLE_Authority)
+		ClearTimer('UpdateEnergy');
+		SetTimer(2, false, 'StartEnergyRegen');
+	}
+
+	simulated function ShowFireCrackerLandLocation()
+	{
+		timeSpentInState = WorldInfo.TimeSeconds - fireCrackerChargeTime;				
+		if(timeSpentInState < SneaktoSlimPawn_Shorty(Pawn).MAX_FIRECRACKER_CHARGE_TIME * 1.2)
+		{			
+			numFactor += 1;			
+		}
+		splight.SetLocation(Pawn.Location + vector(Pawn.Rotation) * FIRECRACKER_INDICATOR_SPEED * numFactor);
+		
+		if( timeSpentInState >= SneaktoSlimPawn_Shorty(Pawn).MAX_FIRECRACKER_CHARGE_TIME )
 		{
 			ClearTimer('UpdateEnergy');
 			SetTimer(2, false, 'StartEnergyRegen');
 		}
 	}
 
-	simulated event MoveLight()
-	{			
-		timeSpentInState = WorldInfo.TimeSeconds - fireCrackerChargeTime;
-		if(timeSpentInState < SneaktoSlimPawn_Shorty(Pawn).MAX_FIRECRACKER_CHARGE_TIME * 1.2)
-		{			
-			splight.Move(splight.Velocity * FIRECRACKER_INDICATOR_SPEED);
-		}
+	simulated function PlayerMove( float DeltaTime )
+	{				
+		local Rotator rot;
+		UpdateRotation(DeltaTime);		
+		rot.Yaw = PlayerInput.aMouseX;		
+		Pawn.SetRotation( Pawn.Rotation + rot);
 	}
 
 Begin:
 	splight = Spawn(class'SneakToSlimSpotLight', Self,,Pawn.Location);
-	//`log("Spawned light " $ splight.Name $ " at loc " $ splight.Location, true, 'Ravi');
-	splight.Velocity = vector(Pawn.Rotation);
-	SetTimer(0.1, true, 'MoveLight');	
+	numFactor = 0;	
+	SetTimer(0.01, true, 'ShowFireCrackerLandLocation');	
 }
 
 simulated state ThrowingFireCracker
@@ -143,8 +164,19 @@ simulated state ThrowingFireCracker
 	local vector fireCrackerdir;
 
 	simulated event BeginState(Name LastStateName)
-	{			
-		fireCrackerChargeTime = WorldInfo.TimeSeconds - fireCrackerChargeTime;		
+	{	
+		if (LastStateName == 'InvisibleExhausted' || LastStateName == 'InvisibleWalking')
+		{
+			attemptToChangeState('EndInvisible');
+			GoToState('EndInvisible');
+		}
+		else if (LastStateName == 'DisguisedExhausted' || LastStateName == 'DisguisedWalking')
+		{
+			attemptToChangeState('EndDisguised');
+			GoToState('EndDisguised');
+		}
+		fireCrackerChargeTime = WorldInfo.TimeSeconds - fireCrackerChargeTime;
+		SneaktoSlimPawn_Shorty(Pawn).playerPlayOrStopCustomAnim('CustomthrowRelease', 'Throw_Release', 1.0f, true, 0, 1, false, false);
 	}
 
 Begin:
@@ -176,26 +208,31 @@ simulated state ChargingDash
 		}
 	}
 
+	simulated function PlayerMove( float DeltaTime )
+	{				
+		local Rotator rot;
+		UpdateRotation(DeltaTime);		
+		rot.Yaw = PlayerInput.aMouseX;		
+		Pawn.SetRotation( Pawn.Rotation + rot);
+	}
+
 	simulated event BeginState(Name LastStateName)
 	{		
 		secondSkillUsed = false;
 		dashChargeTime = WorldInfo.TimeSeconds; //time when charging started		
 		Pawn.GroundSpeed = 0;
-		if(Role < ROLE_Authority)
-		{
-			ClearTimer('EnergyRegen');
-			ClearTimer('StartEnergyRegen');
-			SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');
-		}
+		Pawn.SetRotation ( self.Rotation ); //Make shorty face same direction as camera is looking
+		ClearTimer('EnergyRegen');
+		ClearTimer('StartEnergyRegen');
+		SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');		
+		SneaktoSlimPawn_Shorty(Pawn).playerPlayOrStopCustomAnim('CustomCharge', 'Charge', 1.0f, true, 0.25, 0, true, false);
 	}
 
 	simulated event EndState(Name NextStateName)
 	{
-		if(Role < ROLE_Authority)
-		{
-			ClearTimer('UpdateEnergy');
-			SetTimer(2, false, 'StartEnergyRegen');
-		}
+		ClearTimer('UpdateEnergy');
+		SetTimer(2, false, 'StartEnergyRegen');	
+		SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomCharge', 'Charge', 1.0f, false, 0.25, 0, true, false);
 	}
 }
 
@@ -206,10 +243,26 @@ simulated state Dashing
 
 	simulated event BeginState(Name LastStateName)
 	{		
+		if (LastStateName == 'InvisibleExhausted' || LastStateName == 'InvisibleWalking')
+		{
+			attemptToChangeState('EndInvisible');
+			GoToState('EndInvisible');
+		}
+		else if (LastStateName == 'DisguisedExhausted' || LastStateName == 'DisguisedWalking')
+		{
+			attemptToChangeState('EndDisguised');
+			GoToState('EndDisguised');
+		}
+		SneaktoSlimPawn_Shorty(Pawn).AccelRate = SneaktoSlimPawn_Shorty(Pawn).DASH_ACCELERATION;
 		secondSkillUsed = true;
 		dashChargeTime = WorldInfo.TimeSeconds - dashChargeTime;
 		dashStartTime = WorldInfo.TimeSeconds;
 		cappedChargeTime = FMin(dashChargeTime * SneaktoSlimPawn_Shorty(Pawn).DASH_CHARGE_VS_MOVE_DURATION_FACTOR, SneaktoSlimPawn_Shorty(Pawn).MAX_DASH_TIME);
+		SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomHeadbutt', 'Headbutt', 1.0f, true, 0, 0.5, true, false);
+		if (role == role_authority)
+		{
+			SneaktoSlimPawn(self.Pawn).CallToggleSprintParticle(true, self.GetTeamNum());
+		}
 	}
 
 	simulated function PlayerMove( float DeltaTime )
@@ -253,9 +306,15 @@ simulated state Dashing
 
 	simulated event EndState(name nextState)
 	{
-		Pawn.GroundSpeed = SneaktoSlimPawn_Shorty(Pawn).FLWalkingSpeed;	
+		SneaktoSlimPawn_Shorty(Pawn).AccelRate = SneaktoSlimPawn_Shorty(Pawn).NORMAL_ACCELERATION;
+		Pawn.GroundSpeed = SneaktoSlimPawn_Shorty(Pawn).FLWalkingSpeed;
 		Pawn.bForceMaxAccel = false;
 		dashChargeTime = 0;
+		SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomHeadbutt', 'Headbutt', 1.0f, false, 0, 0.5, true, false);
+		if (role == role_authority)
+		{
+			SneaktoSlimPawn(self.Pawn).CallToggleSprintParticle(false,self.GetTeamNum());
+		}
 	}
 
 Begin:
@@ -303,8 +362,11 @@ simulated function ThrowFireCracker(float chargeTime, int locX, int locY, int lo
 		SpawnedProjectile = Spawn(class'SneakToSlimFireCracker', Self,,loc );
 		if(fireCrackerCheatModeOn)
 		{
-			chargeTime = 3;			
-		}		
+			chargeTime = 3;
+		}
+		SpawnedProjectile.EXPLOSION_DETECT_RADIUS = SneaktoSlimPawn_Shorty(Pawn).FIRECRACKER_EXPLOSION_DETECT_RADIUS;
+		SpawnedProjectile.EXPLOSION_AFFECT_RADIUS = SneaktoSlimPawn_Shorty(Pawn).FIRECRACKER_EXPLOSION_AFFECT_RADIUS;
+		SpawnedProjectile.fireCrackerOwner = Pawn.Name;
 		SpawnedProjectile.Speed = FMin(chargeTime, SneaktoSlimPawn_Shorty(Pawn).MAX_FIRECRACKER_CHARGE_TIME) * SneaktoSlimPawn_Shorty(Pawn).FIRECRACKER_SPEED_MULTIPLIER;
 		//`log("Throwing from " $ loc $ " dir " $ dir $ " speed " $ SpawnedProjectile.Speed, true, 'Ravi');
 		SpawnedProjectile.Init(dir);
@@ -319,6 +381,6 @@ exec function SpamFireCrackers()
 
 defaultproperties
 {	
-	ENERGY_UPDATE_FREQUENCY = 0.2	
+	ENERGY_UPDATE_FREQUENCY = 0.03	
 	fireCrackerCheatModeOn = false
 }

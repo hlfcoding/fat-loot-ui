@@ -28,13 +28,13 @@ simulated state PlayerWalking
 		if(pauseMenuOn)
 			return;
 
-		SneaktoSlimPawn(self.Pawn).incrementSprintCount();
-		resumeSprintTimer();
-
 		if(sneaktoslimpawn(self.Pawn).v_energy <= 20)
 			return;
 		else
 		{
+			SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+			resumeSprintTimer();
+
 			if(Role < ROLE_Authority)
 				attemptToChangeState('Burrow');
 			GoToState('Burrow');
@@ -60,6 +60,8 @@ simulated state Burrow extends PlayerWalking
 {
 	simulated exec function OnPressSecondSkill()   //reveal
 	{
+		pauseSprintTimer();
+
 		//TO-DO		//whether under wall or objects		
 		if(Role < ROLE_Authority)
 			attemptToChangeState('PlayerWalking');
@@ -71,9 +73,20 @@ simulated state Burrow extends PlayerWalking
 		//Player can't Burst if pause menu is on 
 		if(pauseMenuOn)
 			return;
+
+		if (sneaktoslimpawn(self.Pawn).bUsingBuffed[0] == 1)
+		{
+			attemptToChangeState('EndInvisible');
+			GoToState('EndInvisible');
+			`log("ONRELEASEFROMINVISIBLE");
+		}
+		else if (sneaktoslimpawn(self.Pawn).bUsingBuffed[1] == 1)
+		{
+			attemptToChangeState('EndDisguised');
+			GoToState('EndDisguised');
+		}
 		
-		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
-		energyConsumptionFactor = 1.5;
+		energyConsumptionFactor = 1; //this value is not changed on server so energy cost not match. Set to 1 to temporarily fix the bug
 		burstChargeTime = WorldInfo.TimeSeconds;
 		SetTimer(0.01, true, 'drawBurstAOE');		
 	}
@@ -91,6 +104,8 @@ simulated state Burrow extends PlayerWalking
 
 	simulated exec function OnReleaseFirstSkill()
 	{
+		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
+
 		burstChargeTime = WorldInfo.TimeSeconds - burstChargeTime;
 		energyConsumptionFactor = 1;
 		ClearTimer('drawBurstAOE');
@@ -110,19 +125,37 @@ simulated state Burrow extends PlayerWalking
 	}
 
 	simulated event BeginState(name prevState)
-	{   	
+	{   
+		if (prevState == 'EndInvisible' || prevState == 'EndDisguised')
+		{
+			OnPressFirstSkill();
+		}
+		else if (prevState == 'HoldingTreasureWalking')
+		{
+			if(Role < ROLE_Authority)
+				attemptToChangeState('HoldingTreasureBurrow');  //to server
+			GoToState('HoldingTreasureBurrow');  //local
+		}
+
+
 		`log("Stopping energy regen", true, 'Ravi');
 		ClearTimer('EnergyRegen');
 		ClearTimer('StartEnergyRegen');
 		SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');
-		sneaktoslimpawn_ginsengbaby(self.Pawn).toggleDustParticle(true);
+		if (role == role_authority)
+		{
+			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(true, self.GetTeamNum());
+		}
 	}
 
 	event EndState(Name NextStateName)
 	{
 		sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(false, self.GetTeamNum());
 		sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;	
-		sneaktoslimpawn_ginsengbaby(self.Pawn).toggleDustParticle(false);
+		if (role == role_authority)
+		{
+			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(false, self.GetTeamNum());
+		}
 		`log("Restarting energy regen", true, 'Ravi');
 		ClearTimer('UpdateEnergy');
 		SetTimer(2, false, 'StartEnergyRegen');
@@ -132,6 +165,25 @@ Begin:
 	sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(true, self.GetTeamNum());
 	sneaktoslimpawn(self.Pawn).bInvisibletoAI = true;
 	if(debugStates) logState();
+}
+
+simulated state HoldingTreasureBurrow extends Burrow
+{	
+	simulated exec function OnPressFirstSkill()
+	{
+	}
+	simulated exec function OnReleaseFirstSkill()
+	{
+	}
+	simulated exec function OnPressSecondSkill()   //reveal
+	{
+		pauseSprintTimer();
+
+		//TO-DO		//whether under wall or objects		
+		if(Role < ROLE_Authority)
+			attemptToChangeState('HoldingTreasureWalking');
+		GoToState('HoldingTreasureWalking');
+	}
 }
 
 
@@ -156,7 +208,9 @@ simulated state Burst
 			{
 				//if we receive player input after finishing burst, only then move to walking state
 				if( burstComplete && (PlayerInput.aStrafe != 0 || PlayerInput.aForward != 0) )
-				{					
+				{			
+					pauseSprintTimer();
+					SneaktoSlimPawn(self.Pawn).incrementBumpCount();
 					if(Role < ROLE_Authority)
 						attemptToChangeState('PlayerWalking');
 					GoToState('PlayerWalking');
@@ -173,13 +227,13 @@ simulated state Burst
 			if(pauseMenuOn)
 				return;
 
-			SneaktoSlimPawn(self.Pawn).incrementSprintCount();
-			resumeSprintTimer();
-
 			if(sneaktoslimpawn(self.Pawn).v_energy <= 20)
 				return;
 			else
-			{				
+			{		
+				SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+				resumeSprintTimer();
+
 				if(Role < ROLE_Authority)
 					attemptToChangeState('Burrow');
 				GoToState('Burrow');				
@@ -218,6 +272,6 @@ simulated function BurstTheBaby(float chargeTime)
 
 defaultproperties
 {	
-	ENERGY_UPDATE_FREQUENCY = 0.2
+	ENERGY_UPDATE_FREQUENCY = 0.03
 	energyConsumptionFactor = 1
 }

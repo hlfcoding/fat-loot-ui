@@ -3,50 +3,73 @@ class nearbyTrigger extends ITrigger;
 
 var () int NoBuffProbility;
 var () int InvisibleProbility;
-var int BuffType;
-var repnotify bool isHaveBuff;
+var repnotify int BuffType;
 var ParticleSystemComponent ParticalEffect;
-
+var array<color> steamParticleColor;
+var int powerupNum;
 replication {
 	if (bNetDirty)
-		isHaveBuff;
+		BuffType;
 }
 
 simulated event PostBeginPlay()
 {
     super.PostBeginPlay();
-	//if(Role == ROLE_Authority){
-		//isHaveBuff = true;
-	//}
-
+	if(Role == ROLE_Authority){
+		StartSpawnBuffItem();
+	}
 }
 
 simulated function StartSpawnBuffItem(){
 	
 	Local int randNum;
-	isHaveBuff = true;
 	//if(Role == ROLE_Authority){
         randNum = Rand(100);
-		if(randNum < 30){
+		if(randNum < (1*100/powerupNum)){
             BuffType = 1;
 		}
-		else if(randNum<60){
+		else if(randNum < (2*100/powerupNum)){
 			BuffType = 2;
 		}
-		else{
+		else if(randNum < (3*100/powerupNum)){
 			BuffType = 3;
 		}
-
-
+		else if(randNum < (4*100/powerupNum)){
+			BuffType = 4;
+		}
+		else{
+			BuffType = 5;
+		}
     //}
 }
 
 
 simulated event ReplicatedEvent(name VarName){
-	if(VarName == 'isHaveBuff'){
-        `log("1111111111122222222222222isHaveBuff~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@isHaveBuff);
-		
-		SetParticalEffectActive(isHaveBuff);
+	if(VarName == 'BuffType'){
+        `log("1111111111122222222222222isHaveBuff~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@BuffType);
+		ParticalEffect.SetColorParameter('steamColor', steamParticleColor[BuffType]);
+		`log("steamColor is"@steamParticleColor[BuffType].R);
+		switch (BuffType){
+		case 0:
+			ParticalEffect.SetActive(false);
+			break;
+		case 1:
+			ParticalEffect.SetActive(true);
+			break;
+		case 2:
+			ParticalEffect.SetActive(true);
+			break;
+		case 3:
+			ParticalEffect.SetActive(true);
+			break;
+		case 4:
+			ParticalEffect.SetActive(true);
+			break;
+		case 5:
+			ParticalEffect.SetActive(true);
+			break;
+		}
+		//SetParticalEffectActive();
 	}
 
 }
@@ -56,9 +79,11 @@ simulated function SetParticalEffectActive(bool flag){
 	 if (flag)
 	 {
 		PromtText = "Press E to Get the treasure";
+		PromtTextXbox = "Press 'A' to Get the treasure";
 	 } else
 	 {
 		PromtText = "";
+		PromtTextXbox = "";
 	 }
 }
 
@@ -80,8 +105,6 @@ simulated function bool UsedBy(Pawn User)
 			//Tells the user as a client to update its UI
 			 SneaktoSlimPawn(User).showPowerupUI(BuffType);
 			 ChangeBuff(0);
-			 isHaveBuff = false;
-			 `log("33333333333333333333333333333isHaveBuff~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@isHaveBuff);
 			 //if(Role == ROLE_Authority){
 		     setTimer(10.0,false,'StartSpawnBuffItem');
 	         //}
@@ -98,12 +121,15 @@ DefaultProperties
 {
 	displayName = "BookShelf"
 	PromtText = "Press 'E' to Check the shelf"
+	PromtTextXbox = "Press 'A' to Check the shelf"
 	eqGottenText = ""
+	powerupNum = 5
 
 	Begin Object Class=ParticleSystemComponent Name=TeapotEffectComponent
         Template=ParticleSystem'flparticlesystem.Steam'
         bAutoActivate = true
-		//Translation=(Z=80.0)
+		//Translation=(X=-50, Y= 0, Z=30.0)
+		Scale = 0.5
 	End Object
     ParticalEffect = TeapotEffectComponent
 	Components.Add(TeapotEffectComponent)
@@ -122,7 +148,14 @@ DefaultProperties
 		bUsePrecomputedShadows=True
 		LightEnvironment=MyLightEnvironment
 		CastShadow=true
+		Translation = (X=35, Y= 5, Z=50)
+		Scale = 5
     End Object
+    steamParticleColor[0]=(R=0,G=0,B=0,A=255)
+	steamParticleColor[1]=(R=255,G=255,B=180,A=26) //invisible
+	steamParticleColor[2]=(R=26,G=80,B=255,A=26) //disquise
+	steamParticleColor[3]=(R=120,G=255,B=26,A=26) //burp
+
 
 	//set collision component
     CollisionComponent=MyMesh 
@@ -132,8 +165,9 @@ DefaultProperties
 
   	 bBlockActors=true //trigger will block players
   	 bHidden=false //players can see the trigger
-	 BuffType = 1
-	 isHaveBuff = true
+	 BuffType = 0
 	 NoBuffProbility = 50
 	 InvisibleProbility = 50
+	 RemoteRole=ROLE_AutonomousProxy
+	 bAlwaysRelevant=true
 }

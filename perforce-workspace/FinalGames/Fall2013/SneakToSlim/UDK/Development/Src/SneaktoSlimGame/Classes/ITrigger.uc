@@ -2,13 +2,19 @@ class ITrigger extends Trigger;
 
 var string displayName;
 var string PromtText;
+var string PromtTextXbox;
 var string eqGottenText;
 
 event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hitNormal)
 {
 	super.Touch(other, otherComp, hitLoc, hitNormal);
+
 	if(SneaktoSlimPawn(other)!= None){
-	    SneaktoSlimPawn(other).showPromptUI(PromtText);
+		`log(SneaktoSlimPlayerController(SneaktoSlimPawn(other).Controller).PlayerInput.bUsingGamepad);
+		if(SneaktoSlimPlayerController(SneaktoSlimPawn(other).Controller).PlayerInput.bUsingGamepad)
+			SneaktoSlimPawn(other).showPromptUI(PromtTextXbox);
+		else
+			SneaktoSlimPawn(other).showPromptUI(PromtText);
 	}
 		//`log( Name $ " Touched by " $other.Name $ " name is " $ displayName);
 		//SneaktoSlimPawn(other).staticHUDmsg.triggerPromtText = PromtText; // local only
@@ -43,6 +49,7 @@ DefaultProperties
 {
 	displayName = "trigger interface";
 	PromtText = "trigger text default";
+	PromtTextXbox = "trigger text default";
 	eqGottenText = "trigger eq default"
 
 	Components.Remove(Sprite)

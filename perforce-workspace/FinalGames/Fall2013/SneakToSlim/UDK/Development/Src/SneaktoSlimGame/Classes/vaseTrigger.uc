@@ -114,6 +114,7 @@ DefaultProperties
 {
 	displayName = "vase";
 	PromtText = "Press E to enter vase";
+	PromtTextXbox = "Press 'A' to enter vase";
 	eqGottenText = ""
 	
 

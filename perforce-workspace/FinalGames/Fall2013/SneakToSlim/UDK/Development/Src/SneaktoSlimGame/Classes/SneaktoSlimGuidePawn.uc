@@ -51,7 +51,7 @@ DefaultProperties
 	LightEnvironment=MyLightEnvironment
 
 	Begin Object Class=SkeletalMeshComponent Name=GuideSkeletalMesh	
-		SkeletalMesh = SkeletalMesh'FLCharacter.Guard.Guard'		
+		SkeletalMesh = SkeletalMesh'FLCharacter.Shorty.Shorty_skeletal'		
 		Translation=(Z=-48.0)
 		LightEnvironment=MyLightEnvironment
 		CastShadow=true

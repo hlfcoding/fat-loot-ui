@@ -1,13 +1,16 @@
 class SneaktoSlimGuideController extends PlayerController;
 
 //Dialogue Trees that hold tutorial text
-var array<string> HowToMoveDialogue, TreasureDialogue, SpectateDialogue, GuardsDialogue, TeleporterDialogue, VaseDialogue, ShelfDialogue, 
-				  InteractableObjectsDialogue, FirstCheckPointDialogue, SecondCheckPointDialogue, FinalDialogue;
+var array<string> HowToMoveDialoguePC, TreasureDialoguePC, SpectateDialoguePC, GuardsDialoguePC, TeleporterDialoguePC, VaseDialoguePC, ShelfDialoguePC, 
+				  InteractableObjectsDialoguePC, FirstCheckPointDialoguePC, SecondCheckPointDialoguePC, FinalDialoguePC, AbilitiesDialoguePC;
+var array<string> HowToMoveDialogueXbox, TreasureDialogueXbox, SpectateDialogueXbox, GuardsDialogueXbox, TeleporterDialogueXbox, VaseDialogueXbox, ShelfDialogueXbox, 
+				  InteractableObjectsDialogueXbox, FirstCheckPointDialogueXbox, SecondCheckPointDialogueXbox, FinalDialogueXbox, AbilitiesDialogueXbox;
 var array<string> currentDialogue;
 var string currentState;
 var SneaktoSlimPawn talkingTo;
 var int timeBetweenLines;
 var bool isActive;
+var bool isUsingXboxController;
 
 simulated event PostBeginPlay()
 {	
@@ -15,47 +18,59 @@ simulated event PostBeginPlay()
 
 	timeBetweenLines = 5;
 	isActive = false;
+	isUsingXboxController = false;
 
 	//Add Text script for different vars associated with a state
-	HowToMoveDialogue.AddItem("");      //This text is loaded before client HUD is initialized
-	HowToMoveDialogue.AddItem("How to move.");
-	HowToMoveDialogue.AddItem("Use the 'A', 'W', 'S', 'D' keys to move.");
-	HowToMoveDialogue.AddItem("Move the mouse to rotate the camera.");
-	HowToMoveDialogue.AddItem("See the treasure pedestal in front of you?");
-	HowToMoveDialogue.AddItem("Go to the person in front.");
-
-	/*HowToMoveDialogue.AddItem("Hold right mouse click button to sprint.");
-	HowToMoveDialogue.AddItem("See the stamina bar towards the lower-left side of the screen.");
-	HowToMoveDialogue.AddItem("Sprinting decreases stamina as you move.");
-	HowToMoveDialogue.AddItem("It'll recover over time, so make sure you keep an eye on it.");
-	HowToMoveDialogue.AddItem("Move on to the next room to continue or ...");
-	HowToMoveDialogue.AddItem("talk to me if you want to hear this again.");*/
+	HowToMoveDialoguePC.AddItem("");      //This text is loaded before client HUD is initialized
+	HowToMoveDialoguePC.AddItem("How to move.");
+	HowToMoveDialoguePC.AddItem("Use the 'A', 'W', 'S', 'D' keys to move.");
+	HowToMoveDialoguePC.AddItem("Move the mouse to rotate the camera.");
+	HowToMoveDialoguePC.AddItem("See the treasure pedestal in front of you?");
+	HowToMoveDialoguePC.AddItem("Talk to the person in front.");
+	HowToMoveDialogueXbox.AddItem("");      //This text is loaded before client HUD is initialized
+	HowToMoveDialogueXbox.AddItem("How to move.");
+	HowToMoveDialogueXbox.AddItem("Use the left thumb stick to move.");
+	HowToMoveDialogueXbox.AddItem("Move the right thumb stick to rotate the camera.");
+	HowToMoveDialogueXbox.AddItem("See the treasure pedestal in front of you?");
+	HowToMoveDialogueXbox.AddItem("Talk to the person in front.");
 	
-	TreasureDialogue.AddItem("Let me explain the purpose of treasure.");
-	TreasureDialogue.AddItem("Returning collected treasure to your home base scores you a point.");
-	TreasureDialogue.AddItem("At the end of a match, the player with the most points wins.");
-	//TreasureDialogue.AddItem("See the glowing pedestal? It has treasure.");
-	TreasureDialogue.AddItem("Walk up to the pedestal and press 'e' to grab it.");
-	/*TreasureDialogue.AddItem("Did I surprise you? That was a special move called the belly bump.");
-	TreasureDialogue.AddItem("As the Fat Lady character you can perform this attack with a left mouse click.");
-	TreasureDialogue.AddItem("Doing a belly bump costs some stamina, so again remember to be mindful of your stamina.");
-	TreasureDialogue.AddItem("Different characters have different special moves for both mouse clicks.");
-	TreasureDialogue.AddItem("I encourage you to try them out some time.");
-	TreasureDialogue.AddItem("One more thing before we move on.");
-	TreasureDialogue.AddItem("Noticed how my attack knocked the treasure out of your grip.");
-	TreasureDialogue.AddItem("When this happens, the treasure will return to a random pedestal.");
-	TreasureDialogue.AddItem("Move on to the next room to continue or ...");
-	TreasureDialogue.AddItem("talk to me if you want to hear this again.");*/
+	TreasureDialoguePC.AddItem("Let me explain the purpose of treasure.");
+	TreasureDialoguePC.AddItem("Returning collected treasure to your home base scores you a point.");
+	TreasureDialoguePC.AddItem("At the end of a match, the player with the most points wins.");
+	TreasureDialoguePC.AddItem("Walk up to the pedestal and press 'e' to grab it.");
+	TreasureDialogueXbox.AddItem("Let me explain the purpose of treasure.");
+	TreasureDialogueXbox.AddItem("Returning collected treasure to your home base scores you a point.");
+	TreasureDialogueXbox.AddItem("At the end of a match, the player with the most points wins.");
+	TreasureDialogueXbox.AddItem("Walk up to the pedestal and press 'A' to grab it.");
 
-	SpectateDialogue.AddItem("See those characters down there?");
+	GuardsDialoguePC.AddItem("Good job. Now try getting the treasure while dealing with the guard");
+	GuardsDialoguePC.AddItem("WATCH OUT! for guards at ALL costs!!!");
+	GuardsDialoguePC.AddItem("You can't beat these skilled protectors in combat.");
+	GuardsDialoguePC.AddItem("Tip: If you are out in the light, guards will have a better chance of spotting you.");
+	GuardsDialoguePC.AddItem("Talk to me again to move on to the next lesson.");
+	GuardsDialogueXbox = GuardsDialoguePC;
+
+	AbilitiesDialoguePC.AddItem("You can activate different abilities by clicking on the mouse.");
+	AbilitiesDialoguePC.AddItem("Each character has different abilities, but for now ...");
+	AbilitiesDialoguePC.AddItem("As the fat lady, you can run by holding the right mouse button and ...");
+	AbilitiesDialoguePC.AddItem("clicking the left mouse button will perform a belly bump.");
+	AbilitiesDialoguePC.AddItem("Attacking others will stun them and knock off any treasure their holding.");
+	AbilitiesDialoguePC.AddItem("Try it on the other player in the room or ...");
+	AbilitiesDialoguePC.AddItem("explore the area to see how different interactable objects work.");
+	AbilitiesDialoguePC.AddItem("When your done, press 'ESC' and quit to return to the main menu.");
+	AbilitiesDialogueXbox.AddItem("You can activate different abilities by pressing left or right trigger buttons");
+	AbilitiesDialogueXbox.AddItem("Each character has different abilities, but for now ...");
+	AbilitiesDialogueXbox.AddItem("As the fat lady, you can run by holding the LT button and ...");
+	AbilitiesDialogueXbox.AddItem("pressing the RT button will perform a belly bump.");
+	AbilitiesDialogueXbox.AddItem("Attacking others will stun them and knock off any treasure their holding.");
+	AbilitiesDialogueXbox.AddItem("Try it on the other player in the room or ...");
+	AbilitiesDialogueXbox.AddItem("explore the area to see how different interactable objects work.");
+	AbilitiesDialogueXbox.AddItem("When your done, press 'Start' and quit to return to the main menu.");
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+	/*SpectateDialogue.AddItem("See those characters down there?");
 	SpectateDialogue.AddItem("That's what a typical game looks like.");
 	SpectateDialogue.AddItem("See if you can notice the small details to play.");
 	SpectateDialogue.AddItem("When your done observing, move on to the next room.");
-
-	GuardsDialogue.AddItem("Good job. Now try getting the treasure while dealing with the guard");
-	GuardsDialogue.AddItem("WATCH OUT! for guards at ALL costs!!!");
-	GuardsDialogue.AddItem("You can't beat these skilled protectors in combat.");
-	GuardsDialogue.AddItem("Tip: If you are out in the light, guards will have a better chance of spotting you.");
 
 	//Explain interactable objects
 	InteractableObjectsDialogue.AddItem("Talk to my sisters to understand how interactable objects function.");
@@ -91,7 +106,7 @@ simulated event PostBeginPlay()
 	
 	FinalDialogue.AddItem("Great job you've completed the tutorial level.");
 	FinalDialogue.AddItem("Now your ready to play.");
-	FinalDialogue.AddItem("Have fun online and we hope you enjoy your game.");
+	FinalDialogue.AddItem("Have fun online and we hope you enjoy your game.");*/
 	
 	//State isn't used but set to keep things from accidently activating 
 	changeToTutorialState('WaitOnFirstLoad');
@@ -119,10 +134,13 @@ exec function skipLine()
 function readNextDialogueEntry()
 {
 	local string entry;
+	local int count;
 	local PathNode node;
 	local GuideTrigger guideTrigger;
 	local Rotator rotate;
 	local SneaktoSlimAIPawn aiPawn;
+	local SneaktoSlimPawn_FatLady lady;
+	local SneaktoSlimPlayerController_FatLady pclady;
 
 	//Stops if all dialogue has been read
 	if(currentDialogue.Length == 0)
@@ -151,6 +169,7 @@ function readNextDialogueEntry()
 		}
 		return;
 	}
+
 	if(currentState == "ExplainGuards" && currentDialogue.Length == 4)
 	{
 		foreach WorldInfo.AllPawns(class 'SneakToSlimAIPawn', aiPawn)
@@ -163,10 +182,37 @@ function readNextDialogueEntry()
 				}
 			}
 		}
+		foreach WorldInfo.AllActors(class'GuideTrigger', guideTrigger)
+		{
+			if(string(guideTrigger.Tag) == "ExplainGuards")
+				guideTrigger.Tag = 'ExplainAbilities';
+		}
+	}
+	if(currentState == "ExplainAbilities" && currentDialogue.Length == 8)
+	{
+		foreach WorldInfo.AllActors(class'PathNode', node)
+		{
+			if(string(node.Tag) == "Test")
+			{
+				count = 0;
+				foreach WorldInfo.AllPawns(class'SneaktoSlimPawn_FatLady', lady)
+					count++;
+
+				if(count == 1)
+				{
+					lady = Spawn(class 'SneaktoSlimPawn_FatLady',,,node.Location);
+					pclady = Spawn(class 'SneaktoSlimPlayerController_FatLady',,,node.Location);
+					lady.isGotTreasure = true;
+					pclady.GotoState('HoldingTreasure');
+					lady.Controller = pclady;
+					pclady.Pawn = lady;
+				}
+			}
+		}
 	}
 
 	//If the state name matches a predetermined keyword the currentDialogue array is read and displayed
-	if(currentState == "HowToMove" || currentState == "ExplainTreasure" || currentState == "Spectate" || 
+	if(currentState == "HowToMove" || currentState == "ExplainTreasure" || currentState == "ExplainAbilities" || 
 	   currentState == "ExplainGuards" || currentState == "ExplainInteractableObjects" || 
 	   currentState == "ExplainVase" || currentState == "ExplainTeleporter" || currentState == "ExplainShelf" || 
 	   currentState == "FirstCheckPoint" || currentState == "SecondCheckPoint" || currentState == "Final")
@@ -174,7 +220,7 @@ function readNextDialogueEntry()
 		entry = currentDialogue[0];
 		currentDialogue.Remove(0, 1);
 		talkingTo.displayTutorialText(entry);
-		`log(entry);
+		//`log(entry);
 
 		//Sets timer for HowToMove to activate read loop every five seconds instead of two after first line is read
 		if(currentState == "HowToMove" && self.timeBetweenLines == 1 && currentDialogue.Length == 4)
@@ -221,22 +267,36 @@ function changeToTutorialState(name stateName)
 	{
 		case "HowToMove":
 			timeBetweenLines = 1;
-			currentDialogue = HowToMoveDialogue;
+			self.isUsingXboxController = SneaktoSlimPlayerController(talkingTo.Controller).PlayerInput.bUsingGamepad;       //Will return false since controller isn't set immediately when in debug mode
+			if(isUsingXboxController)
+				currentDialogue = HowToMoveDialogueXbox;
+			else
+				currentDialogue = HowToMoveDialoguePC;
 			activateGuide();
 			break;
 		case "ExplainTreasure":
-			currentDialogue = TreasureDialogue;
+			self.isUsingXboxController = SneaktoSlimPlayerController(talkingTo.Controller).PlayerInput.bUsingGamepad;       //Double check, not needed.
+			if(isUsingXboxController)
+				currentDialogue = TreasureDialogueXbox;
+			else
+				currentDialogue = TreasureDialoguePC;
 			activateGuide();
 			break;
-		case "Spectate":
-			currentDialogue = SpectateDialogue;
+		case "ExplainAbilities":
+			if(isUsingXboxController)
+				currentDialogue = AbilitiesDialogueXbox;
+			else
+				currentDialogue = AbilitiesDialoguePC;
 			activateGuide();
 			break;
 		case "ExplainGuards":
-			currentDialogue = guardsDialogue;
+			if(isUsingXboxController)
+				currentDialogue = GuardsDialogueXbox;
+			else
+				currentDialogue = GuardsDialoguePC;
 			activateGuide();
 			break;
-		case "ExplainInteractableObjects":
+		/*case "ExplainInteractableObjects":
 			currentDialogue = InteractableObjectsDialogue;
 			activateGuide();
 			break;
@@ -263,7 +323,7 @@ function changeToTutorialState(name stateName)
 		case "Final":
 			currentDialogue = FinalDialogue;
 			activateGuide();
-			break;
+			break;*/
 		case "WaitOnFirstLoad":
 			`log("Guide is up and waiting.");
 			break;

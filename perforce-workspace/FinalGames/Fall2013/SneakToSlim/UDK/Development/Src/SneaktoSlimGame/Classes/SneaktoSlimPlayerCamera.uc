@@ -132,6 +132,7 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 					FreeCamDistance = 50;           //64;
 					TargetZ = 5;                    //32;
 					TargetOffset = 16;
+					TargetFOV = 100.f;
 				}
 				if (CameraStyle == 'AlertCam')  //FOV changes by 1 part, FreeCamDistance by 2 parts
 				{
@@ -174,8 +175,8 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 					if(SneaktoSlimPawn(PCOwner.Pawn).Mesh.bOwnerNoSee == false)
 						SneaktoSlimPawn(PCOwner.Pawn).Mesh.SetOwnerNoSee(true);
 				}
-				if(SneaktoSlimPawn(PCOwner.Pawn).s_energized == 1)
-					TargetFOV = 100.f;              // FUDGE YEA!!
+				//if(SneaktoSlimPawn(PCOwner.Pawn).s_energized == 1)
+					//TargetFOV = 100.f;              // FUDGE YEA!!
  
 				if(CameraStyle == 'FreeCam')
 				{

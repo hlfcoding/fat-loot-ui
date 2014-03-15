@@ -21,6 +21,91 @@ simulated event PostBeginPlay()
 	//self.Mesh.SetMaterial(1, teamMaterial[self.GetTeamNum()]);
 }
 
+simulated event ReplicatedEvent(name VarName)
+{
+	local SneaktoSlimPawn pa;
+	super.ReplicatedEvent(VarName);
+	if( VarName == 'isGotTreasure')
+	{
+		if(self.isGotTreasure == true)
+		{
+			foreach WorldInfo.AllPawns(class 'SneaktoSlimPawn', pa)
+			{
+				pa.showCharacterHasTreasure(self.GetTeamNum());
+			}
+
+			`log("authority"$ self.Role);
+			`log(self.Mesh.GetSocketByName('treasureSocket'));
+			if (self.Mesh.GetSocketByName('treasureSocket') != None){
+				self.Mesh.AttachComponentToSocket(treasureComponent , 'treasureSocket');
+				self.Mesh.AttachComponentToSocket(treasureLightComponent , 'treasureSocket');
+			}			
+			SetTreasureParticleEffectActive(true);
+
+			if(SneaktoSlimPlayerController_GinsengBaby(Self.Controller).IsInState('Burrow'))
+			{
+				SneaktoSlimPlayerController_GinsengBaby(Self.Controller).attempttochangestate('HoldingTreasureBurrow');//to server
+				SneaktoSlimPlayerController_GinsengBaby(Self.Controller).gotostate('HoldingTreasureBurrow');//local
+			}
+			else if(SneaktoSlimPlayerController_GinsengBaby(Self.Controller).IsInState('Exhausted'))
+			{
+				SneaktoSlimPlayerController_GinsengBaby(Self.Controller).attempttochangestate('HoldingTreasureExhausted');//to server
+				SneaktoSlimPlayerController_GinsengBaby(Self.Controller).gotostate('HoldingTreasureExhausted');//local
+			}
+
+			else
+			{
+				SneaktoSlimPlayerController_GinsengBaby(Self.Controller).attempttochangestate('HoldingTreasureWalking');//to server
+				SneaktoSlimPlayerController_GinsengBaby(Self.Controller).gotostate('HoldingTreasureWalking');//local
+			}
+
+
+		}
+		else
+		{
+			foreach WorldInfo.AllPawns(class 'SneaktoSlimPawn', pa)
+			{
+				pa.showCharacterLostTreasure(self.GetTeamNum());
+			}
+
+			if (self.Mesh.IsComponentAttached(treasureComponent)){
+				self.Mesh.DetachComponent(treasureComponent);
+				self.Mesh.DetachComponent(treasureLightComponent);
+			}				
+			self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
+			self.SetTreasureParticleEffectActive(false);			
+			SneaktoSlimPlayerController_GinsengBaby(self.Controller).DropTreasure();
+		}
+	}
+}
+
+event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vector HitNormal)
+{
+	local SneaktoSlimSpawnPoint playerBase;
+	playerBase = SneaktoSlimSpawnPoint(Other);	
+
+	if(playerBase != none)
+	{	
+		//`log("Pawn touching SpawnPoint");
+		if (SneaktoSlimPlayerController(self.Controller).IsInState('HoldingTreasureExhausted'))
+		{
+			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('Exhausted');
+			SneaktoSlimPlayerController(self.Controller).GoToState('Exhausted');//local
+		}
+		if (SneaktoSlimPlayerController(self.Controller).IsInState('HoldingTreasureBurrow'))
+		{
+			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('Burrow');
+			SneaktoSlimPlayerController(self.Controller).GoToState('Burrow');//local
+		}
+		if (SneaktoSlimPlayerController(self.Controller).IsInState('HoldingTreasureWalking'))
+		{
+			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('PlayerWalking');
+			SneaktoSlimPlayerController(self.Controller).GoToState('PlayerWalking');//local
+		}
+	}		
+}
+
+
 simulated function BabyBurst(float chargeTime)
 {
 	local SneaktoSlimPawn victim;
@@ -43,7 +128,7 @@ simulated function BabyBurst(float chargeTime)
 		
 		if(victim.isGotTreasure)
 		{            
-			victim.dropTreasure();
+			victim.dropTreasure(Normal(vector(self.rotation)));
 		}
 		checkOtherFLBuff(victim);
 
@@ -91,9 +176,10 @@ reliable server function meshTranslation(bool downOrUp, int teamNum)
 	}
 }
 
-function toggleDustParticle(bool flag)
+simulated function toggleDustParticle(bool flag)
 {
 	dustEffect.SetActive(flag);
+	WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.dig',self.Location + vect(0.0, 0.0 ,-60.0));
 }
 
 //reliable client function clientMeshTranslation(int zValue)
@@ -115,10 +201,18 @@ function toggleDustParticle(bool flag)
 //	}
 //}
 
+//event Tick(float DeltaTime)
+//{
+//	//`log(self.Controller.GetStateName());
+//	//`log(self.GroundSpeed);
+//	`log(self.v_energy);
+//}
+
 DefaultProperties
 {
-	FLWalkingSpeed=250.0
-	GroundSpeed=250.0;
+	FLWalkingSpeed=220.0
+	FLSprintingSpeed=420.0
+	GroundSpeed=220.0;
 
 	MIN_BURST_RADIUS = 50
 	MAX_BURST_RADIUS = 150
@@ -126,6 +220,12 @@ DefaultProperties
 	MAX_BURST_CHARGE_TIME = 2.0
 	BurstPower = 23
 	EnergyNeededForBurst = 10
+
+	Begin Object Name=CollisionCylinder
+		CollisionRadius=15.000000
+        CollisionHeight=48.000000
+    End Object
+	CylinderComponent=CollisionCylinder
 	
 	Begin Object Class=SkeletalMeshComponent Name=GBSkeletalMesh	
 		SkeletalMesh = SkeletalMesh'FLCharacter.GinsengBaby.GinsengBaby_skeletal'	

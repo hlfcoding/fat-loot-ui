@@ -66,10 +66,19 @@ DefaultProperties
 
 //	Components.Remove(Sprite)
 
-	Begin Object Class=ParticleSystemComponent Name=MyParticles
+	// disable futuristic particle
+	/*Begin Object Class=ParticleSystemComponent Name=MyParticles
 		template=ParticleSystem'flparticlesystem.teleportIn'
 		bAutoActivate=true
 	End Object
-	Components.Add(MyParticles)
+	Components.Add(MyParticles)*/
+
+	Begin Object Class=DrawSphereComponent Name=sphere
+		SphereRadius = 20
+		HiddenGame = true
+	End Object
+	Components.Add(sphere)
+
 	PromtText = "Press 'E' to Use the Teleporter";
+	PromtTextXbox = "Press 'A' to Use the Teleporter";
 }
