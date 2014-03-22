@@ -23,6 +23,8 @@
             skillSelectView.selectPreview.nameLabel.visible =
             selectPreview.nameLabel.visible = false;
             skillSelectView.selectMenu.addEventListener(ListEvent.INDEX_CHANGE, onSkillSelect);
+            skillSelectView.selectPreview.imageSize = { width: 100, height: 100 };
+            skillSelectView.selectPreview.hasImage = true;
             // Commit.
             source = GameModel.characters;
             init();
