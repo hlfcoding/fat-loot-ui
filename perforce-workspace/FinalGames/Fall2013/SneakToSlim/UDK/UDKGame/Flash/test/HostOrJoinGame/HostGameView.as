@@ -2,8 +2,6 @@ package  {
 
     import flash.display.MovieClip;
     import flash.events.Event;
-    import flash.events.TimerEvent;
-    import flash.utils.Timer;
 
     import scaleform.clik.controls.Button;
     import scaleform.clik.controls.Label;
@@ -24,21 +22,19 @@ package  {
         public var timeLimitLabel:Label;
         public var timeLimitInput:TextInput;
 
-        protected var gameSettingDebouncer:Timer;
-        protected var currentInput:UIComponent;
-
         // TODO: Click outside to blur.
+
+        protected var inputDebouncer:InputDebouncer;
 
         public var gameModel:GameModel;
 
         public function HostGameView() {
             super();
-            gameSettingDebouncer = new Timer(500, 1);
-            gameSettingDebouncer.addEventListener(TimerEvent.TIMER_COMPLETE, onGameSettingChange);
-            gameNameInput.addEventListener(Event.CHANGE, onGameSettingChange);
-            playerLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
-            scoreLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
-            timeLimitInput.addEventListener(Event.CHANGE, onGameSettingChange);
+            inputDebouncer = new InputDebouncer(onGameSettingChange);
+            gameNameInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            playerLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            scoreLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            timeLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
             levelSelectView.addEventListener(LevelSelectView.SELECT, onLevelSelect);
         }
 
@@ -48,38 +44,30 @@ package  {
         public function get navigationButtons():Vector.<Button> {
             return new <Button>[hostButton];
         }
+        public function get currentInput():UIComponent {
+            return inputDebouncer.currentInput;
+        }
 
         public function onGameSettingChange(event:Event):void {
-            // On first change event, update.
-            if (event.type !== TimerEvent.TIMER_COMPLETE && !gameSettingDebouncer.running) {
-                gameSettingDebouncer.start();
-                currentInput = event.target as UIComponent;
-            // On subsequent change events, debounce.
-            } else if (gameSettingDebouncer.running) {
-                return;
-            // On debouncer completion, submit changes and reset.
-            } else if (event.type === TimerEvent.TIMER_COMPLETE && currentInput != null) {
-                var settingName:String = gameSettingName(currentInput);
-                var systemName:String = gameSettingSystemName(settingName);
-                var value:String;
-                var textInput:TextInput;
-                if (currentInput is TextInput) {
-                    textInput = (currentInput as TextInput);
-                    value = textInput.text;
-                }
-                if (isValid(currentInput, value)) {
-                    if (value === '') {
-                        if (textInput != null) {
-                            value = textInput.defaultText;
-                        }
-                    }
-                    gameModel[settingName] = value;
-                    Utility.sendCommand(systemName, gameModel[settingName]);
-                    currentInput = null;
-                } else {
+            var settingName:String = gameSettingName(currentInput);
+            var systemName:String = gameSettingSystemName(settingName);
+            var value:String;
+            var textInput:TextInput;
+            if (currentInput is TextInput) {
+                textInput = (currentInput as TextInput);
+                value = textInput.text;
+            }
+            if (isValid(currentInput, value)) {
+                if (value === '') {
                     if (textInput != null) {
-                        textInput.text = '';
+                        value = textInput.defaultText;
                     }
+                }
+                gameModel[settingName] = value;
+                Utility.sendCommand(systemName, gameModel[settingName]);
+            } else {
+                if (textInput != null) {
+                    textInput.text = '';
                 }
             }
         }
