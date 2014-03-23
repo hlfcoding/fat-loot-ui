@@ -40,6 +40,9 @@ exec function showFatLootClassName()
 
 exec function OnPressFirstSkill() 
 {	
+	if( SneaktoSlimPawn(Pawn).isGotTreasure) // don't throw fire cracker if player has treasure
+		return;
+
 	if(Role < ROLE_Authority)
 		ServerGotoState('ChargingFireCracker');
 

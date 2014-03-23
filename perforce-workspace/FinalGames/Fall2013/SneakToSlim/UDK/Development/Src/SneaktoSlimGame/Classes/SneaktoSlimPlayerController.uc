@@ -2149,6 +2149,9 @@ simulated state HoldingTreasureWalking extends PlayerWalking
 		}
 		else if(self.Class == class 'SneaktoSlimPlayerController_Shorty')
 		{
+			SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+			attemptToChangeState('ChargingDash');
+			GoToState('ChargingDash');
 		}
 	}
 
