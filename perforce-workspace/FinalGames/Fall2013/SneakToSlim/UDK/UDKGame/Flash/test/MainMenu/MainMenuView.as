@@ -119,18 +119,13 @@
             var didNavigate:Boolean = super.navigateBack(sender);
             if (didNavigate && sender is Event) {
                 var commandName:String = 'backTo';
-                switch (sender.target) {
-                    case hostOrJoinGameView.backButton:
-                        commandName += 'RootMenu';
-                        break;
-                    case hostGameView.backButton:
-                        commandName += 'Lobby_Host';
-                        break;
-                    case joinGameView.backButton:
-                        commandName += (currentView is HostGameView) ?
-                            'HostGame_Host' : 'Lobby_NonHost';
-                        break;
-                    default: break;
+                if (hostOrJoinGameView != null && sender.target == hostOrJoinGameView.backButton) {
+                    commandName += 'RootMenu';
+                } else if (hostGameView != null && sender.target == hostGameView.backButton) {
+                    commandName += 'Lobby_Host';
+                } else if (joinGameView != null && sender.target == joinGameView.backButton) {
+                    commandName += (currentView is HostGameView) ?
+                        'HostGame_Host' : 'Lobby_NonHost';
                 }
                 if (commandName != 'backTo') {
                     Utility.sendCommand(commandName);
