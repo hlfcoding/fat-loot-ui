@@ -86,9 +86,11 @@ simulated function SetParticalEffectActive(bool flag){
 
 simulated function bool UsedBy(Pawn User)
 {
-	//local bool used;
-	//used = super.UsedBy(User);
-	
+	local bool used;
+	used = super.UsedBy(User);
+	if(InRangePawnNumber!=SneaktoSlimPawn(User).GetTeamNum()){
+	    return used;
+    }
     if(isHaveTreasure == true)
     {
 		`log("GetTreasure!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -97,7 +99,7 @@ simulated function bool UsedBy(Pawn User)
 		    isHaveTreasure=false;
 		}
 	}
-	return true;
+	return used;
 }
 
 DefaultProperties

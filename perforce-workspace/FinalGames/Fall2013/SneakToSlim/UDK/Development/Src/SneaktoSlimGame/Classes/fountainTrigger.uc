@@ -27,6 +27,9 @@ simulated function bool UsedBy(Pawn User)
 {
 	//Spawn(class 'soundSphere',,,self.Location);
     super.UsedBy(User);
+	if(InRangePawnNumber!=SneaktoSlimPawn(User).GetTeamNum()){
+	    return false;
+    }
 	if(destination == NONE)
 		setDestinationNode();   
 	if(destination == NONE)

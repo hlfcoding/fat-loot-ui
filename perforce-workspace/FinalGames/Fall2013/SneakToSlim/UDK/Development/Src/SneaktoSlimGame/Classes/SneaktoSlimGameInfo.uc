@@ -49,6 +49,7 @@ function GameOver()
 	foreach WorldInfo.AllPawns(class'SneaktoSlimPawn', pawn)
 	{
 		//TODO: send each pawn to "level select room"
+		//pawn.ConsoleCommand("open SneaktoSlimMenu_LandingPage");
 		pawn.showDemoTime("Up!");
 	}
 }

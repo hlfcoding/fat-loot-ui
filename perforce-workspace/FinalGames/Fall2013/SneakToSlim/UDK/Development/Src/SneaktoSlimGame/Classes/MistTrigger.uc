@@ -111,5 +111,6 @@ DefaultProperties
 	RemoteRole=ROLE_AutonomousProxy
 	bAlwaysRelevant=true
 	isTurnedOn = true
+	Components.Remove(Sprite)
 }
 

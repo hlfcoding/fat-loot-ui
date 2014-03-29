@@ -37,8 +37,11 @@ simulated function StartSpawnBuffItem(){
 		else if(randNum < (4*100/powerupNum)){
 			BuffType = 4;
 		}
+		else if(randNum < (5*100/powerupNum)){
+			BuffType = 6;
+		}
 		else{
-			BuffType = 5;
+			BuffType = 6;
 		}
     //}
 }
@@ -68,6 +71,9 @@ simulated event ReplicatedEvent(name VarName){
 		case 5:
 			ParticalEffect.SetActive(true);
 			break;
+		case 6:
+			ParticalEffect.SetActive(true);
+			break;
 		}
 		//SetParticalEffectActive();
 	}
@@ -94,9 +100,11 @@ simulated function ChangeBuff(int type){
 //function bool UsedBy(Pawn User)
 simulated function bool UsedBy(Pawn User)
 {
-	//local bool used;
-	//used = super.UsedBy(User);
-
+	local bool used;
+	used = super.UsedBy(User);
+        if(InRangePawnNumber!=SneaktoSlimPawn(User).GetTeamNum()){
+			return used;
+        }
 		//Only use power if user is currently not using a power
 	     if(BuffType !=0){
 	         SneaktoSlimPawn(User).bBuffed = BuffType;
@@ -113,7 +121,7 @@ simulated function bool UsedBy(Pawn User)
 
 		Sneaktoslimpawn(User).playerPlayOrStopCustomAnim('customSearch', 'Search', 1.f, true, 0, 0, false, true);
 
-		return true;
+		return used;
 }
 
 
@@ -123,7 +131,7 @@ DefaultProperties
 	PromtText = "Press 'E' to Check the shelf"
 	PromtTextXbox = "Press 'A' to Check the shelf"
 	eqGottenText = ""
-	powerupNum = 5
+	powerupNum = 6
 
 	Begin Object Class=ParticleSystemComponent Name=TeapotEffectComponent
         Template=ParticleSystem'flparticlesystem.Steam'

@@ -4,7 +4,7 @@ var int lastPlayerHealth, healthBarLength;
 var float screenSizeX, screenSizeY;
 var GFxObject HealthBar, InvisibilityIcon, PowerupBackdrop, InstructionText, CountdownText;
 var GFxObject player1Score, player2Score, player3Score, player4Score, PromptText, TutorialText;
-var GFxObject SpottedIcon, ClothIcon, ThunderIcon, TeaIcon, SuperSprintIcon, TimerText;
+var GFxObject SpottedIcon, ClothIcon, ThunderIcon, TeaIcon, SuperSprintIcon, BeerIcon, TimerText;
 var array<GFxObject> allFlashObjects;
 var bool isHUDSet;
 
@@ -29,7 +29,8 @@ function Init(optional LocalPlayer player)
 	ClothIcon = GetVariableObject("_root.Cloth_Icon");
 	ThunderIcon = GetVariableObject("_root.Thunder_Icon");
 	TeaIcon = GetVariableObject("_root.TeaIcon"); 
-	SuperSprintIcon = GetVariableObject("_root.TeaIcon"); //Xu: use Tea's icon first, needs to have a unique icon
+	SuperSprintIcon = GetVariableObject("_root.SpeedBoost");
+	BeerIcon = GetVariableObject("_root.CurseIcon");  
 	PowerupBackdrop = GetVariableObject("_root.PowerUpBackdrop");
 	InstructionText = GetVariableObject("_root.HowToUseInstruction");
 	if(SneaktoSlimPlayerController(GetPC()).PlayerInput.bUsingGamepad)
@@ -60,6 +61,7 @@ function Init(optional LocalPlayer player)
 	allFlashObjects.AddItem(ThunderIcon);
 	allFlashObjects.AddItem(TeaIcon);
 	allFlashObjects.AddItem(SuperSprintIcon);
+	allFlashObjects.AddItem(BeerIcon);
 	allFlashObjects.AddItem(PowerupBackdrop);
 	allFlashObjects.AddItem(InstructionText);
 	allFlashObjects.AddItem(CountdownText);

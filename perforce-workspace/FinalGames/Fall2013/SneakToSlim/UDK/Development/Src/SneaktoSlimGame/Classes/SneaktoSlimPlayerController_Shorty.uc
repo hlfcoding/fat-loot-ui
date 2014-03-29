@@ -51,6 +51,10 @@ exec function OnPressFirstSkill()
 
 exec function OnReleaseFirstSkill()
 {
+	if(sneaktoslimpawn(self.Pawn).bUsingBuffed[0] == 1 || sneaktoslimpawn(self.Pawn).bUsingBuffed[1] == 1) // if player is invisible or disguised, remove it
+	{
+		sneaktoslimpawn(self.Pawn).removePowerUp();
+	}
 	if( !firstSkillUsed && SneaktoSlimPawn(Pawn).v_energy > 20.0)
 	{
 		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
@@ -79,6 +83,10 @@ exec function OnPressSecondSkill()
 //exec function ActivateShortyDash()
 exec function OnReleaseSecondSkill()
 {	
+	if(sneaktoslimpawn(self.Pawn).bUsingBuffed[0] == 1) // if player is invisible, remove invisibility
+	{
+		sneaktoslimpawn(self.Pawn).removePowerUp();
+	}
 	if( !secondSkillUsed )
 	{
 		if(Role < ROLE_Authority)
@@ -235,6 +243,7 @@ simulated state ChargingDash
 	{
 		ClearTimer('UpdateEnergy');
 		SetTimer(2, false, 'StartEnergyRegen');	
+		Pawn.GroundSpeed = SneaktoSlimPawn_Shorty(Pawn).FLWalkingSpeed;	
 		SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomCharge', 'Charge', 1.0f, false, 0.25, 0, true, false);
 	}
 }

@@ -4,13 +4,14 @@ var string displayName;
 var string PromtText;
 var string PromtTextXbox;
 var string eqGottenText;
-
+var int InRangePawnNumber;
 event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hitNormal)
 {
 	super.Touch(other, otherComp, hitLoc, hitNormal);
 
 	if(SneaktoSlimPawn(other)!= None){
 		`log(SneaktoSlimPlayerController(SneaktoSlimPawn(other).Controller).PlayerInput.bUsingGamepad);
+		InRangePawnNumber=SneaktoSlimPawn(other).GetTeamNum();
 		if(SneaktoSlimPlayerController(SneaktoSlimPawn(other).Controller).PlayerInput.bUsingGamepad)
 			SneaktoSlimPawn(other).showPromptUI(PromtTextXbox);
 		else
@@ -24,6 +25,7 @@ event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hit
 event UnTouch(Actor other)
 {
 	if(SneaktoSlimPawn(other)!= None){
+		InRangePawnNumber=-1;
 	    SneaktoSlimPawn(other).hidePromptUI();
 	}
 		//SneaktoSlimPawn(other).showPromptUI("hahaha");
@@ -51,6 +53,6 @@ DefaultProperties
 	PromtText = "trigger text default";
 	PromtTextXbox = "trigger text default";
 	eqGottenText = "trigger eq default"
-
+    InRangePawnNumber = -1;
 	Components.Remove(Sprite)
 }

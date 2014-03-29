@@ -128,18 +128,6 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 	}		
 }
 
-simulated event HitWall (Object.Vector HitNormal, Actor Wall, PrimitiveComponent WallComp)
-{	
-	//`log("Hit a wall", true, 'Ravi');
-	local SneaktoSlimPlayerController_Shorty temp;
-	temp = SneaktoSlimPlayerController_Shorty(Controller);
-
-	if( temp != none && temp.IsInState('Dashing') )
-	{
-		temp.StopDashing();
-	}
-}
-
 server reliable function listRoles()
 {
 	local Actor tempA;

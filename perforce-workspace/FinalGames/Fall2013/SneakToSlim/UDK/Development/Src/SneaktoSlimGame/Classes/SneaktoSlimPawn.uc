@@ -67,7 +67,7 @@ enum enumBuff {
 var bool bInvisibletoAI; //if true, AIPawn cannot detect this pawn. used in SneakToSlim.setVisibleSneaktoSlimPawns
 
 var int bBuffed;
-var byte bUsingBuffed[3];//should not be used anymore
+var byte bUsingBuffed[7];//should not be used anymore
 var float BuffedTimer;
 var float BuffedTimerDefault[3];// record the countdonw of buffs
 
@@ -86,6 +86,7 @@ var() float FLSprintingSpeed;
 var() float FLExhaustedSpeed;
 
 //var bool bIsDashing;        //Xu: Whether the pawn is currently dashing
+var float SuperSprintSpeed;
 var float DashDuration;     //Xu: How long the pawn will dash for
 var bool bIsHitWall;
 var float HitWallDuration;
@@ -104,7 +105,7 @@ var vector treasureLocation;
 var SneaktoSlimTreasure myTreasure;
 var SneaktoSlimCloth myCloth;
 
-var  RepNotify int colorIndex;
+var RepNotify int colorIndex;
 
 var bool hiddenInVase;  //Nick: player is in a vase? set true when player activates vase
 var vaseTrigger vaseIMayBeUsing;
@@ -125,12 +126,14 @@ var () float PreBumpDelay;
 var repnotify int invisibleNum;
 var repnotify int endinvisibleNum;
 var repnotify int mistNum;
+var repnotify bool isUsingBeer;
 
 var bool bPreDash;
 var() float energyRegenerateRate;
 var() int PlayerBaseRadius;
 var () bool underLight;
 var int playerCount;
+var int beerNum;
 
 var StaticMeshComponent treasureComponent;
 var PointLightComponent treasureLightComponent;
@@ -160,7 +163,9 @@ replication {   //ARRANGE THESE ALPHABETICALLY
 		endDisguiseNum,
 		invisibleNum,
 		endinvisibleNum,
-		mistNum;
+		mistNum,
+		beerNum,
+		isUsingBeer;
 }
 
 simulated event PostBeginPlay()
@@ -428,34 +433,71 @@ reliable client function showPowerupUI(int num)
 		if(num == 1)
 		{
 			myFlashHUD.InvisibilityIcon.SetBool("isOn", true);
+			myFlashHUD.ClothIcon.SetBool("isOn", false);
+			myFlashHUD.ThunderIcon.SetBool("isOn", false);
+			myFlashHUD.TeaIcon.SetBool("isOn", false);
+			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
+			myFlashHUD.BeerIcon.SetBool("isOn", false);
 			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
 		}
 		if(num == 2)
 		{
+			myFlashHUD.InvisibilityIcon.SetBool("isOn", false);
 			myFlashHUD.ClothIcon.SetBool("isOn", true);
+			myFlashHUD.ThunderIcon.SetBool("isOn", false);
+			myFlashHUD.TeaIcon.SetBool("isOn", false);
+			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
+			myFlashHUD.BeerIcon.SetBool("isOn", false);
 			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
 		}
 		if(num == 3)
 		{
+			myFlashHUD.InvisibilityIcon.SetBool("isOn", false);
+			myFlashHUD.ClothIcon.SetBool("isOn", false);
 			myFlashHUD.ThunderIcon.SetBool("isOn", true);
+			myFlashHUD.TeaIcon.SetBool("isOn", false);
+			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
+			myFlashHUD.BeerIcon.SetBool("isOn", false);
 			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
 		}
 		if(num == 4)
 		{
+			myFlashHUD.InvisibilityIcon.SetBool("isOn", false);
+			myFlashHUD.ClothIcon.SetBool("isOn", false);
+			myFlashHUD.ThunderIcon.SetBool("isOn", false);
 			myFlashHUD.TeaIcon.SetBool("isOn", true);
+			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
+			myFlashHUD.BeerIcon.SetBool("isOn", false);
 			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
 		}
 		if(num == 5)
 		{
+			myFlashHUD.InvisibilityIcon.SetBool("isOn", false);
+			myFlashHUD.ClothIcon.SetBool("isOn", false);
+			myFlashHUD.ThunderIcon.SetBool("isOn", false);
+			myFlashHUD.TeaIcon.SetBool("isOn", false);
 			myFlashHUD.SuperSprintIcon.SetBool("isOn", true);
+			myFlashHUD.BeerIcon.SetBool("isOn", false);
+			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
+			myFlashHUD.InstructionText.SetBool("isOn", true);
+			myFlashHUD.CountdownText.SetBool("isOn", true);
+		}
+		if(num == 6)
+		{
+			myFlashHUD.InvisibilityIcon.SetBool("isOn", false);
+			myFlashHUD.ClothIcon.SetBool("isOn", false);
+			myFlashHUD.ThunderIcon.SetBool("isOn", false);
+			myFlashHUD.TeaIcon.SetBool("isOn", false);
+			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
+			myFlashHUD.BeerIcon.SetBool("isOn", true);
 			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
@@ -501,6 +543,12 @@ reliable client function hidePowerupUI(int num)
 		if(num == 5)
 		{
 			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
+			myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
+			myFlashHUD.InstructionText.SetBool("isOn", false);
+		}
+		if(num == 5)
+		{
+			myFlashHUD.BeerIcon.SetBool("isOn", false);
 			myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
 			myFlashHUD.InstructionText.SetBool("isOn", false);
 		}
@@ -1018,6 +1066,26 @@ simulated event ReplicatedEvent(name VarName)
 		}
 	}
 
+	if ( VarName == 'isUsingBeer')
+	{
+		`log("1111111111111111111111111111111111111111111111111111");
+		if(isUsingBeer == true)
+		{
+			isUsingBeer = false;
+			if(self.Role == ROLE_SimulatedProxy)
+			{
+				foreach allactors(class 'sneaktoslimpawn', CurrentPawn)
+				{
+					if(CurrentPawn.Role == ROLE_AutonomousProxy)
+					{
+						CurrentPawn.beerNum = -1;
+						CurrentPawn.bUsingBuffed[6] = 1;
+					}
+				}
+			}
+		}
+	}
+
 	Super.ReplicatedEvent(VarName);
 }
 
@@ -1499,27 +1567,11 @@ reliable server function checkServerFLBuff(enumBuff _eb, bool _boo)
 {	
 	`log("[Server] "$ Name $ " press 'use buff' key " $ _eb $" "$ _boo  $ " " $ bBuffed);
 	
-	if(self.bBuffed == 1) //buff 1 is invis
+	if(self.bBuffed > 0 && self.bBuffed <= 5)
 	{		
 		updateStaticHUDeq("");
 		//Pawn calls itself as a client to update UI
 		self.hidePowerupUI(self.bBuffed);
-	}
-
-	if(self.bBuffed == 2) //buff 2 is disguise
-	{
-		self.hidePowerupUI(self.bBuffed);		
-		updateStaticHUDeq("");
-	}
-	if(self.bBuffed == 3) //buff 3 is thunder fan
-	{
-		self.hidePowerupUI(self.bBuffed);		
-		updateStaticHUDeq("");
-	}
-	if(self.bBuffed == 4) //buff 4 is energy tea
-	{
-		self.hidePowerupUI(self.bBuffed);		
-		updateStaticHUDeq("");
 	}
 }
 
@@ -1618,7 +1670,7 @@ event Tick(float DeltaTime)
 {	
 	//`log("dis num" $ self.disguiseNum $ "end dis num" $ self.endDisguiseNum $ "bbuffed" $ self.bBuffed);
 	//Nick: updates map's location to match player's location (if on)
-
+	//`log(beerNum);
 	//serverCheckBBuffed();
 
 	//`log(self.bBuffed);
@@ -1679,6 +1731,24 @@ event Tick(float DeltaTime)
 	{
 		self.hideCountdownTimer();
 		BuffedTimer = 0;
+	}
+	else if(bUsingBuffed[6] == 1)
+	{
+		 BuffedTimer += DeltaTime;
+		 self.showCountdownTimer(int(BuffedTimerDefault[0]-BuffedTimer));
+
+		//inputStringToCenterHUD(BuffedTimerDefault[1] - BuffedTimer);
+
+		if(BuffedTimer >= BuffedTimerDefault[0])
+		{
+			self.hideCountdownTimer();
+			BuffedTimer = 0;
+			inputStringToCenterHUD(0);
+			`log("buff end ");
+			//beInvisable(false, false, false);  
+			self.beerNum = 1;
+			bUsingBuffed[6] = 0;
+		}
 	}
 	else
 	{
@@ -2288,6 +2358,24 @@ exec function QuitCurrentGame()
 	ConsoleCommand("open sneaktoslimmenu_landingpage?Character=Menu");
 }
 
+reliable client function GoToResultsScreen()
+{
+	local SaveGameState sgs;
+
+	sgs = new class 'SaveGameState';
+
+	ConsoleCommand("disconnect");
+	ConsoleCommand("open sneaktoslimmenu_landingpage?Character=" $ self.characterName);
+
+	class'Engine'.static.BasicLoadObject(sgs, "GameResults.bin", true, 1);
+	while(sgs.characterType.Length > 0)
+	{
+		`log("Player " $ sgs.characterType.Length $ " Type = " $ sgs.characterType[0] $ " Score = " $ sgs.scoreBoard[0]);
+		sgs.characterType.Remove(0,1);
+		sgs.scoreBoard.Remove(0,1);
+	}
+}
+
 exec function serverQuit()
 {
 	HostQuitGame();
@@ -2303,6 +2391,13 @@ exec function saysometing()
 	`log("fuck you fuck me");
 }
 
+reliable server function SetUsingBeer(bool inputUsingBeer)
+{
+	`log("I am fucked");
+	self.isUsingBeer = inputUsingBeer;
+}
+
+
 defaultproperties
 {
 	bJumpCapable = false;
@@ -2310,6 +2405,7 @@ defaultproperties
 	bBuffed = 0;
 	bUsingBuffed[0] = 0;
 	bUsingBuffed[1] = 0;
+	bUsingBuffed[6] = 0;
 
 	BuffedTimerDefault[0] = 10.0; // buff invis period
 	BuffedTimerDefault[1] = 20.0; // buff disguise period
@@ -2317,6 +2413,7 @@ defaultproperties
 	bInvisibletoAI = false;
 
 	//bIsDashing = false;
+	SuperSprintSpeed = 400;
 	DashDuration = 0.1f;
 	bIsHitWall = false;
 	HitWallDuration = 0.05;
@@ -2328,6 +2425,8 @@ defaultproperties
 	invisibleNum = -1;
 	endinvisibleNum = -1;
 	mistNum = 0;
+	beerNum = 1;
+	isUsingBeer = false;
 
 	bOOM = false;
 

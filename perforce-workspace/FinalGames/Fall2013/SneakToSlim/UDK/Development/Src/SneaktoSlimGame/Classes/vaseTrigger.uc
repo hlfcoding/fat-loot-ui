@@ -53,6 +53,9 @@ simulated function bool UsedBy(Pawn User)
 	
 	if(!occupied)
 	{
+		if(InRangePawnNumber!=SneaktoSlimPawn(User).GetTeamNum()){
+	        return used;
+        }
 		Inside_player = SneaktoSlimPawn(User);      //Cast Pawn to SneaktoSlimPawn and place it in vase's player property
 		Inside_player.hiddenInVase = true;
 		occupied = true;
