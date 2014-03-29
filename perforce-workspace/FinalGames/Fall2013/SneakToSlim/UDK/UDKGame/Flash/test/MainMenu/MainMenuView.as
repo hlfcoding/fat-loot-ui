@@ -10,6 +10,7 @@
 
         public static const DEBUG = true;
         public static const USE_FIXTURES = true;
+        public static const SEND_NAV_COMMANDS = false;
 
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
@@ -46,7 +47,9 @@
                     // From root menu.
                     case rootMenuView.networkedGameButton:
                         toViewName = 'hostOrJoinGameView';
-                        Utility.sendCommand('lobbyScreen');
+                        if (MainMenuView.SEND_NAV_COMMANDS) {
+                            Utility.sendCommand('lobbyScreen');
+                        }
                         break;
                     case rootMenuView.tutorialButton:   Utility.sendCommand('playTutorialInUdk'); break;
                     case rootMenuView.creditButton:     Utility.sendCommand('showCreditInUdk'); break;
@@ -57,18 +60,24 @@
                         var selectedModel:Object = hostOrJoinGameView.gameTableView.selectedModel;
                         gameModel.level = GameModel.getLevelById(selectedModel.level);
                         gameModel.location = selectedModel.location;
-                        Utility.sendCommand('joinGameScreen');
+                        if (MainMenuView.SEND_NAV_COMMANDS) {
+                            Utility.sendCommand('joinGameScreen');
+                        }
                         break;
                     case hostOrJoinGameView.hostButton:
                         toViewName = 'hostGameView';
-                        Utility.sendCommand('hostGameScreen');
+                        if (MainMenuView.SEND_NAV_COMMANDS) {
+                            Utility.sendCommand('hostGameScreen');
+                        }
                         break;
                     // From host view.
                     case hostGameView.hostButton:
                         toViewName = 'joinGameView';
                         gameModel.level = hostGameView.levelSelectView.selectedModel;
                         Utility.sendCommand('hostGameInUdk', gameModel.location);
-                        Utility.sendCommand('joinGameScreen_Host');
+                        if (MainMenuView.SEND_NAV_COMMANDS) {
+                            Utility.sendCommand('joinGameScreen_Host');
+                        }
                         break;
                     // From join view.
                     case joinGameView.joinButton:
@@ -127,7 +136,7 @@
                     commandName += (currentView is HostGameView) ?
                         'HostGame_Host' : 'Lobby_NonHost';
                 }
-                if (commandName != 'backTo') {
+                if (commandName != 'backTo' && MainMenuView.SEND_NAV_COMMANDS) {
                     Utility.sendCommand(commandName);
                 }
             }
