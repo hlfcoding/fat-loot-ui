@@ -106,7 +106,7 @@
             }
             var toViewClassName:String = toViewName.substr(0, 1).toUpperCase().concat(toViewName.substr(1));
             // Load and store view.
-            load(toViewClassName, toViewName);
+            var toView:MovieClip = load(toViewClassName, toViewName);
             // Setup view as needed.
             switch (toViewName) {
                 case 'joinGameView':
@@ -119,9 +119,9 @@
             }
             // Navigate.
             if (isRestoreRequest) {
-                this.rootView = this[toViewName];
+                this.rootView = toView;
             } else {
-                navigate(this[toViewName]);
+                navigate(toView);
             }
         }
 
