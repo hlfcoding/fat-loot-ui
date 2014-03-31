@@ -12,6 +12,8 @@ replication {
 simulated event PostBeginPlay()
 {
     super.PostBeginPlay();
+	Mistnum = int(Split(self.Name,"MistTrigger_",true))+1;
+	`log("MistNumber????????????????????????????????????????????"@Mistnum);
 	if(role == role_authority){
 		setTimer(30.0,false,'ChangeisTurnedOn');
 	}
@@ -25,7 +27,6 @@ simulated function ChangeisTurnedOn(){
 	if(!isTurnedOn){
 		foreach worldinfo.AllActors(class 'SneaktoSlimPawn', currentPawn){
 			if(currentPawn.mistNum == Mistnum){
-				`log("Reset Invisible");
 				currentPawn.mistNum = 0;
 				currentpawn.bInvisibletoAI=false;
 		    }
@@ -35,7 +36,6 @@ simulated function ChangeisTurnedOn(){
 		foreach worldinfo.AllActors(class 'SneaktoSlimPawn', currentPawn){
 			overlapping=IsOverlapping(currentPawn);
 			if(overlapping){
-				`log("Start Invisible");
 				currentPawn.mistNum = Mistnum;
 				currentpawn.bInvisibletoAI=true;
 		    }
@@ -47,7 +47,6 @@ simulated function ChangeisTurnedOn(){
 simulated event ReplicatedEvent(name VarName){
 	
 	if(VarName == 'isTurnedOn'){
-        `log("Change isTurnedOn in replicated ~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@isTurnedOn);
 		ParticalEffect.SetActive(isTurnedOn);
 		
 	}
@@ -59,7 +58,6 @@ event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hit
 	
 	super.Touch(other, otherComp, hitLoc, hitNormal);
 	if(isTurnedOn){
-		`log("Step In Mist");
 	    sneaktoslimpawn(other).bInvisibletoAI = true;
 	    sneaktoslimpawn(other).mistNum = Mistnum;//need to be set to mistTrigger num
 	}
@@ -70,7 +68,6 @@ event UnTouch(Actor other)
 	
 	//sneaktoslimpawn(other).endinvisibleNum = other.GetTeamNum();
 	if(isTurnedOn){
-		`log("Step Out Of Mist");
 	    sneaktoslimpawn(other).bInvisibletoAI = false;
 	    sneaktoslimpawn(other).mistNum = 0;
 	}

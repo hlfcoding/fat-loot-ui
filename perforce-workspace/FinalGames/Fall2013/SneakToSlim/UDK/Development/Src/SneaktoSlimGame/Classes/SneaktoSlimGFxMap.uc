@@ -1,7 +1,7 @@
 class SneaktoSlimGFxMap extends GFxMoviePlayer;
 
 var float screenSizeX, screenSizeY;
-var GFxObject Map, playerIcon, demoTime, winnerDisplayText, winnerDisplayBackground, minimapText;
+var GFxObject Map, playerIcon, demoTime, winnerDisplayText, winnerDisplayBackground, minimapText, arrow;
 var MiniMap miniMap;
 var Texture2D mapTexture;
 var vector player2DScreenPoint;
@@ -9,6 +9,7 @@ var String mapName, mapPath;
 var array<GFxObject> allFlashObjects;
 var float flashMapX, flashMapY, flashMapWidth, flashMapHeight, scaleFactorX, scaleFactorY;
 var array<Texture2D> minimaps;
+var float mouseRotation, faceRotation;
 var bool isHUDSet;
 
 function Init(optional LocalPlayer player)
@@ -28,6 +29,7 @@ function Init(optional LocalPlayer player)
 	flashMapHeight = Map.GetFloat("height");
 	flashMapWidth = Map.GetFloat("width");
 	playerIcon = GetVariableObject("_root.player_icon");
+	arrow = GetVariableObject("_root.Arrow");
 	demoTime = GetVariableObject("_root.DemoTimeText");
 	demoTime.setBool("isOn", false);
 	winnerDisplayText = GetVariableObject("_root.WinnerDisplayText");
@@ -39,6 +41,7 @@ function Init(optional LocalPlayer player)
 	allFlashObjects.AddItem(Map);
 	allFlashObjects.AddItem(minimapText);
 	allFlashObjects.AddItem(playerIcon);
+	allFlashObjects.AddItem(arrow);
 	allFlashObjects.AddItem(demoTime);
 	allFlashObjects.AddItem(winnerDisplayText);
 	allFlashObjects.AddItem(winnerDisplayBackground);
@@ -66,7 +69,7 @@ function setMiniMapHead(string character)
 		playerIcon.GetObject("lady_head").SetBool("visible", true);	
 		playerIcon.GetObject("bunny_head").SetBool("visible", false);	
 		playerIcon.GetObject("shorty_head").SetBool("visible", false);	
-		playerIcon.GetObject("baby_head").SetBool("visible", false);	
+		playerIcon.GetObject("baby_head").SetBool("visible", false);
 		isHUDSet = true;
 	}
 	if(character == "Shorty")
@@ -192,6 +195,9 @@ function TickMap(float DeltaTime)
 		//Map.SetBool("isOn", miniMap.isOn);
 		//playerIcon.SetBool("isOn", miniMap.isOn);
 
+		playerIcon.SetFloat("rotation", faceRotation);
+		arrow.SetFloat("rotation", mouseRotation);	
+
 		//Same as fltemplemap but extra calculations for map margins are considered
 		if(mapName == "demoday")
 		{
@@ -223,6 +229,8 @@ function TickMap(float DeltaTime)
 
 				playerIcon.SetFloat("x", transformedX-(10*scaleFactorX));
 				playerIcon.SetFloat("y", transformedY-(10*scaleFactorY));
+				arrow.SetFloat("x", transformedX-(10*scaleFactorX));
+				arrow.SetFloat("y", transformedY-(10*scaleFactorY));
 			}
 			else
 			{
@@ -246,6 +254,8 @@ function TickMap(float DeltaTime)
 
 				playerIcon.SetFloat("x", transformedX);
 				playerIcon.SetFloat("y", transformedY);
+				arrow.SetFloat("x", transformedX);
+				arrow.SetFloat("y", transformedY);
 			}
 		}
 		//Same as demoday but extra calculations for map margins are ignored
@@ -279,6 +289,8 @@ function TickMap(float DeltaTime)
 
 				playerIcon.SetFloat("x", transformedX-(10*scaleFactorX));
 				playerIcon.SetFloat("y", transformedY-(10*scaleFactorY));
+				arrow.SetFloat("x", transformedX-(10*scaleFactorX));
+				arrow.SetFloat("y", transformedY-(10*scaleFactorY));
 			}
 			else
 			{
@@ -302,6 +314,8 @@ function TickMap(float DeltaTime)
 
 				playerIcon.SetFloat("x", transformedX);
 				playerIcon.SetFloat("y", transformedY);
+				arrow.SetFloat("x", transformedX);
+				arrow.SetFloat("y", transformedY);
 			}
 		}
 		//Same as demoday but extra calculations for map margins are ignored
@@ -335,6 +349,8 @@ function TickMap(float DeltaTime)
 
 				playerIcon.SetFloat("x", transformedX-(10*scaleFactorX));
 				playerIcon.SetFloat("y", transformedY-(10*scaleFactorY));
+				arrow.SetFloat("x", transformedX-(10*scaleFactorX));
+				arrow.SetFloat("y", transformedY-(10*scaleFactorY));
 			}
 			else
 			{
@@ -358,6 +374,8 @@ function TickMap(float DeltaTime)
 
 				playerIcon.SetFloat("x", transformedX);
 				playerIcon.SetFloat("y", transformedY);
+				arrow.SetFloat("x", transformedX);
+				arrow.SetFloat("y", transformedY);
 			}
 		}
 		//else

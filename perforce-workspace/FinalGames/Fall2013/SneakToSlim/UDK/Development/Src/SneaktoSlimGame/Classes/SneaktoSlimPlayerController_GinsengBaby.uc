@@ -169,6 +169,8 @@ Begin:
 
 simulated state HoldingTreasureBurrow extends Burrow
 {	
+	local SneaktoSlimPawn onePawn;
+
 	simulated exec function OnPressFirstSkill()
 	{
 	}
@@ -184,6 +186,56 @@ simulated state HoldingTreasureBurrow extends Burrow
 			attemptToChangeState('HoldingTreasureWalking');
 		GoToState('HoldingTreasureWalking');
 	}
+
+	event EndState(Name NextStateName)
+	{
+		sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(false, self.GetTeamNum());
+		sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;	
+		if (role == role_authority)
+		{
+			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(false, self.GetTeamNum());
+		}
+		`log("Restarting energy regen", true, 'Ravi');
+		ClearTimer('UpdateEnergy');
+		SetTimer(2, false, 'StartEnergyRegen');
+
+		if (NextStateName == 'Burrow')
+		{
+			SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree');
+			if(Role == ROLE_Authority)
+			{
+				ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
+				{
+					onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree');
+				}
+			}
+		}
+		else
+		{
+			SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree_treasure');
+			if(Role == ROLE_Authority)
+			{
+				ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
+				{
+					onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree_treasure');
+				}
+			}
+		}
+	}
+
+Begin:
+	sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(true, self.GetTeamNum());
+	sneaktoslimpawn(self.Pawn).bInvisibletoAI = true;
+	SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree_treasure_underground');
+	if(Role == ROLE_Authority)
+	{
+		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
+		{
+			onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree_treasure_underground');
+		}
+	}
+	if(debugStates) logState();
+
 }
 
 

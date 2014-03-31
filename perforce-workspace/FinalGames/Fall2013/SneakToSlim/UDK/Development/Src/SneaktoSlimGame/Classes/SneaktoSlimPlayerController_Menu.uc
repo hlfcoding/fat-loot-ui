@@ -15,12 +15,33 @@ var int scoreLimit;
 var int playerNumLimit;
 
 dllimport final function runWindowsCommand(out string s);
+dllimport final function killTheServer(out string s);
 
 //exec function selectMapInUdk(string inputString)
 //{
 //	if(inputString != "Null")
 //		mapName = inputString;
 //}
+simulated event PostBeginPlay()
+{
+	`log("Menu_controller");
+
+	setTimer(1,true,'killZeroPlayerServer');
+}
+
+//kill 0 player server
+exec function killZeroPlayerServer()
+{
+	local string outputString;
+
+	//find and kill
+	outputString = ": FLMist (0 players)";
+	killTheServer(outputString);
+
+	outputString = ": DemoDay (0 players)";
+	killTheServer(outputString);
+}
+
 //Menu One//
 //start tutorial
 exec function startTutorialLevel()
@@ -121,29 +142,30 @@ exec function playTutorialInUdk()
 	ConsoleCommand("open TutorialSmall?Character=FatLady");
 }
 
+exec function setIPAddress(string inIpAddress)
+{
+	targetIPAddress = inIpAddress;
+}
+
+exec function createGameInUdk()
+{
+	createRoom();
+	ConsoleCommand("open 127.0.0.1"$"?Character="$characterName);
+}
 
 exec function joinGameInUdk(string inIpAddress)
 {
 
-	local string urlAddress;
-	local string windowsCmd;
+	//local string urlAddress;
+	//local string windowsCmd;
 
 	//public self ip address, player number, map
 	//ConsoleCommand("open "$"map"$"?"$"Character="$characterName);
 
 	`log("open 127.0.0.1"$"?Character="$characterName$" -log");
 
-	if(gameMode == "Client")
-	{
-		`log("wyliya");
-		ConsoleCommand("open 127.0.0.1"$"?Character="$characterName);
-	}
-	else if(gameMode == "Server")
-	{
-		createRoom();
-		ConsoleCommand("open 127.0.0.1"$"?Character="$characterName);
-	}
-
+	ConsoleCommand("open 127.0.0.1"$"?Character="$characterName$"?Time="$timeLimit);
+	
 }
 
 exec function readyButton()
@@ -163,7 +185,9 @@ DefaultProperties
 	selfIPAddress = "127.0.0.1";
 	IPAddressList[0] = "127.0.0.1";
 
-	timeLimit = 300;
+	timeLimit = 567;
 	scoreLimit = 5;
 	playerNumLimit = 4;
+
+
 }

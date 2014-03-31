@@ -400,7 +400,7 @@ simulated state HoldingTreasureSprinting extends Sprinting
 		ServerSpeedDown();
 		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
 					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
+		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',1.f,true,0,0.5);
 		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
 		{
 			ClearTimer('EnergyCheck');
@@ -422,10 +422,41 @@ simulated state HoldingTreasureSprinting extends Sprinting
 
 	}
 
+	simulated function EnergyCheck()
+	{
+		if (Vsize(sneaktoslimpawn(self.Pawn).Velocity) != 0)
+		{
+			if(sneaktoslimpawn(self.Pawn).v_energy > sneaktoslimpawn(self.Pawn).PerSpeedEnergy)
+			{
+				ClearTimer('EnergyRegen');
+				ClearTimer('StartEnergyRegen');
+				//current.startSpeedUpAnim();
+				SwitchToCamera('ShoulderCam');
+				SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',0.5f,true,0.5,0.5,true,false);
+				sneaktoslimpawn(self.Pawn).v_energy = sneaktoslimpawn(self.Pawn).v_energy - sneaktoslimpawn(self.Pawn).PerSpeedEnergy;
+				if (sneaktoslimpawn(self.Pawn).v_energy < 0)
+					sneaktoslimpawn(self.Pawn).v_energy = 0;
+			}
+			else
+			{
+				//attemptToChangeState('EndSprinting');
+				//GoToState('EndSprinting');//local
+				OnReleaseSecondSkill();
+			}
+		}
+		else
+		{
+			SetTimer(2, false, 'StartEnergyRegen');
+			if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+			SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',0.5f,false,0,0.5f);
+		}
+	}
+
 
 Begin:
 	if(debugStates) logState();
-	SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customTreasureWalk','Treasure_Walk',2.3f,true,0.5,0.5,true,true);
+	SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',0.5f,true,0.5,0.5,true,true);
 	Speedup();
 	HoldTreasure();
 }

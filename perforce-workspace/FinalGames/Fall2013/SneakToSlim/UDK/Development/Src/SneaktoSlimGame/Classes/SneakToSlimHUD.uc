@@ -396,6 +396,8 @@ simulated event DrawHUD()
 		{
 			FlashMap.miniMap = map;
 			FlashMap.player2DScreenPoint = WorldPointTo2DScreenPoint(map.playerLocation);
+			FlashMap.faceRotation = PlayerOwner.Pawn.Rotation.Yaw*UnrRotToDeg;
+			FlashMap.mouseRotation = PlayerOwner.Rotation.Yaw*UnrRotToDeg;
 		}
 		//map = SneaktoSlimPlayerController(SneaktoSlimPawn(PlayerOwner.Pawn).Controller).myMap;
 		/*if(map != NONE && map.isOn)

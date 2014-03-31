@@ -134,7 +134,7 @@ DefaultProperties
     LightBeamEffectRef = LightBeamEffect;
 
 	Begin Object Class=ParticleSystemComponent Name=TreasureEffectComponent
-        Template=ParticleSystem'flparticlesystem.treasureChestEffect'
+        Template=ParticleSystem'flparticlesystem.DragontreasureChestEffect'
         bAutoActivate=false
 		//Translation=(Z=80.0)
 	End Object

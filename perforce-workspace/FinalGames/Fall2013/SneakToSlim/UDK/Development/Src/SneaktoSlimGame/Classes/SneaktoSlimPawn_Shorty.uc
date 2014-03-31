@@ -76,6 +76,8 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 {		
 	local SneaktoSlimPawn victim;
 
+	super.Bump(Other, OtherComp, HitNormal);
+
 	if( SneaktoSlimPlayerController_Shorty(Controller).IsInState('Dashing') )
 	{
 		SneaktoSlimPlayerController_Shorty(Controller).StopDashing();

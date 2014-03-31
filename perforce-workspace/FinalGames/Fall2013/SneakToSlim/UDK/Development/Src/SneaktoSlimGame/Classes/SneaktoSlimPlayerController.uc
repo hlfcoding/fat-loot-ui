@@ -1350,6 +1350,12 @@ simulated state PlayerWalking
 			NewAccel.X = sneaktoslimpawn(self.Pawn).beerNum * PlayerInput.aForward * DeltaTime * 100 * PlayerInput.MoveForwardSpeed; 
 			NewAccel.Z = 0; //no vertical movement for now, may be needed by ladders later
 
+			//`log("Camera rotation" $ SneaktoslimPlayerCamera(PlayerCamera).Rotation);
+			//`log("Pawn rotation" $ Pawn.Rotation);
+			//`log("NewAccel" $ NewAccel);
+			//`log("aForward" $ PlayerInput.aForward);
+			//`log("aStrafe" $ PlayerInput.aStrafe);
+
 			if (IsLocalPlayerController())
 			{
 				AdjustPlayerWalkingMoveAccel(NewAccel);
@@ -1394,23 +1400,55 @@ Begin:
 	if(debugStates) logState();
 }
 
+simulated function changeAnimTreeToTreasure()
+{
+	local AnimTree animTreeToChangeTo;
+	local SneaktoSlimPawn onePawn;
+
+	if(self.Class == class 'SneaktoSlimPlayerController_FatLady')
+		animTreeToChangeTo = animTree'FLCharacter.lady.lady_AnimTree_treasure';
+	else if(self.Class == class 'SneaktoSlimPlayerController_Rabbit')
+		animTreeToChangeTo = animTree'FLCharacter.Rabbit.rabbit_AnimTree_treasure';
+	else if(self.Class == class 'SneaktoSlimPlayerController_GinsengBaby')
+		animTreeToChangeTo = animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree_treasure';
+	else if(self.Class == class 'SneaktoSlimPlayerController_Shorty')
+		animTreeToChangeTo = animTree'FLCharacter.Shorty.Shorty_Treasure_AnimTree';
+
+	SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTreeToChangeTo);
+
+	if(Role == ROLE_Authority)
+	{
+		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
+		{
+			onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTreeToChangeTo);
+		}
+	}
+}
+
+
+
 simulated function changeAnimTreeToNormal()
 {
+	local AnimTree animTreeToChangeTo;
+	local SneaktoSlimPawn onePawn;
+
 	if(self.Class == class 'SneaktoSlimPlayerController_FatLady')
-	{
-		SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.lady.lady_AnimTree_copy');
-	}
+		animTreeToChangeTo = animTree'FLCharacter.lady.lady_AnimTree_copy';
 	else if(self.Class == class 'SneaktoSlimPlayerController_Rabbit')
-	{
-		SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.Rabbit.rabbit_AnimTree');
-	}
+		animTreeToChangeTo = animTree'FLCharacter.Rabbit.rabbit_AnimTree';
 	else if(self.Class == class 'SneaktoSlimPlayerController_GinsengBaby')
-	{
-		SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree');
-	}
+		animTreeToChangeTo = animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree';
 	else if(self.Class == class 'SneaktoSlimPlayerController_Shorty')
+		animTreeToChangeTo = animTree'FLCharacter.Shorty.Shorty_AnimTree';
+
+	SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTreeToChangeTo);
+
+	if(Role == ROLE_Authority)
 	{
-		SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.Shorty.Shorty_AnimTree');
+		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
+		{
+			onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTreeToChangeTo);
+		}
 	}
 }
 
@@ -1491,6 +1529,7 @@ simulated state UsingSuperSprint
 	simulated event BeginState(Name LastStateName)
 	{
 		Pawn.AccelRate = 4000;
+		SwitchToCamera('ShoulderCam');
 	}
 	
 	simulated function PlayerMove( float DeltaTime )
@@ -1498,10 +1537,6 @@ simulated state UsingSuperSprint
 		local vector		NewAccel;
 		local eDoubleClickDir	DoubleClickMove;
 		local rotator		OldRotation;
-		local rotator       rot;
-		local vector        viewDirection;
-
-		viewDirection = vector(Pawn.Rotation);
 
 		if( Pawn == None )
 		{
@@ -1509,18 +1544,19 @@ simulated state UsingSuperSprint
 		}
 		else
 		{			
-			NewAccel = viewDirection * DeltaTime;
-			NewAccel.Z = 0; //no vertical movement				
+			NewAccel.Y = sneaktoslimpawn(self.Pawn).beerNum * 0 * DeltaTime * 100 * PlayerInput.MoveForwardSpeed;
+			NewAccel.X = sneaktoslimpawn(self.Pawn).beerNum * 1935.5007 * DeltaTime * 100 * PlayerInput.MoveForwardSpeed; 
+			NewAccel.Z = 0;
 
 			if (IsLocalPlayerController())
 			{
 				AdjustPlayerWalkingMoveAccel(NewAccel);
 			}
+			
 			DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
-			//OldRotation = Rotation;
+			
+			OldRotation = Rotation;
 			UpdateRotation( DeltaTime );
-			rot.Yaw = PlayerInput.aMouseX;
-			Pawn.SetRotation(Pawn.Rotation + rot);
 
 			if( Role < ROLE_Authority ) // save this move and replicate it
 			{
@@ -1531,6 +1567,49 @@ simulated state UsingSuperSprint
 				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
 			}
 		}
+	}
+
+	//Update player rotation when walking
+	simulated function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
+	{
+		local Rotator CameraRotationYawOnly;
+		local Vector ZeroVector;
+		ZeroVector = vect(0.0, 0.0, 0.0);
+
+		previousStateName = 'Walking';
+
+		if( Pawn == None )
+		{
+			return;
+		}
+
+		if (Role == ROLE_Authority)
+		{
+			// Update ViewPitch for remote clients
+			Pawn.SetRemoteViewPitch( Rotation.Pitch );
+		}
+
+		//get the controller yaw to transform our movement-accelerations by
+		CameraRotationYawOnly.Yaw = Rotation.Yaw; 
+		NewAccel = NewAccel>>CameraRotationYawOnly; //transform the input by the camera World orientation so that it's in World frame
+
+		if (NewAccel != ZeroVector)
+			Pawn.Acceleration = NewAccel;
+		else
+			Pawn.Acceleration = vlerp(Pawn.Acceleration, ZeroVector, 0.8);
+   
+		Pawn.FaceRotation(Rotation,DeltaTime); //notify pawn of rotation
+
+		CheckJumpOrDuck();
+	}
+
+	simulated event EndState(name nextState)
+	{
+		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+			SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+		Pawn.AccelRate = 500;
+		Pawn.GroundSpeed = Sneaktoslimpawn(Pawn).FLWalkingSpeed;
+		Pawn.bForceMaxAccel = false;
 	}
 
 Begin:
@@ -2342,26 +2421,6 @@ simulated state HoldingTreasureWalking extends PlayerWalking
 	simulated exec function use()           //E-button
 	{
 
-	}
-
-	simulated function changeAnimTreeToTreasure()
-	{
-		if(self.Class == class 'SneaktoSlimPlayerController_FatLady')
-		{
-			SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.lady.lady_AnimTree_treasure');
-		}
-		else if(self.Class == class 'SneaktoSlimPlayerController_Rabbit')
-		{
-			SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.Rabbit.rabbit_AnimTree_treasure');
-		}
-		else if(self.Class == class 'SneaktoSlimPlayerController_GinsengBaby')
-		{
-			SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree_treasure');
-		}
-		else if(self.Class == class 'SneaktoSlimPlayerController_Shorty')
-		{
-			SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.Shorty.Shorty_Treasure_AnimTree');
-		}
 	}
 
 Begin:

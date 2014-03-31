@@ -38,7 +38,7 @@ simulated function StartSpawnBuffItem(){
 			BuffType = 4;
 		}
 		else if(randNum < (5*100/powerupNum)){
-			BuffType = 6;
+			BuffType = 5;
 		}
 		else{
 			BuffType = 6;

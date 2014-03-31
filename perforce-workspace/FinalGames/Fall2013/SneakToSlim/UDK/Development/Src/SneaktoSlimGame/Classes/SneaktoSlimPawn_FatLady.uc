@@ -83,6 +83,8 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 	local SneaktoSlimAINavMeshController HitController;
 	local SneaktoSlimPawn victim;
 
+	super.Bump(Other, OtherComp, HitNormal);
+
 	if(!bInvulnerable)
 	{
 		//code for when Player belly-bumps into something else

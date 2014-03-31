@@ -43,6 +43,9 @@ var int totalTimesTreasureGot;
 var int bellyBumpMisses;
 var int bellyBumpHits;
 
+var SpotLightComponent AIFlashlight;
+var StaticMeshComponent AILantern;
+
 struct HUDMessage
 {
 	var string sMeg;
@@ -179,6 +182,8 @@ simulated event PostBeginPlay()
     SetSpawnPointColor();
 	setTimer(0.3,false,'ServerRemindTreasureLocation');
 	setTimer(0.3,false,'ServerInitLight');
+	AIFlashLight.SetEnabled(false);
+	AISkelComp.AttachComponentToSocket(AILantern,'lantern');
 }
 
 simulated exec function EnterMist(){
@@ -546,7 +551,7 @@ reliable client function hidePowerupUI(int num)
 			myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
 			myFlashHUD.InstructionText.SetBool("isOn", false);
 		}
-		if(num == 5)
+		if(num == 6)
 		{
 			myFlashHUD.BeerIcon.SetBool("isOn", false);
 			myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
@@ -834,6 +839,8 @@ simulated event ReplicatedEvent(name VarName)
 				{
 					CurrentPawn.DetachComponent(CurrentPawn.Mesh);
 					CurrentPawn.ReattachComponent(CurrentPawn.AISkelComp);
+				//	CurrentPawn.AISkelComp.AttachComponentToSocket(AILantern,'lantern');
+					AIFlashLight.SetEnabled(true);
 				}
 			}
 			serverResetDisguiseNum();
@@ -849,7 +856,8 @@ simulated event ReplicatedEvent(name VarName)
 				if(CurrentPawn.GetTeamNum() == endDisguiseNum)
 				{
 					CurrentPawn.DetachComponent(CurrentPawn.AISkelComp);
-					CurrentPawn.ReattachComponent(CurrentPawn.Mesh);					
+					CurrentPawn.ReattachComponent(CurrentPawn.Mesh);		
+					AIFlashLight.SetEnabled(false);
 				}
 			}
 			serverResetEndDisguiseNum();
@@ -923,6 +931,7 @@ simulated event ReplicatedEvent(name VarName)
 
 	if(VarName == 'mistNum')
 	{
+		//`log("Replicated Event: Enter Mist");
 		//enter mist
 		if(self.mistNum != 0)
 		{
@@ -1287,11 +1296,14 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 	//local vector dropLocation;
 	///////////////////////////////`Log("Collision",true, 'Nick P');
 	//Account for only 1 collision every "InvulnerableTimer" seconds
-	if(!bInvulnerable)
-	{
-		bInvulnerable = true;
-		SetTimer(InvulnerableTimer, false, 'EndInvulnerable');
-	}
+	//if(!bInvulnerable)
+	//{
+	//	bInvulnerable = true;
+	//	SetTimer(InvulnerableTimer, false, 'EndInvulnerable');
+	//}
+
+	if(self.Controller.IsInState('UsingSuperSprint'))
+		self.Controller.GotoState('PlayerWalking');
 	//`log(self.GetTeamNum(), true, 'Lu');
 }
 
@@ -1676,7 +1688,6 @@ event Tick(float DeltaTime)
 	//`log(self.bBuffed);
 	//`log(sneaktoslimgamereplicationinfo(worldinfo.GRI).ServerGameTime);
 	//`log(sneaktoslimgamereplicationinfo(worldinfo.GRI).wuliya);
-
 	if(SneaktoSlimPlayerController(self.Controller).myMap != NONE)
 	{
 		//if(SneaktoSlimPlayerController(self.Controller).myMap.isOn)
@@ -1850,6 +1861,8 @@ event HitWall (Object.Vector HitNormal, Actor Wall, PrimitiveComponent WallComp)
 		//StunPlayer(2);
 		sneaktoslimplayercontroller(self.Controller).changeEveryoneState('Stunned');		
 	}
+	if(self.Controller.IsInState('UsingSuperSprint'))
+		self.Controller.GotoState('PlayerWalking');
 	super.HitWall(HitNormal, Wall, WallComp);	
 }
 
@@ -2173,6 +2186,22 @@ reliable server function callServer2()
 }
 
 ///////////////////////////////////////////////////end temporary trash can 
+
+
+reliable client function changeAnimTreeOnAllClients(SneaktoSlimPawn pawnToChangeAnimTree, AnimTree animTreeToChangeTo)
+{
+	local SneaktoSlimPawn pawnToChangeOn;
+
+	ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', pawnToChangeOn)
+    {
+		if(pawnToChangeOn == pawnToChangeAnimTree)
+		{
+			pawnToChangeOn.Mesh.SetAnimTreeTemplate(animTreeToChangeTo);
+		}
+	}
+}
+
+
 exec function callPlay()
 {
 	servercallPlay();
@@ -2350,6 +2379,7 @@ unreliable client function ClientCreateExplosion(vector loc)
 			loc, 
 			rot(0,0,0), 
 			None);
+			PlaySound(SoundCue'flsfx.Firework_fx_Cue',false,false,true,loc);
 }
 
 exec function QuitCurrentGame()
@@ -2361,20 +2391,85 @@ exec function QuitCurrentGame()
 reliable client function GoToResultsScreen()
 {
 	local SaveGameState sgs;
+	local int count;
 
 	sgs = new class 'SaveGameState';
 
-	ConsoleCommand("disconnect");
-	ConsoleCommand("open sneaktoslimmenu_landingpage?Character=" $ self.characterName);
+	//ConsoleCommand("disconnect");
+	//ConsoleCommand("open sneaktoslimmenu_landingpage?Character=" $ self.characterName);
 
 	class'Engine'.static.BasicLoadObject(sgs, "GameResults.bin", true, 1);
-	while(sgs.characterType.Length > 0)
+	for(count = 0; count < sgs.characterType.Length; count++)
 	{
-		`log("Player " $ sgs.characterType.Length $ " Type = " $ sgs.characterType[0] $ " Score = " $ sgs.scoreBoard[0]);
-		sgs.characterType.Remove(0,1);
-		sgs.scoreBoard.Remove(0,1);
+		`log("Results Screen: Player " $ (count + 1) $ " Type = " $ sgs.characterType[count] $ " Score = " $ sgs.scoreBoard[count]);
 	}
 }
+
+reliable client function saveGameResults(int score1, string character1, optional int score2 = -1, optional string character2, optional int score3 = -1, optional string character3, optional int score4 = -1, optional string character4)
+{
+	local array<int> scores;
+	local array<string> names;
+	local SaveGameState sgs;
+	local int count;
+
+	sgs = new class 'SaveGameState';
+
+	//Values are entered in reverse order since GameInfo loop reads AllPawns in reverse order of being created
+	//So: Pawn 1 - FatLady          Pawn 1 - Shorty
+	//    Pawn 2 - Rabbit       ->  Pawn 2 - Rabbit
+	//    Pawn 3 - Shorty           Pawn 3 - FatLady
+	if(score4 != -1)
+	{
+		scores.AddItem(score4);
+		names.AddItem(character4);
+	}
+
+	if(score3 != -1)
+	{
+		scores.AddItem(score3);
+		names.AddItem(character3);
+	}
+
+	if(score2 != -1)
+	{
+		scores.AddItem(score2);
+		names.AddItem(character2);
+	}
+
+	scores.AddItem(score1);
+	names.AddItem(character1);
+
+	sgs.scoreBoard = scores;
+	sgs.characterType = names;
+
+	for(count = 0; names.Length > count; count++)
+	{
+		`log("Save Data Client: Player " $ (count + 1) $ " Type = " $ sgs.characterType[count] $ " Score = " $ sgs.scoreBoard[count]);
+	}
+
+	class'Engine'.static.BasicSaveObject(sgs, "GameResults.bin", true, 1);
+}
+
+/*reliable client function saveGameResults(array<int> scoreBoard, array<string> characterType)
+{
+	local SaveGameState sgs;
+	sgs = new class 'SaveGameState';
+	//Saves variables into class
+	`log("");
+	`log("");
+	`log("Pawn client parameter data: " $ scoreBoard[0] $ " " $ characterType[0]);
+	`log("");
+	`log("");
+	sgs.scoreBoard = scoreboard;
+	sgs.characterType = characterType;
+	`log("");
+	`log("");
+	`log("Pawn client sgs data: " $ sgs.scoreBoard[0] $ " " $ sgs.characterType[0]);
+	`log("");
+	`log("");
+	//Creates bin file of object
+	class'Engine'.static.BasicSaveObject(sgs, "GameResults.bin", true, 1);
+}*/
 
 exec function serverQuit()
 {
@@ -2389,6 +2484,10 @@ reliable server function HostQuitGame()
 exec function saysometing()
 {
 	`log("fuck you fuck me");
+	if(bBuffed==5)
+		bBuffed = 2;
+	else
+		bBuffed = 5;
 }
 
 reliable server function SetUsingBeer(bool inputUsingBeer)
@@ -2413,7 +2512,7 @@ defaultproperties
 	bInvisibletoAI = false;
 
 	//bIsDashing = false;
-	SuperSprintSpeed = 400;
+	SuperSprintSpeed = 600;
 	DashDuration = 0.1f;
 	bIsHitWall = false;
 	HitWallDuration = 0.05;
@@ -2456,7 +2555,7 @@ defaultproperties
 	Begin Object Class=SkeletalMeshComponent Name=InitialSkeletalMesh	
 		SkeletalMesh = SkeletalMesh'FLCharacter.lady.new_lady_skeletalmesh'		
 		AnimSets(0)=AnimSet'FLCharacter.lady.new_lady_Anims'		
-		AnimTreeTemplate = AnimTree'FLCharacter.lady.lady_AnimTree_copy'		
+		AnimTreeTemplate = AnimTree'FLCharacter.lady.lady_AnimTree'		
 		Translation=(Z=-48.0)
 		LightEnvironment=MyLightEnvironment
 		CastShadow=true
@@ -2490,6 +2589,16 @@ defaultproperties
 	AISkelComp = AISkeletalMesh
     Components.Add(InitialSkeletalMesh)	
 	Mesh = InitialSkeletalMesh	
+
+
+	Begin Object Class=StaticMeshComponent   Name=MyGuardLatern
+		StaticMesh=StaticMesh'FLCharacter.guard.Lanturn'
+		LightEnvironment=MyLightEnvironment
+		CastShadow=true
+		bCanStepUpOn = false
+	End Object
+	AILantern = MyGuardLatern
+//	Components.Add(lanter);
 
 	Begin Object Name=CollisionCylinder
 		CollisionRadius=22.000000
@@ -2554,7 +2663,7 @@ defaultproperties
 	  CastStaticShadows = false;
 	  CastDynamicShadows = True;
 	  LightShadowMode = LightShadow_Normal
-	  Radius=96.000000
+	  Radius=32.000000
 	  Brightness=5.0000	 
 	  LightColor=(R=255,G=255,B=0)
       bRenderLightShafts = true
@@ -2563,4 +2672,21 @@ defaultproperties
 
 	treasureComponent=SneakToSlimPawnTreasureMesh; 
 	treasureLightComponent = TreasurePointLight;	
+
+
+	Begin Object Class=SpotLightComponent Name=MyFlashlight
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Normal ;
+	  Radius=250.000000
+	  Brightness=10.0
+	  LightColor=(R=235,G=235,B=110)
+	End Object
+	Components.Add(MyFlashlight);
+	AIFlashLight = MyFlashlight;
+	
 }

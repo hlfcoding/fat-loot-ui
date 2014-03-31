@@ -407,13 +407,17 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	local UniqueNetId ZeroId;
 	local int SupposeTeam;
 	local bool IsSpectator;
-
+	local string inTime;
 
 	// Get URL options.
 	InName     = Left(ParseOption ( Options, "Name"), 20);
 
 	InCharacter = ParseOption(Options, "Character");
 	NewPlayer.SetCharacter(InCharacter);
+
+	//InTime = ParseOption(Options, "Time");
+	//if(int(InTime) != 0)
+	//	timePerMatch = int(InTime);
 
 	//get suppose team
 	SupposeTeam=FindTheFirstEmptyTeam();
