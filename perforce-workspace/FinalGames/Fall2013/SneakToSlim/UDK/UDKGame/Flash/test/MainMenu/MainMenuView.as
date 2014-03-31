@@ -11,7 +11,7 @@
 
         public static const DEBUG = true;
         public static const USE_FIXTURES = true;
-        public static const SEND_NAV_COMMANDS = false;
+        public static const SEND_NAV_COMMANDS = true;
 
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
