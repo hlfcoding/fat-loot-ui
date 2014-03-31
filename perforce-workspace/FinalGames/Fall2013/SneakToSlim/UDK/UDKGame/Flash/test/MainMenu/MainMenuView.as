@@ -9,9 +9,10 @@
 
     public class MainMenuView extends NavigableView {
 
-        public static const DEBUG = true;
-        public static const USE_FIXTURES = true;
-        public static const SEND_NAV_COMMANDS = true;
+        public static const DEBUG:Boolean = true;
+        public static const USE_FIXTURES:Boolean = true;
+        public static const SEND_NAV_COMMANDS:Boolean = true;
+        public static const VERSION:String = '0.20.0';
 
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
@@ -25,6 +26,7 @@
         public function MainMenuView() {
             super();
             shouldDebug = MainMenuView.DEBUG;
+            versionLabel.text = MainMenuView.VERSION;
             versionLabel.visible = shouldDebug;
             load('RootMenuView', 'rootMenuView');
             rootView = rootMenuView;
