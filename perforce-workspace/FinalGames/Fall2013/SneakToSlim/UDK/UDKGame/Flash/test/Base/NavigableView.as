@@ -13,10 +13,13 @@ package {
 
         public var defaultTransition:String;
 
+        protected var shouldDebug:Boolean;
+
         protected var _navigationStack:Vector.<MovieClip>;
 
         public function NavigableView() {
             super();
+            shouldDebug = false;
             _navigationStack = new <MovieClip>[];
             defaultTransition = NavigableView.TRANSITION_DEFAULT;
         }
@@ -80,6 +83,9 @@ package {
                 transition = defaultTransition;
             }
             if (toView == null) {
+                if (shouldDebug) {
+                   throw new Error('No to view.');
+                }
                 return false;
             }
             // Update stack and buttons.

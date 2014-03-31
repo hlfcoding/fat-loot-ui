@@ -4,6 +4,7 @@
     import flash.display.MovieClip;
     import flash.events.Event;
 
+    import scaleform.clik.controls.Label;
     import scaleform.clik.events.ButtonEvent;
 
     public class MainMenuView extends NavigableView {
@@ -17,11 +18,14 @@
         public var hostOrJoinGameView:HostOrJoinGameView; // Also known as Lobby.
         public var hostGameView:HostGameView;
         public var joinGameView:JoinGameView;
+        public var versionLabel:Label;
 
         protected var _gameModel:GameModel; // TODO: Sync all changes to shared game model.
 
         public function MainMenuView() {
             super();
+            shouldDebug = MainMenuView.DEBUG;
+            versionLabel.visible = shouldDebug;
             load('RootMenuView', 'rootMenuView');
             rootView = rootMenuView;
             gameModel = new GameModel({
@@ -95,6 +99,9 @@
                 toViewName = sender as String;
             }
             if (toViewName == null) {
+                if (shouldDebug) {
+                    throw new Error('No destination view name.');
+                }
                 return;
             }
             var toViewClassName:String = toViewName.substr(0, 1).toUpperCase().concat(toViewName.substr(1));
