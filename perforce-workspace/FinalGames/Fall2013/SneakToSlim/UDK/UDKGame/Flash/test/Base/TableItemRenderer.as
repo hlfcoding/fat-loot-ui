@@ -57,7 +57,7 @@ package  {
             }
             dividers.forEach(function(divider:TableItemDivider, index:int, vector:Vector.<TableItemDivider>):void {
                 var textField:TextField = extraTextFields[index];
-                divider.x = textField.x - 5;
+                divider.x = textField.x - 7;
             }, this);
         }
 
