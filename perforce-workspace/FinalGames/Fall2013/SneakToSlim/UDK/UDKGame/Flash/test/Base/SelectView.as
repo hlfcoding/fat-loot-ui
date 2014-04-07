@@ -18,12 +18,16 @@ package {
         public var selectPreview:PreviewView;
 
         public var hasBackgroundImage:Boolean;
+        public var backgroundImagePathHandler:Function;
 
         protected var _selectedModel:Object;
 
         public function SelectView() {
             super();
             hasBackgroundImage = false;
+            backgroundImagePathHandler = function(data:Object):String {
+                return 'Assets'.concat('/', data.id.toLowerCase(), '.jpg');
+            };
             collection = DataProvider(selectMenu.dataProvider);
             collection.itemRendererName = 'SelectItemRenderer';
             selectMenu.rowHeight = selectMenu.height;
@@ -50,6 +54,7 @@ package {
                 // Makeshift way of passing this through.
                 for each (var data:Object in source) {
                     data.hasBackgroundImage = hasBackgroundImage;
+                    data.backgroundImagePathHandler = backgroundImagePathHandler;
                 }
             }
             collection.setSource(source);

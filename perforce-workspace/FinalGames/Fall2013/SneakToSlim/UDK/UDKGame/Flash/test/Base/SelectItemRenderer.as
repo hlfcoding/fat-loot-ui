@@ -51,8 +51,9 @@ package  {
                 hasBackgroundImage = data.hasBackgroundImage;
             }
             if (hasBackgroundImage) {
-                //bgImageURL = 'Assets'.concat('/', data.id, '.png');
-                bgImageURL = 'http://placehold.it/100/png/&text='+data.name;
+                bgImageURL = data.backgroundImagePathHandler(data);
+                //bgImageURL = 'http://placehold.it/100/png/&text='+data.name;
+                trace(bgImageURL);
             }
         }
 

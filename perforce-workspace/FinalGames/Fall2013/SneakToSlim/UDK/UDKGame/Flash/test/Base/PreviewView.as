@@ -16,6 +16,7 @@ package {
 
         public var imageLoader:Loader;
         public var imageSize:Object;
+        public var imagePathHandler:Function;
 
         protected var _model:Object;
         protected var _style:String;
@@ -33,11 +34,14 @@ package {
             nameLabel.text = model.name;
             descriptionLabel.text = model.description;
             if (hasImage) {
-                //imageURL = 'Assets'.concat('/', model.id, '.png');
+                imageURL = imagePathHandler(model);
+                /*
                 imageURL = 'http://placehold.it'.concat(
                     '/'+imageSize.width+'x'+imageSize.height,
                     '/png/&text='+model.name
                 );
+                */
+                trace(imageURL);
             }
         }
 

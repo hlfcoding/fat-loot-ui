@@ -12,6 +12,9 @@
             super()
             // Configure.
             hasBackgroundImage = true;
+            backgroundImagePathHandler = function(data:Object):String {
+                return 'Assets'.concat('/level-', data.id.toLowerCase(), '.png');
+            };
             selectMenu.labelFunction = function(item:Object):String {
                 var model:Object = item;
                 return model.name;

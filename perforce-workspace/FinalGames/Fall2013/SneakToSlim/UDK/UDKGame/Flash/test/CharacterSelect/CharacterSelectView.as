@@ -15,6 +15,9 @@
             super()
             // Configure.
             hasBackgroundImage = true;
+            backgroundImagePathHandler = function(data:Object):String {
+                return 'Assets'.concat('/character-', data.id.toLowerCase(), '.png');
+            };
             skillSelectView.selectMenu.labelFunction =
             selectMenu.labelFunction = function(item:Object):String {
                 var model:Object = item;
@@ -24,7 +27,11 @@
             selectPreview.nameLabel.visible = false;
             skillSelectView.selectMenu.addEventListener(ListEvent.INDEX_CHANGE, onSkillSelect);
             skillSelectView.selectPreview.imageSize = { width: 100, height: 100 };
+            skillSelectView.selectPreview.imagePathHandler = function(data:Object):String {
+                return 'Assets'.concat('/skill-', data.id.toLowerCase(), '.png');
+            };
             skillSelectView.selectPreview.hasImage = true;
+
             // Commit.
             source = GameModel.characters;
             init();
