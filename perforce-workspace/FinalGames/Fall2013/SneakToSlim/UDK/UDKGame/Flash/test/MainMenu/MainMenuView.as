@@ -3,16 +3,17 @@
     import flash.display.DisplayObject;
     import flash.display.MovieClip;
     import flash.events.Event;
+    import flash.text.TextFieldAutoSize;
 
     import scaleform.clik.controls.Label;
     import scaleform.clik.events.ButtonEvent;
 
     public class MainMenuView extends NavigableView {
 
-        public static const DEBUG:Boolean = false; // Disable in general for production builds.
+        public static const DEBUG:Boolean = true; // Disable in general for production builds.
         public static const USE_FIXTURES:Boolean = true;
         public static const SEND_COMMANDS:Boolean = false; // Disable for preview builds.
-        public static const VERSION:String = '0.20.0';
+        public static const VERSION:String = '0.21.0';
 
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
@@ -26,8 +27,7 @@
         public function MainMenuView() {
             super();
             shouldDebug = MainMenuView.DEBUG;
-            versionLabel.text = MainMenuView.VERSION;
-            versionLabel.visible = shouldDebug;
+            addVersionLabel();
             load('RootMenuView', 'rootMenuView');
             rootView = rootMenuView;
             gameModel = new GameModel({
@@ -142,6 +142,16 @@
                 }
             }
             return didNavigate;
+        }
+
+        protected function addVersionLabel():void {
+            var versionLabel:Label = new DefaultLabel();
+            versionLabel.alpha = 0.3;
+            versionLabel.autoSize = TextFieldAutoSize.RIGHT;
+            versionLabel.text = MainMenuView.VERSION;
+            versionLabel.visible = shouldDebug;
+            versionLabel.x = stage.stageWidth - versionLabel.width - 3;
+            addChild(versionLabel);
         }
 
         // Helpers.
