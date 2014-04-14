@@ -45,68 +45,68 @@ package {
             {
                 id: 'Rabbit',
                 name: 'Tiger',
-                description: "This is Tiger's description. It's going to take more than just one line.",
+                description: "This is Tiger's description. It's going to take more than just one line. It's going to take more than just two lines.",
                 skills: [
                     {
                         id: 'EarthDive',
                         name: 'Earth Dive',
-                        description: "This is Earth Dive's description. It's going to take more than just one line."
+                        description: "This is Earth Dive's description. It's going to take more than just one line. It's going to take more than just two lines."
                     },
                     {
                         id: 'TigerRoar',
                         name: 'Tiger Roar',
-                        description: "This is Tiger Roar's description. It's going to take more than just one line."
+                        description: "This is Tiger Roar's description. It's going to take more than just one line. It's going to take more than just two lines."
                     }
                 ]
             },
             {
                 id: 'GinsengBaby',
                 name: 'Ginger',
-                description: "This is Ginger's description. It's going to take more than just one line.",
+                description: "This is Ginger's description. It's going to take more than just one line. It's going to take more than just two lines.",
                 skills: [
                     {
                         id: 'Burrow',
                         name: 'Burrow',
-                        description: "This is Burrow's description. It's going to take more than just one line."
+                        description: "This is Burrow's description. It's going to take more than just one line. It's going to take more than just two lines."
                     },
                     {
                         id: 'Burst',
                         name: 'Burst',
-                        description: "This is Burst's description. It's going to take more than just one line."
+                        description: "This is Burst's description. It's going to take more than just one line. It's going to take more than just two lines."
                     }
                 ]
             },
             {
                 id: 'Shorty',
                 name: 'Shorty',
-                description: "This is Shorty's description. It's going to take more than just one line.",
+                description: "This is Shorty's description. It's going to take more than just one line. It's going to take more than just two lines.",
                 skills: [
                     {
                         id: 'Charge',
                         name: 'Charge',
-                        description: "This is Charge's description. It's going to take more than just one line."
+                        description: "This is Charge's description. It's going to take more than just one line. It's going to take more than just two lines."
                     },
                     {
                         id: 'OverThere',
                         name: 'OVER THERE!',
-                        description: "This is OVER THERE!'s description. It's going to take more than just one line."
+                        description: "This is OVER THERE!'s description. It's going to take more than just one line. It's going to take more than just two lines."
                     }
                 ]
             },
             {
                 id: 'FatLady',
                 name: 'Lady Qianqing',
-                description: "This is Lady Qianqing's description. It's going to take more than just one line.",
+                description: "This is Lady Qianqing's description. It's going to take more than just one line. It's going to take more than just two lines.",
                 skills: [
                     {
                         id: 'Sprint',
                         name: 'Sprint',
-                        description: "This is Sprint's description. It's going to take more than just one line."
+                        description: "This is Sprint's description. It's going to take more than just one line. It's going to take more than just two lines."
                     },
                     {
                         id: 'BellyBump',
                         name: 'Belly Bump',
-                        description: "This is Belly Bump's description. It's going to take more than just one line."
+                        description: "This is Belly Bump's description. It's going to take more than just one line. It's going to take more than just two lines."
                     }
                 ]
             }
@@ -203,22 +203,22 @@ package {
             {
                 id: 'Mansion',
                 name: 'The Mansion',
-                description: "This is The Mansion's description. It's going to take more than just one line."
+                description: "This is The Mansion's description. It's going to take more than just one line. It's going to take more than just two lines."
             },
             {
                 id: 'Temple',
                 name: 'The Temple',
-                description: "This is The Temple's description. It's going to take more than just one line."
+                description: "This is The Temple's description. It's going to take more than just one line. It's going to take more than just two lines."
             },
             {
                 id: 'Pit',
                 name: 'The Pit',
-                description: "This is The Pit's description. It's going to take more than just one line."
+                description: "This is The Pit's description. It's going to take more than just one line. It's going to take more than just two lines."
             },
             {
                 id: 'Mist',
                 name: 'The Mist',
-                description: "This is The Mist's description. It's going to take more than just one line."
+                description: "This is The Mist's description. It's going to take more than just one line. It's going to take more than just two lines."
             }
         ];
 
