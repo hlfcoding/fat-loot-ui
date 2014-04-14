@@ -65,8 +65,7 @@ package  {
             if (bgImageLoader == null) {
                 bgImageLoader = new Loader();
                 bgImageLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoaderComplete);
-                bgImageLoader.alpha = 0.3;
-                addChild(bgImageLoader);
+                addChildAt(bgImageLoader, 1);
             }
         }
 
