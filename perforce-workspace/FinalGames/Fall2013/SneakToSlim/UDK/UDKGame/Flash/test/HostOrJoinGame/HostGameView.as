@@ -36,6 +36,11 @@ package  {
             scoreLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
             timeLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
             levelSelectView.addEventListener(LevelSelectView.SELECT, onLevelSelect);
+            // Restyle.
+            gameNameInput.defaultTextFormat.color =
+            playerLimitInput.defaultTextFormat.color =
+            scoreLimitInput.defaultTextFormat.color =
+            timeLimitInput.defaultTextFormat.color = 0x0F3D0D;
         }
 
         public function get navigationBackButton():Button {
