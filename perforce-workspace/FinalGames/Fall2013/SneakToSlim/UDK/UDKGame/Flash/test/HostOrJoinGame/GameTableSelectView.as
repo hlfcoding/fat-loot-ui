@@ -32,7 +32,7 @@ package  {
         override public function set selectedModel(value:Object):void {
             super.selectedModel = value;
             if (value != null) {
-                Utility.sendCommand('selectGameInUdk', value.location);
+                MainMenuView.sendCommand('selectGameInUdk', value.location);
             }
         }
 

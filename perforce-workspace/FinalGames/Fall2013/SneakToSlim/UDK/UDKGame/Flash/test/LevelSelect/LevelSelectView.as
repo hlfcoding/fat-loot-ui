@@ -28,7 +28,7 @@
         override public function set selectedModel(value:Object):void {
             super.selectedModel = value;
             if (selectedModel != null) {
-                Utility.sendCommand('selectGameMapInUdk', selectedModel.id);
+                MainMenuView.sendCommand('selectGameMapInUdk', selectedModel.id);
             }
             dispatchEvent(new Event(LevelSelectView.SELECT));
         }

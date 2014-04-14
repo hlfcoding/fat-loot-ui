@@ -69,7 +69,7 @@ package  {
                     }
                 }
                 gameModel[settingName] = value;
-                Utility.sendCommand(systemName, gameModel[settingName]);
+                MainMenuView.sendCommand(systemName, gameModel[settingName]);
             } else {
                 if (textInput != null) {
                     textInput.text = '';

@@ -11,7 +11,7 @@
 
         public static const DEBUG:Boolean = true;
         public static const USE_FIXTURES:Boolean = true;
-        public static const SEND_NAV_COMMANDS:Boolean = true;
+        public static const SEND_COMMANDS:Boolean = false; // Disable for preview builds.
         public static const VERSION:String = '0.20.0';
 
         public var cursor:Cursor;
@@ -53,37 +53,29 @@
                     // From root menu.
                     case rootMenuView.networkedGameButton:
                         toViewName = 'hostOrJoinGameView';
-                        if (MainMenuView.SEND_NAV_COMMANDS) {
-                            Utility.sendCommand('lobbyScreen');
-                        }
+                        MainMenuView.sendCommand('lobbyScreen');
                         break;
-                    case rootMenuView.tutorialButton:   Utility.sendCommand('playTutorialInUdk'); break;
-                    case rootMenuView.creditButton:     Utility.sendCommand('showCreditInUdk'); break;
-                    case rootMenuView.quitButton:       Utility.sendCommand('quitGameInUdk'); break;
+                    case rootMenuView.tutorialButton:   MainMenuView.sendCommand('playTutorialInUdk'); break;
+                    case rootMenuView.creditButton:     MainMenuView.sendCommand('showCreditInUdk'); break;
+                    case rootMenuView.quitButton:       MainMenuView.sendCommand('quitGameInUdk'); break;
                     // From host-or-join view.
                     case hostOrJoinGameView.joinButton:
                         toViewName = 'joinGameView';
                         var selectedModel:Object = hostOrJoinGameView.gameTableView.selectedModel;
                         gameModel.level = GameModel.getLevelById(selectedModel.level);
                         gameModel.location = selectedModel.location;
-                        if (MainMenuView.SEND_NAV_COMMANDS) {
-                            Utility.sendCommand('joinGameScreen');
-                        }
+                        MainMenuView.sendCommand('joinGameScreen');
                         break;
                     case hostOrJoinGameView.hostButton:
                         toViewName = 'hostGameView';
-                        if (MainMenuView.SEND_NAV_COMMANDS) {
-                            Utility.sendCommand('hostGameScreen');
-                        }
+                        MainMenuView.sendCommand('hostGameScreen');
                         break;
                     // From host view.
                     case hostGameView.hostButton:
                         toViewName = 'joinGameView';
                         gameModel.level = hostGameView.levelSelectView.selectedModel;
-                        Utility.sendCommand('hostGameInUdk', gameModel.location);
-                        if (MainMenuView.SEND_NAV_COMMANDS) {
-                            Utility.sendCommand('joinGameScreen_Host');
-                        }
+                        MainMenuView.sendCommand('hostGameInUdk', gameModel.location);
+                        MainMenuView.sendCommand('joinGameScreen_Host');
                         break;
                     // From join view.
                     case joinGameView.joinButton:
@@ -91,7 +83,7 @@
                         commandName = 'joinGameInUdk'.concat(
                             (previousView is HostGameView) ? '_Host' : '_NonHost'
                         );
-                        Utility.sendCommand(commandName, gameModel.location);
+                        MainMenuView.sendCommand(commandName, gameModel.location);
                         break;
                     default: break;
                 }
@@ -145,11 +137,18 @@
                     commandName += (currentView is HostGameView) ?
                         'HostGame_Host' : 'Lobby_NonHost';
                 }
-                if (commandName != 'backTo' && MainMenuView.SEND_NAV_COMMANDS) {
-                    Utility.sendCommand(commandName);
+                if (commandName != 'backTo') {
+                    MainMenuView.sendCommand(commandName);
                 }
             }
             return didNavigate;
+        }
+
+        // Helpers.
+
+        public static function sendCommand(name:String, value:String=''):void {
+            if (!MainMenuView.SEND_COMMANDS) { return; }
+            Utility.sendCommand(name, value);
         }
 
         // UDK endpoints.

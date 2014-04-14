@@ -36,7 +36,7 @@ package  {
             // This is a bit of a hack.
             // Also, the view shouldn't be sending such a command.
             gameModel.location = testGameLocationInput.text;
-            Utility.sendCommand('setGameLocationIPInUdk', gameModel.location);
+            MainMenuView.sendCommand('setGameLocationIPInUdk', gameModel.location);
         }
 
         public function viewWillAppear():void {}
