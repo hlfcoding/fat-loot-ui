@@ -9,7 +9,7 @@
 
     public class MainMenuView extends NavigableView {
 
-        public static const DEBUG:Boolean = true;
+        public static const DEBUG:Boolean = false; // Disable in general for production builds.
         public static const USE_FIXTURES:Boolean = true;
         public static const SEND_COMMANDS:Boolean = false; // Disable for preview builds.
         public static const VERSION:String = '0.20.0';
