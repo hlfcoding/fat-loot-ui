@@ -133,20 +133,13 @@ package {
         protected function transitionIn(view:MovieClip, transition:String):void {
             view.visible = true;
             if (transition === NavigableView.TRANSITION_DEFAULT) {
-                centerToStage(view);
+                Utility.centerToStage(view);
             }
         }
         protected function transitionOut(view:MovieClip, transition:String):void {
             if (view != null) {
                 view.visible = false;
             }
-        }
-
-        // Helpers
-
-        public function centerToStage(view:MovieClip) {
-            view.x = stage.stageWidth / 2;
-            view.y = stage.stageHeight / 2;
         }
 
     }
