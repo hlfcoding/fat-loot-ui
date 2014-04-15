@@ -23,6 +23,13 @@ package  {
             super();
             inputDebouncer = new InputDebouncer(onGameLocationChange);
             testGameLocationInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            levelPreview.nameLabel.visible = true;
+            levelPreview.imageSize = { width: 427, height: 267 };
+            levelPreview.imageOffset = {
+                x: (levelPreview.width - levelPreview.imageSize.width) / 2,
+                y: 0
+            };
+            addChild(Utility.hideViewOverflow(levelPreview));
         }
 
         public function get navigationBackButton():Button {
