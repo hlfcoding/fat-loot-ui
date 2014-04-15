@@ -1,10 +1,7 @@
 package {
 
-    import flash.display.DisplayObject;
-    import flash.display.Loader;
+    import flash.display.Bitmap;
     import flash.display.MovieClip;
-    import flash.events.Event;
-    import flash.net.URLRequest;
 
     import scaleform.clik.controls.Label;
     import scaleform.clik.controls.TextArea;
@@ -13,19 +10,18 @@ package {
 
         public var nameLabel:Label;
         public var descriptionLabel:TextArea;
+        public var image:Bitmap;
 
-        public var imageLoader:Loader;
+        // FIXME: Perhaps making this a UIComponent would help.
+        public var imageOffset:Object;
         public var imageSize:Object;
-        public var imagePathHandler:Function;
 
         protected var _model:Object;
         protected var _style:String;
-        protected var _hasImage:Boolean;
-        protected var _imageURL:String;
 
         public function PreviewView() {
             super();
-            _hasImage = false;
+            nameLabel.visible = false;
         }
 
         public function get model():Object { return _model; }
@@ -33,43 +29,25 @@ package {
             _model = value;
             nameLabel.text = model.name;
             descriptionLabel.text = model.description;
-            if (hasImage) {
-                imageURL = imagePathHandler(model);
-                /*
-                imageURL = 'http://placehold.it'.concat(
-                    '/'+imageSize.width+'x'+imageSize.height,
-                    '/png/&text='+model.name
-                );
-                */
-                trace(imageURL);
+            if (model.image != null) {
+                var shouldDrawImage:Boolean = image == null || contains(image);
+                if (shouldDrawImage) {
+                    if (image != null) {
+                        removeChild(image);
+                    }
+                    image = model.image as Bitmap;
+                    drawImage();
+                }
             }
         }
 
-        public function get hasImage():Boolean { return _hasImage; }
-        public function set hasImage(value:Boolean):void {
-            _hasImage = value;
-            // Lazy init.
-            if (imageLoader == null) {
-                imageLoader = new Loader();
-                imageLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoaderComplete);
-                addChild(imageLoader);
+        protected function drawImage():void {
+            addChildAt(image, 0);
+            if (imageOffset != null) {
+                image.x = imageOffset.x;
+                image.y = imageOffset.y;
             }
-        }
-
-        public function get imageURL():String { return _imageURL; }
-        public function set imageURL(value:String):void {
-            if (value == _imageURL) {
-                return;
-            }
-            _imageURL = value;
-            // Auto load.
-            var request:URLRequest = new URLRequest(value);
-            imageLoader.load(request);
-        }
-
-        public function onLoaderComplete(event:Event):void {
-            if (event.target == imageLoader.contentLoaderInfo) {
-                var image:DisplayObject = imageLoader.content;
+            if (imageSize != null) {
                 image.width = imageSize.width;
                 image.height = imageSize.height;
             }
