@@ -1,7 +1,6 @@
 package {
 
     import flash.display.MovieClip;
-    import flash.events.Event;
 
     import scaleform.clik.controls.Button;
     import scaleform.clik.controls.ListItemRenderer;

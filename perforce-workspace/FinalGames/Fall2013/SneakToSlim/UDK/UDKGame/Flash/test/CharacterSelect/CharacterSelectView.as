@@ -1,13 +1,10 @@
 ﻿package  {
 
-    import scaleform.clik.controls.Label;
-    import scaleform.clik.controls.TileList;
     import scaleform.clik.events.ListEvent;
 
     public class CharacterSelectView extends SelectView {
 
         public var skillSelectView:SkillSelectView;
-        public var nameLabel:Label;
 
         public var gameModel:GameModel;
 
