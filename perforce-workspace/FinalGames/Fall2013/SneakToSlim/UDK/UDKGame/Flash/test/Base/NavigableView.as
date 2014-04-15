@@ -107,7 +107,7 @@ package {
             for each (var view:MovieClip in _navigationStack) {
                 view.visible = false;
             }
-            if (fromView != null) {
+            if (fromView != null && contains(fromView)) {
                 fromView.viewWillDisappear();
                 transitionOut(fromView, transition);
                 fromView.viewDidDisappear();
