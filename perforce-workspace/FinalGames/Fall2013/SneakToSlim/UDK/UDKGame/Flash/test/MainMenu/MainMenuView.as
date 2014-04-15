@@ -104,6 +104,8 @@
             // Setup view as needed.
             switch (toViewName) {
                 case 'joinGameView':
+                    var levelModel:Object = gameModel.level;
+                    // FIXME: Model won't have image.
                     joinGameView.levelPreview.model = gameModel.level;
                     break;
                 case 'hostGameView':
@@ -121,7 +123,7 @@
 
         override public function load(className:String, propertyName:String=null):MovieClip {
             var view:MovieClip = super.load(className, propertyName);
-            view['gameModel'] = gameModel;
+            view.gameModel = gameModel;
             return view;
         }
 
