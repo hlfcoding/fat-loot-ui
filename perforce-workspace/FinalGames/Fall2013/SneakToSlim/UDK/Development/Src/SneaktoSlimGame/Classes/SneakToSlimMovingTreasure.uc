@@ -10,16 +10,19 @@ simulated event HitWall( vector HitNormal, actor Wall, PrimitiveComponent WallCo
 simulated event Landed( vector HitNormal, actor FloorActor )
 {
 	local sneaktoslimpawn current;
+	local vector newlocation;
 	if(MyPawn == None){
 		`log("I dont have pawn!!!!!!!!!!!!!!!!!!!!!!!");
 	}
-	MyPawn.myTreasure.SetLocation(self.Location);
+	newlocation = self.Location;
+	newlocation.Z = newlocation.Z-16;
+	MyPawn.myTreasure.SetLocation(newlocation);
 	MyPawn.myTreasure.turnOn();
 	MyPawn.myTreasure = none;
 	if(Role == Role_Authority){
 		foreach allActors(class 'sneaktoslimpawn', current)
 			{
-	   		   current.ClientMovingTreasure(self.Location);
+	   		   current.ClientMovingTreasure(newlocation);
 			}
 	}
 	self.Destroy();
@@ -36,7 +39,7 @@ DefaultProperties
 		bUseBooleanEnvironmentShadowing=FALSE
 	End Object
 	Components.Add(MyLightEnvironment)
-	LightEnvironment=MyLightEnvironment
+	//LightEnvironment=MyLightEnvironment
 
 	Begin Object Class=StaticMeshComponent Name=MyStaticMeshComponent
         StaticMesh= StaticMesh'FLInteractiveObject.treasure.Tresure'
@@ -47,7 +50,7 @@ DefaultProperties
     End Object
  
     CollisionComponent=MyStaticMeshComponent 
-	myMesh = MyStaticMeshComponent;
+	//myMesh = MyStaticMeshComponent;
 
     Components.Add(MyStaticMeshComponent)
 
@@ -62,7 +65,7 @@ DefaultProperties
 	bCollideActors=false
 	MaxSpeed=+0300.000000
 	Speed=+0300.000000
-	LifeSpan=+10.000000
+	LifeSpan=0
 	bCanBeDamaged=false
 	Physics=PHYS_Falling	
 	bRotationFollowsVelocity=true

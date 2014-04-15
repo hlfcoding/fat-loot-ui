@@ -39,7 +39,7 @@ event Tick(float DeltaTime)
 
 DefaultProperties
 {
-	ControllerClass=class'SneaktoSlimGuideController'
+	//ControllerClass=class'SneaktoSlimGuideController'
 
 	Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment
 		bSynthesizeSHLight=TRUE
@@ -48,7 +48,7 @@ DefaultProperties
 		bDynamic = TRUE
 	End Object
 	Components.Add(MyLightEnvironment)
-	LightEnvironment=MyLightEnvironment
+	//LightEnvironment=MyLightEnvironment
 
 	Begin Object Class=SkeletalMeshComponent Name=GuideSkeletalMesh	
 		SkeletalMesh = SkeletalMesh'FLCharacter.Shorty.Shorty_skeletal'		

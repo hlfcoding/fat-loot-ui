@@ -94,7 +94,6 @@ Begin:
 
 simulated state Teleport
 {
-	local Name walkingOrHoldingTreasure;
 	
 	event BeginState (Name LastStateName)
 	{
@@ -102,8 +101,7 @@ simulated state Teleport
 			return;
 
 		sneaktoslimpawn(self.Pawn).v_energy -= perDiveEnergy;
-		walkingOrHoldingTreasure = LastStateName;
-		SwitchToCamera('Fixed');
+		//SwitchToCamera('Fixed');
 		Pawn.GroundSpeed = SneaktoSlimPawn_Rabbit(Pawn).TELEPORT_SPEED;
 		Pawn.bForceMaxAccel = true;	
 		SneaktoSlimPawn_Rabbit(Pawn).AccelRate = SneaktoSlimPawn_Rabbit(Pawn).TELEPORT_ACCELERATION;
@@ -162,7 +160,7 @@ simulated state Teleport
 	simulated event EndState(name nextState)
 	{
 		ResetValues();
-		SwitchToCamera('ThirdPerson');
+		//SwitchToCamera('ThirdPerson');
 		//if(Role < ROLE_Authority)
 		//{			
 			SetTimer(2, false, 'StartEnergyRegen');
@@ -174,7 +172,7 @@ Begin:
 	sleep(TELEPORT_DURATION);	
 	ResetValues();
 	sleep(0.15); //wait for camera to catch up
-	if(walkingOrHoldingTreasure == 'HoldingTreasureWalking')
+	if(SneaktoSlimPawn(self.Pawn).isGotTreasure == true)
 	{
 		attemptToChangeState('HoldingTreasureWalking');
 		GoToState('HoldingTreasureWalking');
@@ -210,6 +208,9 @@ simulated state Roaring extends CustomizedPlayerWalking
 		local SneaktoSlimPawn victim;
 		`log("Rabbit_Roar!!");
 
+		
+		SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customRoar', 'roar', 1.f, true, 0.1f, 0.1f, false, true);
+
 		if(sneaktoslimpawn(self.Pawn).v_energy <= perRoarEnergy)
 			return;
 
@@ -242,7 +243,7 @@ simulated state Roaring extends CustomizedPlayerWalking
 
 Begin:
 	Rabbit_Roar();
-	SetTimer(roarTime, false, 'StopRoaring');	
+	SetTimer(roarTime, false, 'StopRoaring');
 }
 
 
@@ -251,7 +252,7 @@ Begin:
 
 defaultproperties
 {
-	perRoarEnergy = 45;
+	perRoarEnergy = 30;
 	roarTime = 0.2f;
 	perDiveEnergy = 35;
 	distanceDive = 225.0;

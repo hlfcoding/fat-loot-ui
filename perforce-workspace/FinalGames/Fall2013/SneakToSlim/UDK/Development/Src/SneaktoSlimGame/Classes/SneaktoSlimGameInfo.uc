@@ -20,6 +20,7 @@ var sneaktoslimPawn sneaktoslimPawnArchetype;
 
 var int timePerMatch;
 var string uniqueMatchDate;     //Randomly generated number to associate files with a certain game
+var bool endMatchAtEndTime;
 
 /**
  * Called when the game info is first initialized
@@ -28,6 +29,7 @@ var string uniqueMatchDate;     //Randomly generated number to associate files w
  */
 event PreBeginPlay()
 {
+	endMatchAtEndTime = true;
 	timePerMatch = 300;
 	uniqueMatchDate = TimeStamp();
 	uniqueMatchDate = Repl(uniqueMatchDate, ":", ";");    //.txt format doesn't allow colons in filenames
@@ -44,14 +46,51 @@ event PreBeginPlay()
 function GameOver()
 {
 	local SneaktoSlimPawn pawn;
+	local array<int> scoreBoard;
+	local array<string> characterType;
 
-	`log("Time up.");
+	PauseTimer(true, 'GameOver');
+
+	if(!self.endMatchAtEndTime)
+		return;
+
+	//Gets all players type and score
 	foreach WorldInfo.AllPawns(class'SneaktoSlimPawn', pawn)
 	{
-		//TODO: send each pawn to "level select room"
-		//pawn.ConsoleCommand("open SneaktoSlimMenu_LandingPage");
-		pawn.showDemoTime("Up!");
+		`log("Server get values: " $ pawn.playerScore $ " " $ pawn.characterName);
+		scoreBoard.AddItem(pawn.playerScore);
+		characterType.AddItem(pawn.characterName);
 	}
+
+	//Tells all pawns to go results level
+	foreach WorldInfo.AllPawns(class'SneaktoSlimPawn', pawn)
+	{
+		//pawn.saveGameResults(scoreBoard, characterType);
+		switch(characterType.Length)
+		{
+			case 1: 
+				pawn.saveGameResults(scoreBoard[0], characterType[0]);
+				break;
+			case 2: 
+				pawn.saveGameResults(scoreBoard[0], characterType[0], scoreBoard[1], characterType[1]);
+				break;
+			case 3: 
+				pawn.saveGameResults(scoreBoard[0], characterType[0], scoreBoard[1], characterType[1], scoreBoard[2], characterType[2]);
+				break;
+			case 4: 
+				pawn.saveGameResults(scoreBoard[0], characterType[0], scoreBoard[1], characterType[1], scoreBoard[2], characterType[2], scoreBoard[3], characterType[3]);
+				break;
+		}
+		pawn.GoToResultsScreen();
+	}
+
+    //Prints debug 
+	/*while(characterType.Length > 0)
+	{
+		`log("Player " $ characterType.Length $ " Type = " $ characterType[0] $ " Score = " $ scoreBoard[0]);
+		characterType.Remove(0,1);
+		scoreBoard.Remove(0,1);
+	}*/
 }
 
 function updateStatsFile()
@@ -97,16 +136,16 @@ function updateStatsFile()
 
 event Tick(float deltaTime)
 {
-	local int currentTime, count;
+	local int currentTime; //, count;
 	local SneaktoSlimPawn pawn;
 	local string time;
-	local SneakToSlimAINavMeshController AIController;
-	local string AICatchText;
+	//local SneakToSlimAINavMeshController AIController;
+	//local string AICatchText;
 
 	super.Tick(deltaTime);
 
-	AICatchText = "";
-	count = 1;
+	//AICatchText = "";
+	//count = 1;
 	currentTime = int(GetTimerCount('GameOver',));
 
 	if(currentTime != -1)
@@ -177,12 +216,12 @@ event PostLogin( PlayerController NewPlayer )
 			StartMatch();
 		else
 		{
-			`log("I am 1"@NewPlayer.pawn.GetTeamNum());
+			`log("I am 1 "@NewPlayer.pawn.GetTeamNum());
 			
 			RestartPlayer(newPlayer);
 			sneaktoslimpawn(NewPlayer.Pawn).changePlayerColorIndex(sneaktoslimPawn(NewPlayer.Pawn).GetTeamNum());
-			`log("I am 3"@sneaktoslimPawn(NewPlayer.Pawn).GetTeamNum());
-			`log("I am 5"@self.GetTeamNum());
+			`log("I am 3 "@sneaktoslimPawn(NewPlayer.Pawn).GetTeamNum());
+			`log("I am 5 "@self.GetTeamNum());
 			//sneaktoslimpawn(NewPlayer.Pawn).drawPlayerColor();
 			
 		}
@@ -407,7 +446,7 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	local UniqueNetId ZeroId;
 	local int SupposeTeam;
 	local bool IsSpectator;
-	local string inTime;
+	//local string inTime;
 
 	// Get URL options.
 	InName     = Left(ParseOption ( Options, "Name"), 20);
@@ -498,6 +537,7 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	//NewPlayer = SpawnPlayerController(StartSpot.Location, SpawnRotation);
 
 	//choose different character by character's name
+	HUDType=class'SneaktoSlimGame.SneakToSlimHUD';
 	if (InCharacter == "FatLady")
 	{
 		NewPlayer = Spawn(class 'SneaktoSlimPlayerController_FatLady',,, StartSpot.Location, SpawnRotation);
@@ -522,12 +562,19 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	{
 		NewPlayer = Spawn(class 'SneaktoSlimPlayerController_Spectator',,, StartSpot.Location, SpawnRotation);
 		NewPlayer.Pawn = Spawn(class 'SneaktoSlimPawn_Spectator',,,StartSpot.Location,SpawnRotation);
+		HUDType=class'Engine.HUD'; //disable sneakstoslim HUD
 	}
 	else if (InCharacter == "Menu")
 	{
 		NewPlayer = Spawn(class 'SneaktoSlimGame.SneaktoSlimPlayerController_Menu',,, StartSpot.Location, SpawnRotation);
 		NewPlayer.Pawn = Spawn(class 'SneaktoSlimGame.SneaktoSlimPawn_Menu',,,StartSpot.Location,SpawnRotation);
 		HUDType=class'Engine.HUD'; //disable in-game HUD
+	}
+	else if (InCharacter == "Results")
+	{
+		NewPlayer = Spawn(class 'SneaktoSlimGame.SneaktoSlimPlayerController_Results',,, StartSpot.Location, SpawnRotation);
+		NewPlayer.Pawn = Spawn(class 'SneaktoSlimGame.SneaktoSlimPawn_Results',,,StartSpot.Location,SpawnRotation);
+		HUDType=class'SneaktoSlimGame.SneaktoSlimHUD_ResultsScreen';
 	}
 	else
 	{
@@ -753,6 +800,9 @@ exec function stopFindingTreasureBox()
 
 function Logout( Controller Exiting )
 {
+	if(Exiting == none || SneaktoSlimPlayerController(Exiting) == none)
+		return;
+
 	SearchDestroyPlayer(Exiting);
 	super.Logout(Exiting);
 	if(Exiting.PlayerReplicationInfo.Team!=none)
@@ -785,6 +835,7 @@ function SearchDestroyPlayer(Controller Exiting)
 
 defaultproperties
 {
+	timePerMatch = 300
 	HUDType=class'SneaktoSlimGame.SneaktoSlimHUD'
 	PlayerControllerClass=class'SneaktoSlimGame.SneaktoSlimPlayerController'
 	DefaultPawnClass=class'SneaktoSlimGame.SneaktoSlimPawn'

@@ -35,6 +35,7 @@ var int timeHoldingTreasure, timesHoldingTreasureAboveAverage, timesHoldingTreas
 var int totalLocationIndex, totalLocationIndex2;
 var int numberOfTimesHitWithBellyBump;
 var string tempString;
+var float playerInputATurn;
 
 simulated event PostBeginPlay()
 {
@@ -820,7 +821,7 @@ simulated state CustomizedPlayerWalking
 		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
 		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
 		{
-			ClearTimer('EnergyCheck');
+			ClearTimer('removeEnergyWithTime');
 			SetTimer(2, false, 'StartEnergyRegen');
 			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
 			sneaktoslimpawn(self.Pawn).s_energized = 0;
@@ -838,7 +839,7 @@ reliable server function ServerSpeedDown()
 	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
 	if(sneaktoslimpawn(self.Pawn).s_energized == 1)
 	{
-		ClearTimer('EnergyCheck');
+		ClearTimer('removeEnergyWithTime');
 		SetTimer(2, false, 'StartEnergyRegen');
 		sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
 		sneaktoslimpawn(self.Pawn).s_energized = 0;
@@ -1231,7 +1232,7 @@ simulated state PlayerWalking
 	// when player input 'Left Shift'
 	simulated exec function FL_useBuff()
 	{
-		Local SneaktoSlimpawn CurrentPawn;
+		//Local SneaktoSlimpawn CurrentPawn;
 
 		if(sneaktoslimpawn(self.Pawn).mistNum == 0)
 		{
@@ -1365,7 +1366,9 @@ simulated state PlayerWalking
 
 			// Update rotation.
 			OldRotation = Rotation;
-			UpdateRotation( DeltaTime );
+			UpdateRotation( DeltaTime );			
+			//playerInputATurn = PlayerInput.aTurn;		temporarily commented. might use later - Ravi
+			//sendInputToServer(playerInputATurn);
 
 			if( Role < ROLE_Authority ) // then save this move and replicate it
 			{
@@ -1398,6 +1401,12 @@ simulated state PlayerWalking
 
 Begin:
 	if(debugStates) logState();
+}
+
+//used to send player turn input to spectator
+server reliable function sendInputToServer(float playerInputATurn)
+{
+	self.playerInputATurn = playerInputATurn;	
 }
 
 simulated function changeAnimTreeToTreasure()
@@ -1618,79 +1627,6 @@ Begin:
 	Pawn.bForceMaxAccel = true;
 }
 
-//simulated state UsingBeer
-//{
-//	simulated function PlayerMove( float DeltaTime )
-//	{
-//		local vector		NewAccel;
-//		local eDoubleClickDir	DoubleClickMove;
-//		local rotator		OldRotation;
-
-//		if( Pawn == None )
-//		{
-//			GoToState('Dead');
-//		}
-//		else
-//		{
-//			NewAccel.Y =  -PlayerInput.aStrafe * DeltaTime * 100 * PlayerInput.MoveForwardSpeed;
-//			NewAccel.X = -PlayerInput.aForward * DeltaTime * 100 * PlayerInput.MoveForwardSpeed;
-//			NewAccel.Z = 0; //no vertical movement for now, may be needed by ladders later
-
-//			if (IsLocalPlayerController())
-//			{
-//				AdjustPlayerWalkingMoveAccel(NewAccel);
-//			}
-
-//			DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
-
-//			// Update rotation.
-//			OldRotation = Rotation;
-//			UpdateRotation( DeltaTime );
-
-//			if( Role < ROLE_Authority ) // then save this move and replicate it
-//			{
-//				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
-//			}
-//			else
-//			{
-//				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
-//			}
-//		}
-//	}
-
-//	simulated function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
-//	{
-//		local Rotator CameraRotationYawOnly;
-//		local Vector ZeroVector;
-//		ZeroVector = vect(0.0, 0.0, 0.0);
-
-//		previousStateName = 'Walking';
-
-//		if( Pawn == None )
-//		{
-//			return;
-//		}
-
-//		if (Role == ROLE_Authority)
-//		{
-//			// Update ViewPitch for remote clients
-//			Pawn.SetRemoteViewPitch( Rotation.Pitch );
-//		}
-
-//		//get the controller yaw to transform our movement-accelerations by
-//		CameraRotationYawOnly.Yaw = Rotation.Yaw; 
-//		NewAccel = NewAccel>>CameraRotationYawOnly; //transform the input by the camera World orientation so that it's in World frame
-
-//		if (NewAccel != ZeroVector)
-//			Pawn.Acceleration = NewAccel;
-//		else
-//			Pawn.Acceleration = vlerp(Pawn.Acceleration, ZeroVector, 0.8);
-   
-//		Pawn.FaceRotation(Rotation,DeltaTime); //notify pawn of rotation
-
-//		CheckJumpOrDuck();
-//	}
-//}
 
 simulated state InvisibleWalking extends PlayerWalking
 {
@@ -1964,6 +1900,12 @@ simulated state Exhausted extends PlayerWalking
 				attemptToChangeState('UsingSuperSprint');
 				GoToState('UsingSuperSprint');
 			}
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 6)
+			{
+				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
+				SneaktoSlimPawn(self.Pawn).SetUsingBeer(true);
+			}
 		}
 	}
 
@@ -2019,6 +1961,8 @@ simulated state caughtByAI extends CustomizedPlayerWalking
 	event EndState (Name NextStateName)
 	{
 		sneaktoslimpawn(self.Pawn).v_energy = 100;
+		sneaktoslimpawn(self.Pawn).beerNum = 1;
+		sneaktoslimpawn(self.Pawn).BuffedTimer = 20;
 		//Removed animation statement from here because Vanish animation is already played once.
 	}
 
@@ -2044,6 +1988,7 @@ simulated state caughtByAI extends CustomizedPlayerWalking
 	simulated function movehar()
 	{
 		`log(sneaktoslimpawn(self.Pawn).Name $ ": Moving " $ sneaktoslimpawn(self.Pawn).name $ " to location " $ playerBase.Name , true, 'Ravi');
+		sneaktoslimpawn(self.Pawn).flashCurtain(false);
 		sneaktoslimpawn(self.Pawn).SetLocation(playerBase.Location);
 
 		//guard can catch u when u r in vase ?
@@ -2081,6 +2026,7 @@ Begin:
 
 	sneaktoslimpawn(self.Pawn).stopAllTheLoopAnimation();
 	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customVanish', 'Vanish', 1.f, true, 0.1f, 0.1f, false, true);
+	sneaktoslimpawn(self.Pawn).SetTimer(0.5, false, 'fadeOutCurtain');
 	
 	foreach WorldInfo.AllNavigationPoints (class'PlayerStart', playerBase)
 	{
@@ -2137,50 +2083,6 @@ simulated state DisguisedWalking extends PlayerWalking
 	{
 		ApplySprintingSpeed();
 		SetTimer(0.05, true, 'removeEnergyWithTime');
-
-		//if (self.Class == class'SneaktoSlimPlayerController_Rabbit')
-		//{
-		//	if(pauseMenuOn)
-		//		return;
-
-		//	if(sneaktoslimpawn(self.Pawn).v_energy <= SneaktoSlimPlayerController_Rabbit(self).perDiveEnergy)
-		//		return;
-		//	else
-		//	{
-		//		SneaktoSlimPawn(self.Pawn).incrementSprintCount();
-		//		attemptToChangeState('Teleport');
-		//		GoToState('Teleport');
-		//	}
-		//}
-		//else if (self.Class == class'SneaktoSlimPlayerController_FatLady')
-		//{
-		//	SneaktoSlimPawn(self.Pawn).incrementSprintCount();
-		//	resumeSprintTimer();
-		//	attemptToChangeState('DisguisedSprinting');//to server
-		//	GoToState('DisguisedSprinting');//local
-		//}
-		//else if (self.Class == class'SneaktoSlimPlayerController_GinsengBaby')
-		//{
-		//	//Player can't sprint if pause menu is on 
-		//	if(pauseMenuOn)
-		//		return;
-
-		//	if(sneaktoslimpawn(self.Pawn).v_energy <= 20)
-		//		return;
-		//	else
-		//	{
-		//		SneaktoSlimPawn(self.Pawn).incrementSprintCount();
-		//		resumeSprintTimer();
-
-		//		if(Role < ROLE_Authority)
-		//			attemptToChangeState('Burrow');
-		//		GoToState('Burrow');
-		//		//TO-DO: 
-		//		//change the model
-		//		//particle system: dust
-		//		//ignore wall and objects
-		//	}
-		//}
 	}
 
 	simulated exec function OnReleaseSecondSkill()
@@ -2465,6 +2367,7 @@ simulated state HoldingTreasureExhausted extends HoldingTreasureWalking
 
 Begin:
 	if(debugStates) logState();
+	changeAnimTreeToTreasure();
 	SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customTreasureWalk','Treasure_Walk',0.5f,true,0.5,0.5,true,true);
 	HoldTreasure();
 	sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLExhaustedSpeed;
@@ -2643,19 +2546,6 @@ Begin:
 }
 
 
-//state InvisibleToAI
-//{
-//	//event PushedState()
-//	//{
-//	//	SetTimer(1.0f);
-//	//}
-
-//	//function Timer()
-//	//{    
-//	//	PopState();
-//	//}
-//}
-
 simulated state Hiding extends CustomizedPlayerWalking
 {
 
@@ -2694,21 +2584,6 @@ Begin:
 	//SwitchToVaseCam();
 }
 
-//simulated state EndHiding extends CustomizedPlayerWalking
-//{
-//	local sneaktoslimpawn current;
-//Begin:
-//	if(debugStates) logState();
-
-//	current = sneaktoslimpawn(self.Pawn);
-//	current.SetHidden(false);
-//	current.SetCollision(true, true);
-//	SwitchToThirdPersonCam();
-//	gotostate('PlayerWalking');
-//	attemptToChangeState('PlayerWalking');
-//	//changeEveryoneState('PlayerWalking');
-//}
-	
 
 simulated function simulatedAttemptToChangeState(name stateName)
 {
@@ -2876,7 +2751,7 @@ exec function callRestartGame()
 server reliable function newServerPlayerRestart()
 {
 	local sneaktoslimplayercontroller current;
-	local SneaktoSlimSpawnPoint currentSpawnPoint;
+	//local SneaktoSlimSpawnPoint currentSpawnPoint;
 	local SneaktoSlimPawn currentPawn;
 
 	//reset character
@@ -2915,6 +2790,7 @@ server reliable function newServerPlayerRestart()
 		currentPawn.bUsingBuffed[0] = 0;
 		currentPawn.bUsingBuffed[1] = 0;
 		currentPawn.bUsingBuffed[2] = 0;
+		currentPawn.bUsingBuffed[6] = 0;
 
 		currentPawn.BuffedTimerDefault[0] = 10.0; // buff invis period
 		currentPawn.BuffedTimerDefault[1] = 20.0; // buff disguise period

@@ -148,7 +148,7 @@ DefaultProperties
 		bUseBooleanEnvironmentShadowing=FALSE
 	End Object
 	Components.Add(MyLightEnvironment)
-	MyLight = MyLightEnvironment
+	//MyLight = MyLightEnvironment
 
 	//Create a new mesh object. This object will be the 3D model of the trigger
 	Begin Object Class=StaticMeshComponent Name=MyMesh

@@ -150,6 +150,7 @@ simulated state Burrow extends PlayerWalking
 
 	event EndState(Name NextStateName)
 	{
+		Pawn.bBlockActors = true;
 		sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(false, self.GetTeamNum());
 		sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;	
 		if (role == role_authority)
@@ -162,6 +163,7 @@ simulated state Burrow extends PlayerWalking
 	}
 
 Begin:
+	Pawn.bBlockActors = false;
 	sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(true, self.GetTeamNum());
 	sneaktoslimpawn(self.Pawn).bInvisibletoAI = true;
 	if(debugStates) logState();
@@ -189,6 +191,7 @@ simulated state HoldingTreasureBurrow extends Burrow
 
 	event EndState(Name NextStateName)
 	{
+		Pawn.bBlockActors = true;
 		sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(false, self.GetTeamNum());
 		sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;	
 		if (role == role_authority)
@@ -199,18 +202,7 @@ simulated state HoldingTreasureBurrow extends Burrow
 		ClearTimer('UpdateEnergy');
 		SetTimer(2, false, 'StartEnergyRegen');
 
-		if (NextStateName == 'Burrow')
-		{
-			SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree');
-			if(Role == ROLE_Authority)
-			{
-				ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
-				{
-					onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree');
-				}
-			}
-		}
-		else
+		if (NextStateName == 'HoldingTreasureWalking')
 		{
 			SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree_treasure');
 			if(Role == ROLE_Authority)
@@ -221,9 +213,21 @@ simulated state HoldingTreasureBurrow extends Burrow
 				}
 			}
 		}
+		else
+		{
+			SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree');
+			if(Role == ROLE_Authority)
+			{
+				ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
+				{
+					onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree');
+				}
+			}
+		}
 	}
 
 Begin:
+	Pawn.bBlockActors = false;
 	sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(true, self.GetTeamNum());
 	sneaktoslimpawn(self.Pawn).bInvisibletoAI = true;
 	SneaktoSlimPawn(self.Pawn).Mesh.SetAnimTreeTemplate(animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree_treasure_underground');

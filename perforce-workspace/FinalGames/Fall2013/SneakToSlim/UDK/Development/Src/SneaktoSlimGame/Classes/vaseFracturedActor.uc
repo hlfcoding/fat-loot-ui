@@ -7,7 +7,7 @@ DefaultProperties
 		Scale=1.4
 		Translation=(X=0.000000,Y=0.000000,Z=-32.000000)
 		bUsePrecomputedShadows=True
-        bspawnphysicschunks = false;
+        //bspawnphysicschunks = false;
     End Object
 
 	//Components.Add(MyMesh);

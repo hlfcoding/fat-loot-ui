@@ -58,8 +58,10 @@ event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hit
 	
 	super.Touch(other, otherComp, hitLoc, hitNormal);
 	if(isTurnedOn){
-	    sneaktoslimpawn(other).bInvisibletoAI = true;
-	    sneaktoslimpawn(other).mistNum = Mistnum;//need to be set to mistTrigger num
+		if(sneaktoslimpawn(other)!=none){
+	        sneaktoslimpawn(other).bInvisibletoAI = true;
+	        sneaktoslimpawn(other).mistNum = Mistnum;//need to be set to mistTrigger num
+		}
 	}
 }
 
@@ -68,16 +70,18 @@ event UnTouch(Actor other)
 	
 	//sneaktoslimpawn(other).endinvisibleNum = other.GetTeamNum();
 	if(isTurnedOn){
-	    sneaktoslimpawn(other).bInvisibletoAI = false;
-	    sneaktoslimpawn(other).mistNum = 0;
+		if(sneaktoslimpawn(other)!=none){
+	        sneaktoslimpawn(other).bInvisibletoAI = false;
+	        sneaktoslimpawn(other).mistNum = 0;
+		}
 	}
 }
 
 DefaultProperties
 {
-	displayName = "Mist";
-	PromtText = "";//"You are in the Mist!"
-	PromtTextXbox = ""
+	//displayName = "Mist";
+	//PromtText = "";//"You are in the Mist!"
+	//PromtTextXbox = ""
 	
 
     Begin Object Class=CylinderComponent NAME=MyMesh
@@ -104,7 +108,7 @@ DefaultProperties
 	//bNoDelete = true
 	bNoEncroachCheck = true     //Enables pawns to move even when overlapping
 
-	scVaseBreakSound = SoundCue'SFX.vaseBreak_test_Cue';
+	//scVaseBreakSound = SoundCue'SFX.vaseBreak_test_Cue';
 	RemoteRole=ROLE_AutonomousProxy
 	bAlwaysRelevant=true
 	isTurnedOn = true

@@ -62,9 +62,8 @@ simulated function giveTreasure(SneaktoSlimPawn User, SneaktoSlimTreasureSpawnPo
 event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vector HitNormal)
 {
     super.Touch(Other, OtherComp, HitLocation, HitNormal);
-
-
-		tempUser = SneaktoSlimPawn(Other);
+	tempUser = SneaktoSlimPawn(Other);
+	if(tempUser != none)
 		tempUser.getTreasure(self, NONE);
 }
  

@@ -1,7 +1,7 @@
 class SneaktoSlimGFxMap extends GFxMoviePlayer;
 
 var float screenSizeX, screenSizeY;
-var GFxObject Map, playerIcon, demoTime, winnerDisplayText, winnerDisplayBackground, minimapText, arrow;
+var GFxObject Map, playerIcon, demoTime, winnerDisplayText, winnerDisplayBackground, minimapText, arrow, rect;
 var MiniMap miniMap;
 var Texture2D mapTexture;
 var vector player2DScreenPoint;
@@ -10,6 +10,7 @@ var array<GFxObject> allFlashObjects;
 var float flashMapX, flashMapY, flashMapWidth, flashMapHeight, scaleFactorX, scaleFactorY;
 var array<Texture2D> minimaps;
 var float mouseRotation, faceRotation;
+var int originalRectSize;
 var bool isHUDSet;
 
 function Init(optional LocalPlayer player)
@@ -29,6 +30,9 @@ function Init(optional LocalPlayer player)
 	flashMapHeight = Map.GetFloat("height");
 	flashMapWidth = Map.GetFloat("width");
 	playerIcon = GetVariableObject("_root.player_icon");
+	rect = GetVariableObject("_root.Rect");
+	rect.SetBool("visible", false);
+	originalRectSize = rect.GetInt("width");
 	arrow = GetVariableObject("_root.Arrow");
 	demoTime = GetVariableObject("_root.DemoTimeText");
 	demoTime.setBool("isOn", false);
@@ -40,8 +44,9 @@ function Init(optional LocalPlayer player)
 	//Adds all objects to array for when screen size is changed
 	allFlashObjects.AddItem(Map);
 	allFlashObjects.AddItem(minimapText);
-	allFlashObjects.AddItem(playerIcon);
-	allFlashObjects.AddItem(arrow);
+	//allFlashObjects.AddItem(playerIcon);
+	allFlashObjects.AddItem(rect);
+	//allFlashObjects.AddItem(arrow);
 	allFlashObjects.AddItem(demoTime);
 	allFlashObjects.AddItem(winnerDisplayText);
 	allFlashObjects.AddItem(winnerDisplayBackground);
@@ -100,11 +105,11 @@ function setMiniMapHead(string character)
 
 function bool setMapTexture()
 {
-	local Texture2D icon;
+	//local Texture2D icon;
 	local int mapIndex;
 
 	//Hides minimap for all levels that aren't these
-	if(!(mapName == "demoday" || mapName == "fltemplemap" || mapName == "flmist"))
+	if(!(mapName == "demoday" || mapName == "fltemplemap" || mapName == "fltemplemaptopplatform" || mapName == "flmist"))
 	{
 		Map.SetBool("visible", false);
 		playerIcon.SetBool("visible", false);
@@ -123,6 +128,8 @@ function bool setMapTexture()
 			//return false;
 		if(InStr(mapPath, "demoday") != -1)
 			mapIndex = 0 ;
+		else if(InStr(mapPath, "fltemplemaptopplatform") != -1)
+			mapIndex = 1;
 		else if(InStr(mapPath, "fltemplemap") != -1)
 			mapIndex = 1;
 		else if(InStr(mapPath, "flmist") != -1)
@@ -164,6 +171,145 @@ function scaleObjects(float x, float y)
 		}
 		screenSizeX = x;
 		screenSizeY = y;
+	}
+}
+
+function setFountainPoint(vector loc)
+{
+	local vector result;
+	local float transformedX, transformedY;
+
+	//Same as fltemplemap but extra calculations for map margins are considered
+	if(mapName == "demoday")
+	{
+		if(!miniMap.isOn)
+		{
+			loc.X *= Map.GetFloat("width");   
+			loc.Y *= Map.GetFloat("height"); 
+
+			transformedX = screenSizeX - Map.GetFloat("width") + loc.X;
+			transformedY = screenSizeY - Map.GetFloat("height") + loc.Y;
+
+			//Map specify conversion to scale point to ignore image margins
+			transformedX = (Map.GetFloat("width") - 70*scaleFactorX - 40*scaleFactorX + Map.GetFloat("x")) + (70*scaleFactorX * ((transformedX - Map.GetFloat("x"))/Map.GetFloat("width")));
+			transformedY = (Map.GetFloat("height") - 117*scaleFactorY - 18*scaleFactorY + Map.GetFloat("y")) + (117*scaleFactorY * ((transformedY - Map.GetFloat("y"))/Map.GetFloat("height")));
+
+			result.X = transformedX-(10*scaleFactorX);
+			result.y = transformedY-(10*scaleFactorY);
+		}
+		else
+		{
+			//Scales values to match screen size
+			loc.X *= screenSizeX;   
+			loc.Y *= screenSizeY; 
+
+			//Map specify conversion to scale point to ignore image margins
+			result.X = (Map.GetFloat("width") - (Map.GetFloat("width") * 70/150) - (Map.GetFloat("width")*40/150) + Map.GetFloat("x")) + ((Map.GetFloat("width")*70/150) * ((loc.X - Map.GetFloat("x"))/Map.GetFloat("width")));
+			result.Y = (Map.GetFloat("height") - (Map.GetFloat("height") * 117/150) - (Map.GetFloat("height")*18/150) + Map.GetFloat("y")) + ((Map.GetFloat("height")*117/150) * ((loc.Y - Map.GetFloat("y"))/Map.GetFloat("height")));
+		}
+	}
+	//Same as demoday but extra calculations for map margins are ignored
+	else if(mapName == "fltemplemap")
+	{
+		if(!miniMap.isOn)
+		{
+			loc.X *= Map.GetFloat("width");   
+			loc.Y *= Map.GetFloat("height"); 
+
+			transformedX = screenSizeX - Map.GetFloat("width") + loc.X;
+			transformedY = screenSizeY - Map.GetFloat("height") + loc.Y;
+
+			/*//Map specify conversion to scale point to ignore image margins
+			transformedX = (Map.GetFloat("width") - 70*scaleFactorX - 40*scaleFactorX + Map.GetFloat("x")) + (70*scaleFactorX * ((transformedX - Map.GetFloat("x"))/Map.GetFloat("width")));
+			transformedY = (Map.GetFloat("height") - 117*scaleFactorY - 18*scaleFactorY + Map.GetFloat("y")) + (117*scaleFactorY * ((transformedY - Map.GetFloat("y"))/Map.GetFloat("height")));*/
+
+			result.X = transformedX-(10*scaleFactorX);
+			result.y = transformedY-(10*scaleFactorY);
+		}
+		else
+		{
+			//Scales values to match screen size
+			loc.X *= screenSizeX;   
+			loc.Y *= screenSizeY; 
+			result.X = loc.X;
+			result.Y = loc.Y;
+		}
+	}
+	//Same as demoday but extra calculations for map margins are ignored
+	else if(mapName == "fltemplemaptopplatform")
+	{
+		if(!miniMap.isOn)
+		{
+			loc.X *= Map.GetFloat("width");   
+			loc.Y *= Map.GetFloat("height"); 
+
+			transformedX = screenSizeX - Map.GetFloat("width") + loc.X;
+			transformedY = screenSizeY - Map.GetFloat("height") + loc.Y;
+
+			/*//Map specify conversion to scale point to ignore image margins
+			transformedX = (Map.GetFloat("width") - 70*scaleFactorX - 40*scaleFactorX + Map.GetFloat("x")) + (70*scaleFactorX * ((transformedX - Map.GetFloat("x"))/Map.GetFloat("width")));
+			transformedY = (Map.GetFloat("height") - 117*scaleFactorY - 18*scaleFactorY + Map.GetFloat("y")) + (117*scaleFactorY * ((transformedY - Map.GetFloat("y"))/Map.GetFloat("height")));*/
+
+			result.X = transformedX-(10*scaleFactorX);
+			result.y = transformedY-(10*scaleFactorY);
+		}
+		else
+		{
+			//Scales values to match screen size
+			loc.X *= screenSizeX;   
+			loc.Y *= screenSizeY; 
+			result.X = loc.X;
+			result.Y = loc.Y;
+		}
+	}
+	//Same as demoday but extra calculations for map margins are ignored
+	else if(mapName == "flmist")
+	{
+		if(!miniMap.isOn)
+		{
+			loc.X *= Map.GetFloat("width");   
+			loc.Y *= Map.GetFloat("height"); 
+
+			transformedX = screenSizeX - Map.GetFloat("width") + loc.X;
+			transformedY = screenSizeY - Map.GetFloat("height") + loc.Y;
+
+			/*//Map specify conversion to scale point to ignore image margins
+			transformedX = (Map.GetFloat("width") - 70*scaleFactorX - 40*scaleFactorX + Map.GetFloat("x")) + (70*scaleFactorX * ((transformedX - Map.GetFloat("x"))/Map.GetFloat("width")));
+			transformedY = (Map.GetFloat("height") - 117*scaleFactorY - 18*scaleFactorY + Map.GetFloat("y")) + (117*scaleFactorY * ((transformedY - Map.GetFloat("y"))/Map.GetFloat("height")));*/
+
+			result.X = transformedX-(10*scaleFactorX);
+			result.y = transformedY-(10*scaleFactorY);
+		}
+		else
+		{
+			//Scales values to match screen size
+			loc.X *= screenSizeX;   
+			loc.Y *= screenSizeY; 
+			result.X = loc.X;
+			result.Y = loc.Y;
+		}
+	}
+	rect.SetFloat("x", result.X);
+	rect.SetFloat("y", result.Y);
+
+	//Causes rect to continuously spin
+	rect.SetFloat("rotation", (rect.GetFloat("rotation") + 2));
+	if(rect.GetInt("rotation") >= 360)
+		rect.SetInt("rotation", 0);
+
+	if(rect.GetInt("width") > originalRectSize && !miniMap.isOn)
+	{
+		`log("Width: " $ rect.GetInt("width") $ " | Height: " $ rect.GetInt("height"));
+		if(rect.GetInt("width") - 60 >= originalRectSize)
+		{
+			rect.SetInt("width", (rect.GetInt("width") - 15));
+			rect.SetInt("height", (rect.GetInt("height") - 15));
+		}
+		else
+		{
+			rect.SetInt("width", originalRectSize);
+			rect.SetInt("height", originalRectSize);
+		}
 	}
 }
 
@@ -319,6 +465,66 @@ function TickMap(float DeltaTime)
 			}
 		}
 		//Same as demoday but extra calculations for map margins are ignored
+		else if(mapName == "fltemplemaptopplatform")
+		{
+			if(!miniMap.isOn)
+			{
+				Map.SetFloat("width", flashMapWidth*scaleFactorX);
+				Map.SetFloat("height", flashMapHeight*scaleFactorY);
+				Map.SetFloat("x", screenSizeX - (flashMapWidth+10)*scaleFactorX);
+				Map.SetFloat("y", screenSizeY - (flashMapHeight+10)*scaleFactorY);
+
+				/*`log("x " $ Map.GetFloat("x"));
+				`log("x prime " $ (Map.GetFloat("width") - (Map.GetFloat("width") * 70/150) - (Map.GetFloat("width")*40/150) + Map.GetFloat("x")));
+				`log("W " $ Map.GetFloat("width"));
+				`log("W prime " $ (Map.GetFloat("width")*70/150));
+				`log("A ratio " $ 1 - (screenSizeX - player2DScreenPoint.X)/screenSizeX);*/
+
+				//Passes player relative location to its controller for tracking/metric purposes
+				player.trackLocation(player2DScreenPoint.X, player2DScreenPoint.Y, self.mapName);
+
+				player2DScreenPoint.X *= Map.GetFloat("width");   
+				player2DScreenPoint.Y *= Map.GetFloat("height"); 
+
+				transformedX = screenSizeX - Map.GetFloat("width") + player2DScreenPoint.X;
+				transformedY = screenSizeY - Map.GetFloat("height") + player2DScreenPoint.Y;
+
+				/*//Map specify conversion to scale point to ignore image margins
+				transformedX = (Map.GetFloat("width") - 70*scaleFactorX - 40*scaleFactorX + Map.GetFloat("x")) + (70*scaleFactorX * ((transformedX - Map.GetFloat("x"))/Map.GetFloat("width")));
+				transformedY = (Map.GetFloat("height") - 117*scaleFactorY - 18*scaleFactorY + Map.GetFloat("y")) + (117*scaleFactorY * ((transformedY - Map.GetFloat("y"))/Map.GetFloat("height")));*/
+
+				playerIcon.SetFloat("x", transformedX-(10*scaleFactorX));
+				playerIcon.SetFloat("y", transformedY-(10*scaleFactorY));
+				arrow.SetFloat("x", transformedX-(10*scaleFactorX));
+				arrow.SetFloat("y", transformedY-(10*scaleFactorY));
+			}
+			else
+			{
+				Map.SetFloat("width", screenSizeX);
+				Map.SetFloat("height", screenSizeY);
+				Map.SetFloat("x", 0);
+				Map.SetFloat("y", 0);
+
+				//Passes player relative location to its controller for tracking/metric purposes
+				player.trackLocation(player2DScreenPoint.X, player2DScreenPoint.Y, self.mapName);
+
+				//Scales values to match screen size
+				player2DScreenPoint.X *= screenSizeX;   
+				player2DScreenPoint.Y *= screenSizeY; 
+				transformedX = player2DScreenPoint.X;
+				transformedY = player2DScreenPoint.Y;
+
+				/*//Map specify conversion to scale point to ignore image margins
+				transformedX = (Map.GetFloat("width") - (Map.GetFloat("width") * 70/150) - (Map.GetFloat("width")*40/150) + Map.GetFloat("x")) + ((Map.GetFloat("width")*70/150) * ((player2DScreenPoint.X - Map.GetFloat("x"))/Map.GetFloat("width")));
+				transformedY = (Map.GetFloat("height") - (Map.GetFloat("height") * 117/150) - (Map.GetFloat("height")*18/150) + Map.GetFloat("y")) + ((Map.GetFloat("height")*117/150) * ((player2DScreenPoint.Y - Map.GetFloat("y"))/Map.GetFloat("height")));*/
+
+				playerIcon.SetFloat("x", transformedX);
+				playerIcon.SetFloat("y", transformedY);
+				arrow.SetFloat("x", transformedX);
+				arrow.SetFloat("y", transformedY);
+			}
+		}
+		//Same as demoday but extra calculations for map margins are ignored
 		else if(mapName == "flmist")
 		{
 			if(!miniMap.isOn)
@@ -389,6 +595,6 @@ DefaultProperties
 	MovieInfo = SwfMovie'Test.MiniMap'
 	//bGammaCorrection = false
 	minimaps[0] = Texture2D'sneaktoslimimages.DemoDayTopDownMap'
-	minimaps[1] = Texture2D'sneaktoslimimages.fltempleTopDownMap'
+	minimaps[1] = Texture2D'sneaktoslimimages.fltemplemapTopDownMap'
 	minimaps[2] = Texture2D'sneaktoslimimages.flmistTopDownMap'
 }

@@ -140,8 +140,7 @@ DefaultProperties
 	Begin Object Class=StaticMeshComponent   Name=MyGuardLatern
 		StaticMesh=StaticMesh'FLCharacter.guard.Lanturn'
 		LightEnvironment=MyLightEnvironment
-		CastShadow=true
-		bCanStepUpOn = false
+		CastShadow=true		
 	End Object
 	lantern = MyGuardLatern
 
@@ -165,7 +164,7 @@ DefaultProperties
 	DetectReactionTime = 0.0
 	HoldTime = 1.0
 	MaxInvestigationDistance = 1000.0
-	MinInvestigationDistance = 25.0
+	MinInvestigationDistance = 50.0
 	bNoEncroachCheck = true     //Enables pawns to move even when overlapping	
 	lightRadius = 400
 	MaxChaseStamina = 100

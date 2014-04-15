@@ -153,9 +153,7 @@ simulated state Sprinting extends PlayerWalking
 
 	event BeginState (Name LastStateName)
 	{
-		////
-		//InvisibleWalking should go into either PlayerWalking or InvisibleSprinting then to Sprinting
-		//
+
 		if (LastStateName == 'HoldingTreasureWalking' || LastStateName == 'HoldingTreasureExhausted')
 		{
 			GoToState('HoldingTreasureSprinting');
@@ -164,22 +162,52 @@ simulated state Sprinting extends PlayerWalking
 		{
 			GoToState('InvisibleSprinting');
 		}
-		//else if (LastStateName == 'DisguisedWalking' || LastStateName == 'DisguisedExhausted')
-		//{
-		//	GoToState('DisguisedSprinting');
-		//}
 		else
 		{
 			`log("state " $ LastStateName $ " trying to go through state Sprinting", true, 'LOG');
 		}
 	}
 
-	
-	//event EndState (name NextStateName)
-	//{
-	//	if(NextStateName == 'Hiding')
-	//		SpeedDown();
-	//}
+	event EndState (Name NextStateName)
+	{
+		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+		{
+			ServerSpeedDown();
+			if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+						SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+			sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
+			if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+			{
+				ClearTimer('removeEnergyWithTime');
+				SetTimer(2, false, 'StartEnergyRegen');
+				sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
+				sneaktoslimpawn(self.Pawn).s_energized = 0;
+			}
+		}
+	}
+
+	simulated exec function OnReleaseSecondSkill()
+	{
+		pauseSprintTimer();
+
+		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+		{
+			ServerSpeedDown();
+			if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+						SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+			sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
+			if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+			{
+				ClearTimer('removeEnergyWithTime');
+				SetTimer(2, false, 'StartEnergyRegen');
+				sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
+				sneaktoslimpawn(self.Pawn).s_energized = 0;
+			}
+			attemptToChangeState('Playerwalking');
+			GoToState('Playerwalking');
+		}
+	}
+
 
 	// when player input 'Left Shift', also overwrite the same func in playerWalking
 	simulated exec function FL_useBuff()
@@ -220,36 +248,48 @@ simulated state Sprinting extends PlayerWalking
 	{
 		if(sneaktoslimpawn(self.Pawn).s_energized == 0)
 		{
-			SetTimer(0.05, true, 'EnergyCheck');
-			//SwitchToShoulderCam();        //ANDYCAM
+			SetTimer(0.05, true, 'removeEnergyWithTime');
 			
 			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLSprintingSpeed;
 			sneaktoslimpawn(self.Pawn).s_energized = 1;
 		}
 	}
 
-	simulated exec function OnReleaseSecondSkill()
-	{
-		pauseSprintTimer();
-
-		ServerSpeedDown();
-		//current = sneaktoslimpawn(self.Pawn);
-		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
-		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
-		{
-			ClearTimer('EnergyCheck');
-			SetTimer(2, false, 'StartEnergyRegen');
-			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-			sneaktoslimpawn(self.Pawn).s_energized = 0;
-		}
-		attemptToChangeState('Playerwalking');
-		GoToState('Playerwalking');
-	}
 
 
-	simulated function EnergyCheck()
+
+	//simulated function EnergyCheck()
+	//{
+	//	if (Vsize(sneaktoslimpawn(self.Pawn).Velocity) != 0)
+	//	{
+	//		if(sneaktoslimpawn(self.Pawn).v_energy > sneaktoslimpawn(self.Pawn).PerSpeedEnergy)
+	//		{
+	//			ClearTimer('EnergyRegen');
+	//			ClearTimer('StartEnergyRegen');
+	//			//current.startSpeedUpAnim();
+	//			SwitchToCamera('ShoulderCam');
+	//			SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,true,0.5,0.5,true,false);
+	//			sneaktoslimpawn(self.Pawn).v_energy = sneaktoslimpawn(self.Pawn).v_energy - sneaktoslimpawn(self.Pawn).PerSpeedEnergy;
+	//			if (sneaktoslimpawn(self.Pawn).v_energy < 0)
+	//				sneaktoslimpawn(self.Pawn).v_energy = 0;
+	//		}
+	//		else
+	//		{
+	//			//attemptToChangeState('EndSprinting');
+	//			//GoToState('EndSprinting');//local
+	//			OnReleaseSecondSkill();
+	//		}
+	//	}
+	//	else
+	//	{
+	//		SetTimer(2, false, 'StartEnergyRegen');
+	//		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+	//				SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+	//		SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5f);
+	//	}
+	//}
+
+	simulated function removeEnergyWithTime()
 	{
 		if (Vsize(sneaktoslimpawn(self.Pawn).Velocity) != 0)
 		{
@@ -257,17 +297,14 @@ simulated state Sprinting extends PlayerWalking
 			{
 				ClearTimer('EnergyRegen');
 				ClearTimer('StartEnergyRegen');
-				//current.startSpeedUpAnim();
-				SwitchToCamera('ShoulderCam');
-				SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,true,0.5,0.5,true,false);
-				sneaktoslimpawn(self.Pawn).v_energy = sneaktoslimpawn(self.Pawn).v_energy - sneaktoslimpawn(self.Pawn).PerSpeedEnergy;
+				SwitchToCamera('ShoulderCam');                                                                                  //change camera
+				SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,true,0.5,0.5,true,false);     //play animation
+				SneaktoSlimPawn(self.Pawn).v_energy = SneaktoSlimPawn(self.Pawn).v_energy - SneaktoSlimPawn(self.Pawn).PerSpeedEnergy;
 				if (sneaktoslimpawn(self.Pawn).v_energy < 0)
-					sneaktoslimpawn(self.Pawn).v_energy = 0;
+						sneaktoslimpawn(self.Pawn).v_energy = 0;
 			}
 			else
 			{
-				//attemptToChangeState('EndSprinting');
-				//GoToState('EndSprinting');//local
 				OnReleaseSecondSkill();
 			}
 		}
@@ -275,15 +312,13 @@ simulated state Sprinting extends PlayerWalking
 		{
 			SetTimer(2, false, 'StartEnergyRegen');
 			if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-			SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5f);
+					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);                          //change camera
+			SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5f);        //stop animation
 		}
 	}
 
 Begin:
 	if(debugStates) logState();
-
-	//SwitchToShoulderCam();    //ANDYCAM
 	Speedup();
 }
 
@@ -311,19 +346,22 @@ simulated state InvisibleSprinting extends Sprinting
 	{
 		pauseSprintTimer();
 
-		ServerSpeedDown();
-		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
 		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
 		{
-			ClearTimer('EnergyCheck');
-			SetTimer(2, false, 'StartEnergyRegen');
-			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-			sneaktoslimpawn(self.Pawn).s_energized = 0;
+			ServerSpeedDown();
+			if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+						SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+			sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
+			if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+			{
+				ClearTimer('removeEnergyWithTime');
+				SetTimer(2, false, 'StartEnergyRegen');
+				sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
+				sneaktoslimpawn(self.Pawn).s_energized = 0;
+			}
+			attemptToChangeState('InvisibleWalking');
+			GoToState('InvisibleWalking');
 		}
-		attemptToChangeState('InvisibleWalking');
-		GoToState('InvisibleWalking');
 	}
 
 	//event EndState(Name NextStateName)
@@ -397,19 +435,22 @@ simulated state HoldingTreasureSprinting extends Sprinting
 	{
 		pauseSprintTimer();
 
-		ServerSpeedDown();
-		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',1.f,true,0,0.5);
 		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
 		{
-			ClearTimer('EnergyCheck');
-			SetTimer(2, false, 'StartEnergyRegen');
-			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
-			sneaktoslimpawn(self.Pawn).s_energized = 0;
+			ServerSpeedDown();
+			if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+						SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+			sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',1.f,true,0,0.5);
+			if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+			{
+				ClearTimer('removeEnergyWithTime');
+				SetTimer(2, false, 'StartEnergyRegen');
+				sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
+				sneaktoslimpawn(self.Pawn).s_energized = 0;
+			}
+			attemptToChangeState('HoldingTreasureWalking');
+			GoToState('HoldingTreasureWalking');
 		}
-		attemptToChangeState('HoldingTreasureWalking');
-		GoToState('HoldingTreasureWalking');
 	}
 
 	simulated exec function FL_useBuff()
@@ -422,7 +463,38 @@ simulated state HoldingTreasureSprinting extends Sprinting
 
 	}
 
-	simulated function EnergyCheck()
+	//simulated function EnergyCheck()
+	//{
+	//	if (Vsize(sneaktoslimpawn(self.Pawn).Velocity) != 0)
+	//	{
+	//		if(sneaktoslimpawn(self.Pawn).v_energy > sneaktoslimpawn(self.Pawn).PerSpeedEnergy)
+	//		{
+	//			ClearTimer('EnergyRegen');
+	//			ClearTimer('StartEnergyRegen');
+	//			//current.startSpeedUpAnim();
+	//			SwitchToCamera('ShoulderCam');
+	//			SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',2.0f,true,0.5,0.5,true,false);
+	//			sneaktoslimpawn(self.Pawn).v_energy = sneaktoslimpawn(self.Pawn).v_energy - sneaktoslimpawn(self.Pawn).PerSpeedEnergy;
+	//			if (sneaktoslimpawn(self.Pawn).v_energy < 0)
+	//				sneaktoslimpawn(self.Pawn).v_energy = 0;
+	//		}
+	//		else
+	//		{
+	//			//attemptToChangeState('EndSprinting');
+	//			//GoToState('EndSprinting');//local
+	//			OnReleaseSecondSkill();
+	//		}
+	//	}
+	//	else
+	//	{
+	//		SetTimer(2, false, 'StartEnergyRegen');
+	//		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+	//				SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+	//		SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',2.0f,false,0,0.5f);
+	//	}
+	//}
+
+	simulated function removeEnergyWithTime()
 	{
 		if (Vsize(sneaktoslimpawn(self.Pawn).Velocity) != 0)
 		{
@@ -430,17 +502,14 @@ simulated state HoldingTreasureSprinting extends Sprinting
 			{
 				ClearTimer('EnergyRegen');
 				ClearTimer('StartEnergyRegen');
-				//current.startSpeedUpAnim();
-				SwitchToCamera('ShoulderCam');
-				SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',0.5f,true,0.5,0.5,true,false);
-				sneaktoslimpawn(self.Pawn).v_energy = sneaktoslimpawn(self.Pawn).v_energy - sneaktoslimpawn(self.Pawn).PerSpeedEnergy;
+				SwitchToCamera('ShoulderCam');                                                                                  //change camera
+				SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',1.f,true,0.5,0.5,true,false);     //play animation
+				SneaktoSlimPawn(self.Pawn).v_energy = SneaktoSlimPawn(self.Pawn).v_energy - SneaktoSlimPawn(self.Pawn).PerSpeedEnergy;
 				if (sneaktoslimpawn(self.Pawn).v_energy < 0)
-					sneaktoslimpawn(self.Pawn).v_energy = 0;
+						sneaktoslimpawn(self.Pawn).v_energy = 0;
 			}
 			else
 			{
-				//attemptToChangeState('EndSprinting');
-				//GoToState('EndSprinting');//local
 				OnReleaseSecondSkill();
 			}
 		}
@@ -448,15 +517,15 @@ simulated state HoldingTreasureSprinting extends Sprinting
 		{
 			SetTimer(2, false, 'StartEnergyRegen');
 			if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-			SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',0.5f,false,0,0.5f);
+					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);                          //change camera
+			SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',1.f,false,0,0.5f);        //stop animation
 		}
 	}
 
 
 Begin:
 	if(debugStates) logState();
-	SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',0.5f,true,0.5,0.5,true,true);
+	SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',2.0f,true,0.5,0.5,true,true);
 	Speedup();
 	HoldTreasure();
 }

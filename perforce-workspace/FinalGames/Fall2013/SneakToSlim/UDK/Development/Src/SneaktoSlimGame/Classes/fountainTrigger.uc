@@ -2,6 +2,13 @@ class fountainTrigger extends ITrigger;
 
 var fountainDestinationNode destination;
 
+simulated event PostBeginPlay()
+{
+	super.PostBeginPlay();
+
+	if(destination == NONE)
+		setDestinationNode(); 
+}
 function setDestinationNode()
 {
 	//Gets fountain's associated destination node
@@ -18,20 +25,32 @@ function setDestinationNode()
 	`log(destination.Name $ " saved in trigger " $ Name);
 }
 
-/*event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hitNormal)
+event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hitNormal)
 {
 	super.Touch(other, otherComp, hitLoc, hitNormal);
-}*/
+
+	if(SneaktoSlimPawn(other)!= None){
+		SneaktoSlimPawn(other).showFountainLocationUI(destination.Location);
+	}
+}
+
+event UnTouch(Actor other)
+{
+	super.UnTouch(other);
+
+	if(SneaktoSlimPawn(other)!= None){
+		SneaktoSlimPawn(other).hideFountainLocationUI();
+	}
+}
 
 simulated function bool UsedBy(Pawn User)
 {
 	//Spawn(class 'soundSphere',,,self.Location);
+	PlaySound(SoundCue'flsfx.teleport_fx_Cue');
     super.UsedBy(User);
 	if(InRangePawnNumber!=SneaktoSlimPawn(User).GetTeamNum()){
 	    return false;
-    }
-	if(destination == NONE)
-		setDestinationNode();   
+    }  
 	if(destination == NONE)
 	{
 		`log("Trigger " $ Name $ " used by" $ User.Name);

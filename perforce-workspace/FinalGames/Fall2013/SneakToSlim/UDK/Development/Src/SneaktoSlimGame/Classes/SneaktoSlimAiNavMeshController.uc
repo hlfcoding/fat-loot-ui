@@ -16,6 +16,8 @@ var int jumpCount;                              //number of times pawn tried to 
 var bool pawnWantsToMove;
 var bool isCatching;
 var array<PathNode> reachablePathnodes;         //nodes directly reachable from current location. choose a random node from here when pawn is lost.
+var PlayerStart playerBases[4];                 //store reference to all 4 player bases in the level
+var array<ShakingLight> lightsInLevel;
 
 var float MIN_ROTATION_TIME;                        //time taken to rotate when guard has to face new direction
 var float MAX_ROTATION_TIME;
@@ -33,8 +35,27 @@ var int totalCatches;
 
 event PostBeginPlay()
 {
+	local PlayerStart playerBase;
+	local ShakingLight lightOnTopOfPlayer;
 	nextPatrolPointIndex = 0;
 	chaseTarget = none;
+	
+
+	foreach WorldInfo.AllNavigationPoints (class'PlayerStart', playerBase)
+	{					
+		if(playerBase.TeamIndex > 3)
+		{
+			`log("ERROR: Can't have > 4 player bases in the level. Unexpected value " $ playerBase.TeamIndex $ ", base: " $ playerBase.Name, true, 'Ravi');
+			continue; 
+		}
+		playerBases[playerBase.TeamIndex] = playerBase;
+	}
+
+	foreach WorldInfo.AllActors(class'ShakingLight', lightOnTopOfPlayer)
+	{				
+		lightsInLevel.AddItem(lightOnTopOfPlayer);
+	}
+	`log(self.name $ ": Number of lights found in level: " $ lightsInLevel.Length, true, 'Ravi');
 	super.PostBeginPlay();
 }
 
@@ -101,7 +122,6 @@ state Patrol
 	}
 	moveDestination = MoveTarget.Location;
 	Sleep(RotateTowardsLocation(MoveTarget.Location));
-	//MoveToward(MoveTarget, MoveTarget);
 	PushState('MoveToLocation');	
 
 	//After reaching destination
@@ -149,17 +169,56 @@ state Follow
 Begin:		
 	pawnWantsToMove = true;
 	if(visiblePlayers.Length > 0 && chaseTarget!=none)
-	{			
+	{		
+
+
+
+		//if(chaseTarget.bInvisibletoAI)
+		//{
+		//	if ((VSize(chaseTarget.Location - playerBases[0].Location) > chaseTarget.PlayerBaseRadius) || (VSize(chaseTarget.Location - playerBases[1].Location) >          chaseTarget.PlayerBaseRadius) || (VSize(chaseTarget.Location - playerBases[2].Location) > chaseTarget.PlayerBaseRadius) || (VSize(chaseTarget.Location - playerBases[3].Location) > chaseTarget.PlayerBaseRadius))
+		//	{
+		//		chaseTarget.hideSpottedIcon();
+		//		chaseTarget = none;
+		//		visiblePlayers.Length = 0;
+		//		if(currentDestinationActor != none)
+		//			currentDestinationActor.Destroy();
+
+		//		investigationLocation = lastSeenPlayerLocation;
+		//		`log(Pawn.Name $ ": Cannot see player anymore! Investigating last seen location: " $ lastSeenPlayerLocation, true, 'Ravi');
+		//		GoToState('Investigate');
+		//	}
+		//	goto 'End';
+		//}
+
+
+
+
+
+		//if(chaseTarget.bInvisibletoAI)
+		//{
+		//	chaseTarget.hideSpottedIcon();
+		//	chaseTarget = none;
+		//	visiblePlayers.Length = 0;
+		//	if(currentDestinationActor != none)
+		//		currentDestinationActor.Destroy();
+
+		//	investigationLocation = pawn.Location;
+		//	`log(Pawn.Name $ ": Cannot see player anymore! Investigating last seen location: " $ lastSeenPlayerLocation, true, 'Ravi');
+		//	GoToState('Investigate');
+		//}
+
+
+
+
 		if(chaseTarget.bInvisibletoAI)
 		{
-			foreach WorldInfo.AllNavigationPoints (class'PlayerStart', playerBase)
-			{					
-				if(playerBase.TeamIndex == chaseTarget.GetTeamNum())
-				{
-					break; //got the base of this player
-				}
+			if(chaseTarget.GetTeamNum() > 3)
+			{
+				`log("ERROR: Cannot have player team number greater than 3. Unexpected value", true, 'Ravi');
+				goto 'End';
 			}			
-
+			playerBase = playerBases[chaseTarget.GetTeamNum()];
+			
 			if(VSize(chaseTarget.Location - playerBase.Location) > chaseTarget.PlayerBaseRadius)
 			{
 				chaseTarget.hideSpottedIcon();
@@ -199,28 +258,26 @@ Begin:
 			//send player to base							
 			if(!SneaktoslimPlayerController(chaseTarget.Controller).isInState('caughtByAI') && Role == Role_Authority)
 			{
-				//SneaktoslimPlayerController(chaseTarget.Controller).HoldTime = SneakToSlimAIPawn(Pawn).HoldTime;					
 				SneaktoslimPlayerController(chaseTarget.Controller).GotoState('caughtByAI');
 				SneaktoslimPlayerController(chaseTarget.Controller).clientAttemptToState('caughtByAI');
 			}
 
 			pawnWantsToMove = false;
+			`log(Pawn.Name $ ": is sleeping because it caught a player", true, 'Ravi');	
+			SneakToSlimAIPawn(Pawn).GroundSpeed = 0;
 			sleep(SneakToSlimAIPawn(Pawn).HoldTime);
 			pawnWantsToMove = true;
+			SneakToSlimAIPawn(Pawn).GroundSpeed = SneakToSlimAIPawn(Pawn).PatrolSpeed;
 			goto 'End';
 		}
 		else
 		{
 			if( isWithinLineOfSight(MoveTarget)) 
-			{
-				//Sleep(RotateTowardsLocation(MoveTarget.Location));
-				MoveToward(MoveTarget, MoveTarget);
-				//PushState('MoveToLocation');
+			{				
+				MoveToward(MoveTarget, MoveTarget);				
 			}
 			else
-			{
-				//Sleep(RotateTowardsLocation(MoveTarget.Location));
-				//MoveToward(MoveTarget, MoveTarget);
+			{				
 				PushState('MoveToLocation');
 			}
 		}
@@ -443,10 +500,16 @@ function checkPawnStuck()
 		pawnStuckDuration += STUCK_CHECK_FREQUENCY;
 		if(pawnStuckDuration > PAWN_STUCK_TIMEOUT) //pawn is stuck
 		{			
-			if(jumpCount == 0)
+			if(jumpCount == 0 && SneakToSlimAIPawn(Pawn).aiState!="Investigate" && chaseTarget == none)
 			{
 				jump();
 				jumpCount = 1;
+			}
+			else if (SneakToSlimAIPawn(Pawn).aiState=="Investigate" || chaseTarget != none)
+			{
+				chaseTarget = none;
+				setStateVariables("Patrol");
+				GotoState('Patrol');
 			}
 		}
 	}
@@ -527,20 +590,18 @@ public function bool investigateLocation(vector iLocation)
 
 	foreach WorldInfo.AllPawns(class'SneaktoSlimPawn', playerWithinVisibleRange)
 	{
-		foreach WorldInfo.AllNavigationPoints (class'PlayerStart', playerBase)
-		{					
-			if(playerBase.TeamIndex == playerWithinVisibleRange.GetTeamNum())
-			{
-				break; //got the base of this player
-			}
+		if(playerWithinVisibleRange.GetTeamNum() > 3)
+		{
+			`log("ERROR: Cannot have player team number greater than 3. Unexpected value", true, 'Ravi');
+			return false;
 		}			
+		playerBase = playerBases[playerWithinVisibleRange.GetTeamNum()];
 
 		if(VSize(investigationLocation - playerBase.Location) < playerWithinVisibleRange.PlayerBaseRadius)
 		{
 			return false;
 		}
-	}
-		
+	}		
 	
 	if( SneakToSlimAIPawn(Pawn).aiState == "Follow")
 	{
@@ -571,7 +632,7 @@ function jump()
 function setVisibleSneaktoSlimPawns()
 {
 	local SneaktoSlimPawn playerWithinVisibleRange;	
-	local SpotLight lightOnTopOfPlayer;	
+	local ShakingLight lightOnTopOfPlayer;	
 	local Vector aiLocation;	
 	local float angleBetweenPlayerAndAI;
 	local float angleBetweenPlayerAndLight;
@@ -587,6 +648,7 @@ function setVisibleSneaktoSlimPawns()
 	local float minimumAi2playerDistance; //among all players detected by AI, what is the distance of closest player
 	local PlayerStart playerBase;
 	local int chaseTargetIndex;          //index into the visiblePlayers list that identifies chaseTarget. Is set based on priority. Player with treasure > Player closest to Guard > Any other player	
+	local int lightIndex;
 
 	numberOfVisiblePlayers = 0;	
 	aiLocation = Pawn.Location;
@@ -606,18 +668,17 @@ function setVisibleSneaktoSlimPawns()
 	//main vision logic
 	foreach OverlappingActors( class'SneaktoSlimPawn', playerWithinVisibleRange, SneakToSlimAIPawn(Pawn).DetectDistance, aiLocation,)
 	{
-		foreach WorldInfo.AllNavigationPoints (class'PlayerStart', playerBase)
-		{					
-			if(playerBase.TeamIndex == playerWithinVisibleRange.GetTeamNum())
-			{
-				break; //got the base of this player
-			}
-		}
+		if(playerWithinVisibleRange.GetTeamNum() > 3)
+		{
+			`log("ERROR: Cannot have player team number greater than 3. Unexpected value", true, 'Ravi');
+			return;
+		}			
+		playerBase = playerBases[playerWithinVisibleRange.GetTeamNum()];		
 
 		if( playerBase != none && VSize(playerWithinVisibleRange.Location - playerBase.Location) < playerWithinVisibleRange.PlayerBaseRadius )
 		{
 			continue; //don't "see" this player since she is in her base area
-		}		
+		}
 				
 		aiToPlayerDirection = Normal(playerWithinVisibleRange.Location - aiLocation);
 		angleBetweenPlayerAndAI = Acos( aiLookDirection dot aiToPlayerDirection ) * 180/pi;
@@ -644,16 +705,17 @@ function setVisibleSneaktoSlimPawns()
 			playerWithinVisibleRange.underLight = true;
 		}
 		else //check if player is lighted by environment lights
-		{				
-			foreach WorldInfo.AllActors(class'SpotLight', lightOnTopOfPlayer)
-			{				
+		{			
+			for(lightIndex=0; lightIndex < lightsInLevel.Length; lightIndex++)
+			{		
+				lightOnTopOfPlayer = lightsInLevel[lightIndex];
 				distLightToPlayer = VSize(playerWithinVisibleRange.Location - lightOnTopOfPlayer.Location);
 
-				if(SpotLightComponent(lightOnTopOfPlayer.LightComponent).Radius > distLightToPlayer) //player is within range of this spotlight
+				if(lightOnTopOfPlayer.Flashlight.Radius > distLightToPlayer) //player is within range of this spotlight
 				{
 					lightToPlayerDirection = Normal(playerWithinVisibleRange.Location - lightOnTopOfPlayer.Location);
-					angleBetweenPlayerAndLight = Acos( SpotLightComponent(lightOnTopOfPlayer.LightComponent).GetDirection() dot lightToPlayerDirection ) * 180/pi;					
-					if(angleBetweenPlayerAndLight <= SpotLightComponent(lightOnTopOfPlayer.LightComponent).OuterConeAngle) //player is in FOV of light
+					angleBetweenPlayerAndLight = Acos( lightOnTopOfPlayer.Flashlight.GetDirection() dot lightToPlayerDirection ) * 180/pi;					
+					if(angleBetweenPlayerAndLight <= lightOnTopOfPlayer.Flashlight.OuterConeAngle) //player is in FOV of light
 					{
 						playerWithinVisibleRange.underLight = true;						
 						break;
@@ -687,14 +749,12 @@ function setVisibleSneaktoSlimPawns()
 		{
 			if (isCatching == false)
 			{
-
-				foreach WorldInfo.AllNavigationPoints (class'PlayerStart', playerBase)
-				{					
-					if(playerBase.TeamIndex == chaseTarget.GetTeamNum())
-					{
-						break; //got the base of this player
-					}
+				if(chaseTarget.GetTeamNum() > 3)
+				{
+					`log("ERROR: Cannot have player team number greater than 3. Unexpected value", true, 'Ravi');
+					return;
 				}			
+				playerBase = playerBases[chaseTarget.GetTeamNum()];						
 
 				if(VSize(chaseTarget.Location - playerBase.Location) > chaseTarget.PlayerBaseRadius)
 				{

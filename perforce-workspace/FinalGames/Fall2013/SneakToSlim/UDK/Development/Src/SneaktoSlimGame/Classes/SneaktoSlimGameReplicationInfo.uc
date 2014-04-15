@@ -41,21 +41,23 @@ reliable server function cleanServerGameTime()
 }
 
 
-event ReplicatedEvent(name VarName)
+simulated event ReplicatedEvent(name VarName)
 {
-	sneaktoslimPawn(self.GetALocalPlayerController().pawn).saysometing();
+	//if( sneaktoslimPawn(self.GetALocalPlayerController().pawn) != None)
+	//{
+	//	sneaktoslimPawn(self.GetALocalPlayerController().pawn).saysometing();		
+	//	if( VarName == 'IsMatchEnd')
+	//	{
+	//		`log("Match has ended");
+	//		sneaktoslimPawn(self.GetALocalPlayerController().pawn).saysometing();			
+	//	}
+	//}
 	super.ReplicatedEvent(VarName);
-	if( VarName == 'IsMatchEnd')
-	{
-		`log("Match is ended");
-		sneaktoslimPawn(self.GetALocalPlayerController().pawn).saysometing();
-		//wuliya = true;
-	}
 
-	if ( VarName == 'ServerGameTime')
-	{
-		`log("fuck you");
-	}
+	//if ( VarName == 'ServerGameTime')
+	//{
+	//	`log("fuck you");
+	//}
 }
 
 DefaultProperties

@@ -7,23 +7,43 @@ var int RotationDifference;
 var SpotLightComponent Flashlight;
 var StaticMeshComponent lantern;
 var DynamicLightEnvironmentComponent LightEnvironment;
-var float speed;
-
+var float Rotatingspeed;
+var float Flashingspeed;
+var float MaxBrightness;
+var float MinBrightness;
+var bool tend;
 simulated event PostBeginPlay()
 {
     super.PostBeginPlay();
+	Flashlight.SetLightProperties(Rand(MaxBrightness)+1);
 	TargetRotation1 = self.Rotation;
 	TargetRotation1.Pitch = TargetRotation1.Pitch+16384;
 	TargetRotation2 = self.Rotation;
 	TargetRotation2.Pitch = TargetRotation2.Pitch-16384;
 	TargetRotation = TargetRotation1;
+	tend = bool(Rand(2));
+	
 }
 
 simulated event Tick(float DeltaTime){
 	local Quat currentQuat;
 	local rotator currentRotation;
-	currentQuat = QuatSlerp(QuatFromRotator(self.Rotation),QuatFromRotator(TargetRotation),DeltaTime*speed,  false);
+	local float currentBrightness;
+	currentQuat = QuatSlerp(QuatFromRotator(self.Rotation),QuatFromRotator(TargetRotation),DeltaTime*Rotatingspeed,  false);
     currentRotation = QuatToRotator(currentQuat);
+	if(tend){
+	    currentBrightness =  Flashlight.Brightness+DeltaTime*Flashingspeed;
+	}
+	else{
+		currentBrightness = Flashlight.Brightness-DeltaTime*Flashingspeed;
+	}
+	if(currentBrightness>=MaxBrightness){
+		Tend = false;
+	}
+	if(currentBrightness<=MinBrightness){
+		Tend = true;
+	}
+	Flashlight.SetLightProperties(currentBrightness);
 	if(Abs(currentRotation.Pitch - TargetRotation1.Pitch)<= 16384 - RotationDifference){
 		TargetRotation = TargetRotation2;
 	}
@@ -31,7 +51,6 @@ simulated event Tick(float DeltaTime){
 		TargetRotation = TargetRotation1;
 	}
 	self.SetRotation(currentRotation);
-	`log("hah"@currentRotation);
 }
 
 DefaultProperties
@@ -50,10 +69,10 @@ DefaultProperties
 	  CastShadows = true;
 	  CastStaticShadows = true;
 	  CastDynamicShadows = true;
-	  LightShadowMode = LightShadow_Normal ;
-	  Radius=250.000000
-	  Brightness=30.0
-	  LightColor=(R=235,G=235,B=110)
+	  LightShadowMode = LightShadow_Modulate;
+	  Radius=300.000000
+	  Brightness=4.0
+	  LightColor=(R=255,G=241,B=134)
 	  Rotation=(Pitch=-16384, Yaw=0, Roll=0)
 	End Object
 	Components.Add(MyFlashlight)
@@ -68,6 +87,11 @@ DefaultProperties
 	Components.Add(MyLightEnvironment)
 	LightEnvironment=MyLightEnvironment	
 
-	speed = 0.2;
-    RotationDifference = 3000; // 16384 means 90 degree. Dont set the difference bigger than that. 
+	Rotatingspeed = 0.05;
+	Flashingspeed = 3.0;
+    RotationDifference = 500; // 16384 means 90 degree. Dont set the difference bigger than that. 
+	MaxBrightness = 10.0;
+	MinBrightness = 3.0;
+	bHidden=false;
+	RemoteRole=ROLE_AutonomousProxy;
 }

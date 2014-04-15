@@ -1,5 +1,5 @@
 class SneaktoSlimPlayerController_Menu extends GamePlayerController
-	DLLBind(DllTest);
+	DLLBind(FatLootDllBinding);
 
 
 var string characterName;
@@ -16,12 +16,19 @@ var int playerNumLimit;
 
 dllimport final function runWindowsCommand(out string s);
 dllimport final function killTheServer(out string s);
+dllimport final function sendClientMessage();
 
 //exec function selectMapInUdk(string inputString)
 //{
 //	if(inputString != "Null")
 //		mapName = inputString;
 //}
+
+exec function sendMyMessage()
+{
+	sendClientMessage();
+}
+
 simulated event PostBeginPlay()
 {
 	`log("Menu_controller");
@@ -177,7 +184,7 @@ exec function readyButton()
 DefaultProperties
 {
 	characterName = "FatLady"
-	mapName = "Null"
+	mapName = "FLMist"
 	gameMode = "Client"
 
 

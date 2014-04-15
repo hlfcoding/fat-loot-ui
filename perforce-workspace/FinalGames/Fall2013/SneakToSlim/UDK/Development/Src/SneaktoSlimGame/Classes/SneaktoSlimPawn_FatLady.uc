@@ -18,8 +18,29 @@ simulated event ReplicatedEvent(name VarName)
 			if (self.Mesh.GetSocketByName('treasureSocket') != None){
 				self.Mesh.AttachComponentToSocket(treasureComponent , 'treasureSocket');
 				self.Mesh.AttachComponentToSocket(treasureLightComponent , 'treasureSocket');
-			}			
-			SetTreasureParticleEffectActive(true);
+			}
+
+			if(self.Role == ROLE_SimulatedProxy)
+			{
+				foreach WorldInfo.AllPawns(class 'SneaktoSlimPawn', pa)
+				{
+					if(pa.Role == ROLE_AutonomousProxy)
+					{
+						if(pa.mistNum == self.mistNum)
+						{
+							self.treasureComponent.SetHidden(false);
+							self.SetTreasureParticleEffectActive(true); 
+						}
+						else
+						{
+							self.treasureComponent.SetHidden(true);
+							self.SetTreasureParticleEffectActive(false); 
+						}
+					}
+				}
+			}
+			else if(self.Role == ROLE_AutonomousProxy)
+				SetTreasureParticleEffectActive(true);
 
 			if(SneaktoSlimPlayerController_FatLady(Self.Controller).IsInState('Exhausted'))
 			{
@@ -51,8 +72,11 @@ simulated event ReplicatedEvent(name VarName)
 			if (self.Mesh.IsComponentAttached(treasureComponent)){
 				self.Mesh.DetachComponent(treasureComponent);
 				self.Mesh.DetachComponent(treasureLightComponent);
-			}				
-			self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
+			}
+			if(self.mistNum == 0)
+				self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
+			else
+				self.changeCharacterMaterial(self,self.GetTeamNum(),"Invisible");
 			self.SetTreasureParticleEffectActive(false);			
 			SneaktoSlimPlayerController_FatLady(self.Controller).DropTreasure();
 		}
@@ -158,7 +182,7 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 	local SneaktoSlimSpawnPoint playerBase;
 	playerBase = SneaktoSlimSpawnPoint(Other);	
 
-	if(playerBase != none)
+	if(playerBase != none && playerBase.teamID == self.GetTeamNum())
 	{	
 		//`log("Pawn touching SpawnPoint");
 		if (SneaktoSlimPlayerController(self.Controller).IsInState('HoldingTreasureExhausted'))

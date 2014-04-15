@@ -11,8 +11,8 @@ var PointLightComponent MyPointLight;
 
 simulated event PostBeginPlay()
 {
-	tempUser.PlayerBaseRadius = PlayerBaseRadius;
-
+	if(tempUser != none)
+		tempUser.PlayerBaseRadius = PlayerBaseRadius;
 }
 
 
@@ -112,7 +112,7 @@ DefaultProperties
 		bDynamic = TRUE
 	End Object
 	Components.Add(MyLightEnvironment)
-	LightEnvironment=MyLightEnvironment
+//	LightEnvironment=MyLightEnvironment
 
 
 	Begin Object Class=ParticleSystemComponent Name=myParticle

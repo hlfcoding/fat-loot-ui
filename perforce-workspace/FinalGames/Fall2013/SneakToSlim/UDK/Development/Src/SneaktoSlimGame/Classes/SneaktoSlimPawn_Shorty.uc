@@ -39,8 +39,29 @@ simulated event ReplicatedEvent(name VarName)
 			if (self.Mesh.GetSocketByName('treasureSocket') != None){
 				self.Mesh.AttachComponentToSocket(treasureComponent , 'treasureSocket');
 				self.Mesh.AttachComponentToSocket(treasureLightComponent , 'treasureSocket');
-			}			
-			SetTreasureParticleEffectActive(true);
+			}	
+
+			if(self.Role == ROLE_SimulatedProxy)
+			{
+				foreach WorldInfo.AllPawns(class 'SneaktoSlimPawn', pa)
+				{
+					if(pa.Role == ROLE_AutonomousProxy)
+					{
+						if(pa.mistNum == self.mistNum)
+						{
+							self.treasureComponent.SetHidden(false);
+							self.SetTreasureParticleEffectActive(true); 
+						}
+						else
+						{
+							self.treasureComponent.SetHidden(true);
+							self.SetTreasureParticleEffectActive(false); 
+						}
+					}
+				}
+			}
+			else if(self.Role == ROLE_AutonomousProxy)
+				SetTreasureParticleEffectActive(true);
 
 			if(SneaktoSlimPlayerController_Shorty(Self.Controller).IsInState('Exhausted'))
 			{
@@ -65,7 +86,10 @@ simulated event ReplicatedEvent(name VarName)
 				self.Mesh.DetachComponent(treasureComponent);
 				self.Mesh.DetachComponent(treasureLightComponent);
 			}				
-			self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
+			if(self.mistNum == 0)
+				self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
+			else
+				self.changeCharacterMaterial(self,self.GetTeamNum(),"Invisible");
 			self.SetTreasureParticleEffectActive(false);			
 			SneaktoSlimPlayerController_Shorty(Self.Controller).DropTreasure();
 		}
@@ -78,6 +102,9 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 
 	super.Bump(Other, OtherComp, HitNormal);
 
+	if(SneaktoSlimPlayerController_Shorty(Controller) == None)
+		return;
+
 	if( SneaktoSlimPlayerController_Shorty(Controller).IsInState('Dashing') )
 	{
 		SneaktoSlimPlayerController_Shorty(Controller).StopDashing();
@@ -89,6 +116,9 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 				victim.dropTreasure(Normal(vector(self.rotation)));
 			}
 			checkOtherFLBuff(victim);
+
+			if(SneaktoSlimPlayerController(victim.Controller) == None)
+				return;
 
 			if (SneaktoSlimPlayerController(victim.Controller).GetStateName() != 'InBellyBump')     //if the victim isn't belly-bumping too...
 			{
@@ -114,7 +144,7 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 	local SneaktoSlimSpawnPoint playerBase;
 	playerBase = SneaktoSlimSpawnPoint(Other);	
 
-	if(playerBase != none)
+	if(playerBase != none && playerBase.teamID == self.GetTeamNum())
 	{	
 		//`log("Pawn touching SpawnPoint");
 		if (SneaktoSlimPlayerController(self.Controller).IsInState('HoldingTreasureExhausted'))
@@ -185,11 +215,11 @@ DefaultProperties
 	Components.Add(ShortySkeletalMesh)
 	Mesh = ShortySkeletalMesh
 
-	Begin Object Name=CollisionCylinder
-		CollisionRadius=15.000000
-        CollisionHeight=48.000000
-    End Object
-	CylinderComponent=CollisionCylinder
+	//Begin Object Name=CollisionCylinder
+	//	CollisionRadius=15.000000
+    //    CollisionHeight=48.000000
+    //End Object
+	//CylinderComponent=CollisionCylinder
 
 	NORMAL_ACCELERATION = 500;
 	DASH_ACCELERATION = 4000;

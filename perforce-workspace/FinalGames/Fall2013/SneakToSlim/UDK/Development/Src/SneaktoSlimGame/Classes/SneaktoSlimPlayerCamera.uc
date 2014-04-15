@@ -108,11 +108,11 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 				if (CameraStyle == 'ThirdPerson')
 				{
 					Rot = PCOwner.Rotation; //setting the rotation of the camera to the rotation of the pawn
-					Rot.Pitch = Rot.Pitch - 2200;
+					Rot.Pitch = Rot.Pitch - 1500;//2200;
 					TargetZ = 0;
-					TargetFOV = 60.0;
+					TargetFOV = 65.0;
 					TargetOffset = 0;
-					FreeCamDistance = 256.f;
+					FreeCamDistance = 170.f;
 				}
 				if (CameraStyle == 'IsometricCam') 
 				{

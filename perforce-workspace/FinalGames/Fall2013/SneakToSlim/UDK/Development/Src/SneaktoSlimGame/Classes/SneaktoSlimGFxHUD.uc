@@ -4,9 +4,10 @@ var int lastPlayerHealth, healthBarLength;
 var float screenSizeX, screenSizeY;
 var GFxObject HealthBar, InvisibilityIcon, PowerupBackdrop, InstructionText, CountdownText;
 var GFxObject player1Score, player2Score, player3Score, player4Score, PromptText, TutorialText;
-var GFxObject SpottedIcon, ClothIcon, ThunderIcon, TeaIcon, SuperSprintIcon, BeerIcon, TimerText;
+var GFxObject SpottedIcon, ClothIcon, ThunderIcon, TeaIcon, SuperSprintIcon, CurseIcon, TimerText, blackCurtain;
 var array<GFxObject> allFlashObjects;
 var bool isHUDSet;
+var bool flashCurtain, increaseAlpha;
 
 function Init(optional LocalPlayer player)
 {
@@ -30,7 +31,7 @@ function Init(optional LocalPlayer player)
 	ThunderIcon = GetVariableObject("_root.Thunder_Icon");
 	TeaIcon = GetVariableObject("_root.TeaIcon"); 
 	SuperSprintIcon = GetVariableObject("_root.SpeedBoost");
-	BeerIcon = GetVariableObject("_root.CurseIcon");  
+	CurseIcon = GetVariableObject("_root.CurseIcon");  
 	PowerupBackdrop = GetVariableObject("_root.PowerUpBackdrop");
 	InstructionText = GetVariableObject("_root.HowToUseInstruction");
 	if(SneaktoSlimPlayerController(GetPC()).PlayerInput.bUsingGamepad)
@@ -39,6 +40,7 @@ function Init(optional LocalPlayer player)
 		InstructionText.GetObject("InstructionText").SetText("Press 'shift'");
 	CountdownText = GetVariableObject("_root.CountdownText");
 	PromptText = GetVariableObject("_root.PromptText");
+	blackCurtain = GetVariableObject("_root.BlackCurtain");
 	SpottedIcon = GetVariableObject("_root.warning_sign");
 	player1Score = GetVariableObject("_root.scoreboard_one");
 	player1Score.GetObject("Coin").SetBool("visible", false);
@@ -61,13 +63,14 @@ function Init(optional LocalPlayer player)
 	allFlashObjects.AddItem(ThunderIcon);
 	allFlashObjects.AddItem(TeaIcon);
 	allFlashObjects.AddItem(SuperSprintIcon);
-	allFlashObjects.AddItem(BeerIcon);
+	allFlashObjects.AddItem(CurseIcon);
 	allFlashObjects.AddItem(PowerupBackdrop);
 	allFlashObjects.AddItem(InstructionText);
 	allFlashObjects.AddItem(CountdownText);
 	allFlashObjects.AddItem(PromptText);
 	allFlashObjects.AddItem(TutorialText);
 	allFlashObjects.AddItem(SpottedIcon);
+	allFlashObjects.AddItem(blackCurtain);
 	allFlashObjects.AddItem(player1Score);
 	allFlashObjects.AddItem(player2Score);
 	allFlashObjects.AddItem(player3Score);
@@ -83,6 +86,8 @@ function Init(optional LocalPlayer player)
 
 	healthBarLength = GetVariableObject("_root.stamina_bar.currentBar").GetInt("width");
 	isHUDSet = false;
+	flashCurtain = false;
+	increaseAlpha = true;
 }
 
 //Turns on/off appropriate head images on the energy bar
@@ -173,6 +178,26 @@ function TickHud(float DeltaTime)
 		//Scales according to width size
 		GetVariableObject("_root.stamina_bar.currentBar").SetInt("width", (lastPlayerHealth * healthBarLength /100));
 	//}
+
+	if(flashCurtain)
+	{
+		if(increaseAlpha)
+		{
+			blackCurtain.SetFloat("alpha", (blackCurtain.GetFloat("alpha") + 0.05));
+			if(blackCurtain.GetFloat("alpha") >= 1.0)
+			{
+				flashCurtain = false;
+			}
+		}
+		else
+		{
+			blackCurtain.SetFloat("alpha", (blackCurtain.GetFloat("alpha") - 0.05));
+			if(blackCurtain.GetFloat("alpha") <= 0.0)
+			{
+				flashCurtain = false;
+			}
+		}
+	}
 }
 
 DefaultProperties

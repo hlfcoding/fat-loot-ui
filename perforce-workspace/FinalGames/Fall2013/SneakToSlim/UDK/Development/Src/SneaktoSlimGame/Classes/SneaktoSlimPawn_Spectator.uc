@@ -1,52 +1,37 @@
-class SneaktoSlimPawn_Spectator extends SneaktoSlimPawn;
-
-var SneaktoSlimPawn playerSpectatingAs;
-
-exec function startSpectating()
-{
-	local SneaktoSlimPawn playerPawn;
-	
-	foreach WorldInfo.AllActors(class'SneaktoSlimPawn', playerPawn)
-	{		
-		//if(SneaktoSlimPlayerController(playerPawn.Controller).IsInState('Spectate'))
-		//	continue; //don't spectate from another spectator's point of view!
-
-		if( playerPawn.Name != self.Name) 
-		{
-			`log("Spectating as player: " $ playerPawn.Name, true, 'Ravi');
-			playerSpectatingAs = playerPawn;	
-			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('Spectate');
-			SneaktoSlimPlayerController(self.Controller).GoToState('Spectate');
-			break;
-		}
-	}	
-}
+class SneaktoSlimPawn_Spectator extends Pawn;
+var Vector spawnLocation;
+var float SpectatorWalkingSpeed;
 
 event Tick(float DeltaTime)
 {
-	super.Tick(DeltaTime);
-
-	if( self.Controller.IsInState('Spectate') )
-	{
-		SneaktoSlimPlayerController_Spectator(self.Controller).updateLocationToSpectate();
-	}
+	super.Tick(DeltaTime);	
 }
-
-//function disableCollision()
-//{
-//	self.SetHidden(true);
-//	self.SetCollisionType(ECollisionType.COLLIDE_NoCollision);
-//}
 
 simulated event PostBeginPlay()
 {   
-	self.mySkelComp.SetScale(0); //don't show fat lady model
-    Super.PostBeginPlay();
-
-	//settimer(5,false,'disableCollision');
+	spawnLocation = self.Location;
+	GroundSpeed=SpectatorWalkingSpeed;
+	//`log("=============================================================================", true, 'Ravi');
+	Super.PostBeginPlay();
 }
-
 
 DefaultProperties
 {
+	//ControllerClass=class'SneaktoSlimPlayerController_Spectator'
+	bCollideWorld = false
+	bCollideActors = false
+	SpectatorWalkingSpeed=550.0
+
+	Begin Object Class=SkeletalMeshComponent Name=SpectatorSkeletalMesh	
+		SkeletalMesh = SkeletalMesh'FLCharacter.lady.new_lady_skeletalmesh'		
+		AnimSets(0)=AnimSet'FLCharacter.lady.new_lady_Anims'		
+		AnimTreeTemplate = AnimTree'FLCharacter.lady.lady_AnimTree'		
+		Translation=(Z=-48.0)
+		bOwnerNoSee=false		
+		CastShadow=false
+		Scale=0
+	End Object
+
+	Components.Add(SpectatorSkeletalMesh)	
+	Mesh = SpectatorSkeletalMesh
 }

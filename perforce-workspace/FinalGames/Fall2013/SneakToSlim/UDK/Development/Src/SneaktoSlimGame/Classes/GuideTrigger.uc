@@ -91,5 +91,5 @@ DefaultProperties
 	displayName = "Guide";
 	eqGottenText = ""
 
-	bBlockPlayers = true      //Needed?
+	//bBlockPlayers = true      //Needed?
 }

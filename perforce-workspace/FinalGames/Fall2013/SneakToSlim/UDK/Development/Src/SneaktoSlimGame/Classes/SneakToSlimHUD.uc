@@ -28,6 +28,8 @@ var int screenYResolution;
 var SneaktoSlimGFxHUD FlashHUD;
 var SneaktoSlimGFxMap FlashMap;
 var SneaktoSlimGFxPauseMenu FlashPauseMenu;
+var Vector fountainLocation;
+var bool trackFountain;
 
 replication 
 {   //ARRANGE THESE ALPHABETICALLY
@@ -121,6 +123,7 @@ simulated function PostBeginPlay()
 	//Saves map specific info in flash class
 	FlashMap.mapName = WorldInfo.GetMapName();
 	FlashMap.mapPath = "SneaktoSlimImages." $ FlashMap.mapName $ "TopDownMap";
+	trackFountain = false;
 }
 
 //Called every tick since playerowner isn't set up instantly in postbegin play
@@ -185,7 +188,7 @@ function findMapDimensions()
 		mapHeight = sqrt(square(topLeft.X - bottomLeft.X) + square(topLeft.Y - bottomLeft.Y));
 	}
 	//Same code as if(demoday)
-	else if(WorldInfo.GetMapName() == "fltemplemap")
+	else if(WorldInfo.GetMapName() == "fltemplemap" || WorldInfo.GetMapName() == "fltemplemaptopplatform")
 	{
 		//Breaks if map corners at not placed in editor
 		if(corners.Length != 4)
@@ -329,7 +332,7 @@ function Vector WorldPointTo2DScreenPoint(Vector point3D)
 		screenPoint.Y = prime2.Y;
 	}
 	//same
-	else if(FlashMap.mapName == "fltemplemap")
+	else if(FlashMap.mapName == "fltemplemap" || FlashMap.mapName == "fltemplemaptopplatform")
 	{
 		prime.X = point3D.Y;    //Rotate point -90 deg (clockwise about origin)
 		prime.Y = -point3D.X;
@@ -371,12 +374,13 @@ simulated event DrawHUD()
 {
 	local SneaktoSlimPawn localPawn;
 	//local int selfScoreMostLeft_i;
-	local int j, k;
+	local int j; //, k;
 	local byte _tNumber;
 	//local byte _selfTNumber;
-	local sneaktoslimpawn current;
+	//local sneaktoslimpawn current;
 
 	local MiniMap map;
+	//local vector tempVector;
 	//local String mapName;
 	//local vector pawnScreenPoint;
 	//local Actor obj;
@@ -398,6 +402,11 @@ simulated event DrawHUD()
 			FlashMap.player2DScreenPoint = WorldPointTo2DScreenPoint(map.playerLocation);
 			FlashMap.faceRotation = PlayerOwner.Pawn.Rotation.Yaw*UnrRotToDeg;
 			FlashMap.mouseRotation = PlayerOwner.Rotation.Yaw*UnrRotToDeg;
+
+			if(self.trackFountain)
+			{
+				FlashMap.setFountainPoint(WorldPointTo2DScreenPoint(self.fountainLocation));
+			}
 		}
 		//map = SneaktoSlimPlayerController(SneaktoSlimPawn(PlayerOwner.Pawn).Controller).myMap;
 		/*if(map != NONE && map.isOn)
@@ -461,10 +470,6 @@ simulated event DrawHUD()
 		//sets font and color
 		Canvas.DrawColor=WhiteColor;
 		Canvas.Font=class'Engine'.static.GetLargeFont();
-
-		//Draws text
-		//canvas.SetPos(Canvas.ClipX*0.1,Canvas.ClipY*0.2);
-		//canvas.DrawText("");
 
 		//selfScoreMostLeft_i = 1;
 

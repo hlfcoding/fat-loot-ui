@@ -36,14 +36,16 @@ unreliable server function ServerCreateExplosion(vector loc)
 reliable server function StunPlayers(vector loc)
 {
 	local SneaktoSlimPawn playerPawn;
-	//`log("In firecracker stun function", true, 'Ravi');
-
+	
 	foreach OverlappingActors(class'SneaktoSlimPawn', playerPawn, EXPLOSION_AFFECT_RADIUS, loc)
 	{		
 		if( playerPawn.Name != fireCrackerOwner) //don't stun the player who threw the firecracker!
 		{
 			`log("Firecraker is stunning player: " $ playerPawn.Name, true, 'Ravi');
-			playerPawn.Controller.GoToState('Stunned');
+			if(playerPawn.Controller != None)
+			{
+				playerPawn.Controller.GoToState('Stunned');
+			}
 		}
 	}
 }
