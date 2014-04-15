@@ -8,6 +8,16 @@
 
         public var gameModel:GameModel;
 
+        [Embed(source='../Assets/character-fatlady.png')]       public static var FatLadyAsset:Class;
+        [Embed(source='../Assets/character-ginsengbaby.png')]   public static var GinsengBabyAsset:Class;
+        [Embed(source='../Assets/character-rabbit.png')]        public static var RabbitAsset:Class;
+        [Embed(source='../Assets/character-shorty.png')]        public static var ShortyAsset:Class;
+
+        [Embed(source='../Assets/character-preview-fatlady.png')]       public static var FatLadyPreviewAsset:Class;
+        [Embed(source='../Assets/character-preview-ginsengbaby.png')]   public static var GinsengBabyPreviewAsset:Class;
+        [Embed(source='../Assets/character-preview-rabbit.png')]        public static var RabbitPreviewAsset:Class;
+        [Embed(source='../Assets/character-preview-shorty.png')]        public static var ShortyPreviewAsset:Class;
+
         public function CharacterSelectView() {
             super()
             // Configure.
