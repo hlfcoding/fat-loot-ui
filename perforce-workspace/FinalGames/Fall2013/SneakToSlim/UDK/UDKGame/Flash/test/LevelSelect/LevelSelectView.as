@@ -21,18 +21,39 @@
         public function LevelSelectView() {
             super()
             // Configure.
-            hasBackgroundImage = true;
-            backgroundImagePathHandler = function(data:Object):String {
-                return 'Assets'.concat('/level-', data.id.toLowerCase(), '.png');
-            };
             selectMenu.labelFunction = function(item:Object):String {
                 var model:Object = item;
                 return model.name;
             };
-            selectPreview.nameLabel.visible = false;
             // Commit.
             source = GameModel.levels;
             init();
+        }
+
+        override protected function getAssetClass(id:String, destination:Object):Class {
+            if (destination === backgroundImages) {
+                switch (id) {
+                    case 'Mansion': return LevelSelectView.MansionAsset;
+                    case 'Mist':    return LevelSelectView.MistAsset;
+                    case 'Pit':     return LevelSelectView.PitAsset;
+                    case 'Temple':  return LevelSelectView.TempleAsset;
+                    default: break;
+                }
+            } else if (destination === previewImages) {
+                return LevelSelectView.getPreviewAssetClass(id);
+            }
+            return Class;
+        }
+
+        public static function getPreviewAssetClass(id:String):Class {
+            switch (id) {
+                case 'Mansion': return LevelSelectView.MansionPreviewAsset;
+                case 'Mist':    return LevelSelectView.MistPreviewAsset;
+                case 'Pit':     return LevelSelectView.PitPreviewAsset;
+                case 'Temple':  return LevelSelectView.TemplePreviewAsset;
+                default: break;
+            }
+            return Class;
         }
 
         override public function set selectedModel(value:Object):void {

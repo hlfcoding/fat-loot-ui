@@ -21,27 +21,35 @@
         public function CharacterSelectView() {
             super()
             // Configure.
-            hasBackgroundImage = true;
-            backgroundImagePathHandler = function(data:Object):String {
-                return 'Assets'.concat('/character-', data.id.toLowerCase(), '.png');
-            };
-            skillSelectView.selectMenu.labelFunction =
             selectMenu.labelFunction = function(item:Object):String {
                 var model:Object = item;
                 return model.name;
             };
-            skillSelectView.selectPreview.nameLabel.visible =
-            selectPreview.nameLabel.visible = false;
             skillSelectView.selectMenu.addEventListener(ListEvent.INDEX_CHANGE, onSkillSelect);
-            skillSelectView.selectPreview.imageSize = { width: 100, height: 100 };
-            skillSelectView.selectPreview.imagePathHandler = function(data:Object):String {
-                return 'Assets'.concat('/skill-', data.id.toLowerCase(), '.png');
-            };
-            skillSelectView.selectPreview.hasImage = true;
-
             // Commit.
             source = GameModel.characters;
             init();
+        }
+
+        override protected function getAssetClass(id:String, destination:Object):Class {
+            if (destination === backgroundImages) {
+                switch (id) {
+                    case 'FatLady':     return CharacterSelectView.FatLadyAsset;
+                    case 'GinsengBaby': return CharacterSelectView.GinsengBabyAsset;
+                    case 'Rabbit':      return CharacterSelectView.RabbitAsset;
+                    case 'Shorty':      return CharacterSelectView.ShortyAsset;
+                    default: break;
+                }
+            } else if (destination === previewImages) {
+                switch (id) {
+                    case 'FatLady':     return CharacterSelectView.FatLadyPreviewAsset;
+                    case 'GinsengBaby': return CharacterSelectView.GinsengBabyPreviewAsset;
+                    case 'Rabbit':      return CharacterSelectView.RabbitPreviewAsset;
+                    case 'Shorty':      return CharacterSelectView.ShortyPreviewAsset;
+                    default: break;
+                }
+            }
+            return Class;
         }
 
         override public function set selectedModel(value:Object):void {
