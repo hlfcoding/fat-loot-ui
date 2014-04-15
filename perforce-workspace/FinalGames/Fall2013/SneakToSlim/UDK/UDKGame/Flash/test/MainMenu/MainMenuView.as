@@ -1,5 +1,6 @@
 ﻿package  {
 
+    import flash.display.Bitmap;
     import flash.display.DisplayObject;
     import flash.display.MovieClip;
     import flash.events.Event;
@@ -104,9 +105,20 @@
             // Setup view as needed.
             switch (toViewName) {
                 case 'joinGameView':
-                    var levelModel:Object = gameModel.level;
-                    // FIXME: Model won't have image.
-                    joinGameView.levelPreview.model = gameModel.level;
+                    // Clone model.
+                    var levelModel:Object = {};
+                    for (var key:String in gameModel.level) {
+                        if (key === 'image') {
+                            levelModel.image = new Bitmap(gameModel.level.image.bitmapData);
+                            continue;
+                        }
+                        levelModel[key] = gameModel.level[key];
+                    }
+                    if (levelModel.image == null) {
+                        var classRef = LevelSelectView.getPreviewAssetClass(levelModel.id);
+                        levelModel.image = new classRef() as Bitmap;
+                    }
+                    joinGameView.levelPreview.model = levelModel;
                     break;
                 case 'hostGameView':
                     hostGameView.gameModel = gameModel;
