@@ -1,7 +1,6 @@
 package  {
 
-    import flash.display.DisplayObject;
-    import flash.display.Loader;
+    import flash.display.Bitmap;
     import flash.display.Shape;
     import flash.events.Event;
     import flash.net.URLRequest;
@@ -13,21 +12,18 @@ package  {
 
     public class SelectItemRenderer extends ListItemRenderer {
 
-        protected var bgImageLoader:Loader;
+        protected var backgroundImage:Bitmap;
         protected var bgImageConstraints:Constraints;
-        protected var _hasBGImage:Boolean;
-        protected var _bgImageURL:String;
 
         public function SelectItemRenderer() {
             super();
-            _hasBGImage = false;
         }
 
         override protected function draw():void {
             super.draw();
             // Extend conventional behavior.
             if (isInvalid(InvalidationType.SIZE) ) {
-                if (bgImageConstraints != null && !constraintsDisabled && bgImageLoader != null) {
+                if (bgImageConstraints != null && !constraintsDisabled && backgroundImage != null) {
                     bgImageConstraints.update(_width, _height);
                 }
             }
@@ -47,52 +43,30 @@ package  {
                 return;
             }
             super.setData(data);
-            if (data.hasBackgroundImage != null) {
-                hasBackgroundImage = data.hasBackgroundImage;
-            }
-            if (hasBackgroundImage) {
-                bgImageURL = data.backgroundImagePathHandler(data);
-                //bgImageURL = 'http://placehold.it/100/png/&text='+data.name;
-                trace(bgImageURL);
-            }
-        }
-
-        [Inspectable(defaultValue = "false")]
-        public function get hasBackgroundImage():Boolean { return _hasBGImage; }
-        public function set hasBackgroundImage(value:Boolean):void {
-            _hasBGImage = value;
-            // Lazy init.
-            if (bgImageLoader == null) {
-                bgImageLoader = new Loader();
-                bgImageLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoaderComplete);
-                addChildAt(bgImageLoader, 1);
-            }
-        }
-
-        public function get bgImageURL():String { return _bgImageURL; }
-        public function set bgImageURL(value:String):void {
-            if (value == _bgImageURL) {
-                return;
-            }
-            _bgImageURL = value;
-            // Auto load.
-            var request:URLRequest = new URLRequest(value);
-            bgImageLoader.load(request);
-        }
-
-        public function onLoaderComplete(event:Event):void {
-            if (event.target == bgImageLoader.contentLoaderInfo) {
-                if (!constraintsDisabled && bgImageConstraints == null) {
-                    // Lazy init.
-                    var bgImage:DisplayObject = bgImageLoader.content;
-                    bgImage.width = _originalWidth;
-                    bgImage.height = _originalHeight;
-                    bgImageConstraints = new Constraints(this, ConstrainMode.COUNTER_SCALE);
-                    bgImageConstraints.addElement('bgImage', bgImage, Constraints.ALL);
-                    //trace('[CONSTRAINTS]', bgImageConstraints);
+            // Background image support.
+            if (data.backgroundImage != null) {
+                var shouldDrawImage:Boolean = backgroundImage == null || contains(backgroundImage);
+                if (shouldDrawImage) {
+                    if (backgroundImage != null) {
+                        removeChild(backgroundImage);
+                    }
+                    backgroundImage = data.backgroundImage as Bitmap;
+                    drawBackgroundImage();
                 }
-                invalidateSize();
             }
+        }
+
+        protected function drawBackgroundImage():void {
+            addChildAt(backgroundImage, 1);
+            if (!constraintsDisabled && bgImageConstraints == null) {
+                // Lazy init.
+                backgroundImage.width = _originalWidth;
+                backgroundImage.height = _originalHeight;
+                bgImageConstraints = new Constraints(this, ConstrainMode.COUNTER_SCALE);
+                bgImageConstraints.addElement('backgroundImage', backgroundImage, Constraints.ALL);
+                //trace('[CONSTRAINTS]', bgImageConstraints);
+            }
+            invalidateSize();
         }
 
     }
