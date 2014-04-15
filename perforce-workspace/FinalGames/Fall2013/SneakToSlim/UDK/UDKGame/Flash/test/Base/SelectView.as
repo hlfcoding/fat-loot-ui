@@ -1,5 +1,6 @@
 package {
 
+    import flash.display.Bitmap;
     import flash.display.MovieClip;
 
     import scaleform.clik.controls.Button;
@@ -17,16 +18,17 @@ package {
         public var selectPreview:PreviewView;
 
         public var hasBackgroundImage:Boolean;
-        public var backgroundImagePathHandler:Function;
+        protected var backgroundImages:Object;
+
+        public var hasPreviewImages:Boolean;
+        protected var previewImages:Object;
 
         protected var _selectedModel:Object;
 
         public function SelectView() {
             super();
-            hasBackgroundImage = false;
-            backgroundImagePathHandler = function(data:Object):String {
-                return 'Assets'.concat('/', data.id.toLowerCase(), '.jpg');
-            };
+            hasBackgroundImage = true;
+            hasPreviewImages = true;
             collection = DataProvider(selectMenu.dataProvider);
             collection.itemRendererName = 'SelectItemRenderer';
             selectMenu.rowHeight = selectMenu.height;
@@ -38,22 +40,42 @@ package {
         public function init():void {
             // Init.
             selectMenu.selectedIndex = 0;
-            selectedModel = selectPreview.model = getModelAtIndex(0);
+            selectedModel = getModelAtIndex(0);
+        }
+
+        protected function loadImages(source:Array, destination:Object):void {
+            var classRef:Class;
+            for each (var id:String in Utility.pluck(source, 'id')) {
+                classRef = getAssetClass(id, destination);
+                destination[id] = new classRef() as Bitmap;
+            }
+        }
+
+        protected function getAssetClass(id:String, destination:Object):Class {
+            // Override.
+            if (destination === backgroundImages) {
+                // Switch and return...
+            } else if (destination === previewImages) {
+                // Switch and return...
+            }
+            return Class;
         }
 
         public function get selectedModel():Object { return _selectedModel; }
         public function set selectedModel(value:Object):void {
             if (value === _selectedModel && value != null) { return; }
             _selectedModel = value;
-            selectPreview.model = value;
+            selectPreviewModel = selectedModel;
         }
 
         public function set source(source:Array):void {
             if (hasBackgroundImage) {
-                // Makeshift way of passing this through.
+                if (backgroundImages == null) {
+                    backgroundImages = {};
+                    loadImages(source, backgroundImages);
+                }
                 for each (var data:Object in source) {
-                    data.hasBackgroundImage = hasBackgroundImage;
-                    data.backgroundImagePathHandler = backgroundImagePathHandler;
+                    data.backgroundImage = backgroundImages[data.id];
                 }
             }
             collection.setSource(source);
@@ -62,14 +84,26 @@ package {
             selectedModel = getModelAtIndex(0);
         }
 
+        public function set selectPreviewModel(value:Object):void {
+            // Preview image support.
+            if (hasPreviewImages) {
+                if (previewImages == null) {
+                    previewImages = {};
+                    loadImages(collection, previewImages);
+                }
+                value.image = previewImages[value.id];
+            }
+            selectPreview.model = value;
+        }
+
         public function handleItemFocus(event:ListEvent):void {
             switch (event.type) {
                 case ListEvent.ITEM_ROLL_OVER:
-                    selectPreview.model = getModelAtIndex(event.index);
+                    selectPreviewModel = getModelAtIndex(event.index);
                     break;
                 case ListEvent.ITEM_ROLL_OUT:
                     if (selectedModel != null) {
-                        selectPreview.model = selectedModel;
+                        selectPreviewModel = selectedModel;
                     }
                     break;
             }
