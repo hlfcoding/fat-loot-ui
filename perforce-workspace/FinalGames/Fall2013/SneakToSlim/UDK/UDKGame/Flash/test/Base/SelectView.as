@@ -36,7 +36,7 @@ package {
             selectMenu.addEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
         }
 
-        public function init() {
+        public function init():void {
             // Init.
             selectMenu.selectedIndex = 0;
             selectedModel = selectPreview.model = getModelAtIndex(0);

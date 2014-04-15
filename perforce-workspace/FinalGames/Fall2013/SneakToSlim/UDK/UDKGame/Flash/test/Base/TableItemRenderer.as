@@ -45,7 +45,7 @@ package  {
             updateDividers();
         }
 
-        protected function updateDividers() {
+        protected function updateDividers():void {
             if (dividers == null) {
                 dividers = new Vector.<TableItemDivider>();
                 for (var index:uint = 0; index < numChildren; index++) {

@@ -34,7 +34,7 @@ package {
             selectTopBar.addEventListener(IndexEvent.INDEX_CHANGE, handleSort);
         }
 
-        public function init() {
+        public function init():void {
             // Init.
             selectMenu.selectedIndex = 0;
             selectedModel = getModelAtIndex(0);
