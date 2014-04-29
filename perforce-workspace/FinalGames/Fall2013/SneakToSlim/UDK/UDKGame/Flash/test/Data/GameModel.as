@@ -45,68 +45,68 @@ package {
             {
                 id: 'Rabbit',
                 name: 'Tiger',
-                description: "This is Tiger's description. It's going to take more than just one line. It's going to take more than just two lines.",
+                description: "A ferocious and silent hunter, the Tiger is known for its speed and precision when taking down its prey. This Tiger is no different, even if it hunts treasure instead of animals. Or has a certain predilection for carrots.",
                 skills: [
                     {
                         id: 'EarthDive',
-                        name: 'Earth Dive',
-                        description: "This is Earth Dive's description. It's going to take more than just one line. It's going to take more than just two lines."
+                        name: 'Dash',
+                        description: "In danger, Tiger’s true nature shows as it bunny hops away to safety."
                     },
                     {
                         id: 'TigerRoar',
-                        name: 'Tiger Roar',
-                        description: "This is Tiger Roar's description. It's going to take more than just one line. It's going to take more than just two lines."
+                        name: 'Roar',
+                        description: "Signalling impending doom, the Tiger’s Roar leaves enemies shaken!"
                     }
                 ]
             },
             {
                 id: 'GinsengBaby',
-                name: 'Ginger',
-                description: "This is Ginger's description. It's going to take more than just one line. It's going to take more than just two lines.",
+                name: 'Ginseng Baby',
+                description: "The Ginseng Baby’s a nature spirit, tasked with protecting the surrounding forests from the expansion of the Imperial City. To that end, he has infiltrated the Empress’s city for his sacred mission. Unfortunately, his attentions often stray with a pretty piece… of treasure in the room.",
                 skills: [
                     {
                         id: 'Burrow',
                         name: 'Burrow',
-                        description: "This is Burrow's description. It's going to take more than just one line. It's going to take more than just two lines."
+                        description: "Ginseng Baby returns to the earth, hidden from guards and players..."
                     },
                     {
                         id: 'Burst',
                         name: 'Burst',
-                        description: "This is Burst's description. It's going to take more than just one line. It's going to take more than just two lines."
+                        description: "With a crash, Ginseng Baby explodes from the earth, causing localized earthquakes!"
                     }
                 ]
             },
             {
                 id: 'Shorty',
                 name: 'Shorty',
-                description: "This is Shorty's description. It's going to take more than just one line. It's going to take more than just two lines.",
+                description: "Size isn’t everything. Fed up with the long hours and always getting the short end of the stick, Shorty looked down his nose at the Ministry of Auspicious Celestial Enforcement (also known as M.A.C.E.) WIthout any means to keep his head above water, Shorty’s turned to petty theft.",
                 skills: [
                     {
                         id: 'Charge',
                         name: 'Charge',
-                        description: "This is Charge's description. It's going to take more than just one line. It's going to take more than just two lines."
+                        description: "While he might need to build up speed, Shorty actually won the Ministry’s Contest of Heavenly Quickness."
                     },
                     {
                         id: 'OverThere',
-                        name: 'OVER THERE!',
-                        description: "This is OVER THERE!'s description. It's going to take more than just one line. It's going to take more than just two lines."
+                        name: 'Firework',
+                        description: "Confiscated from neighborhood troublemakers, Shorty uses these as a distraction."
                     }
                 ]
             },
             {
                 id: 'FatLady',
-                name: 'Lady Qianqing',
-                description: "This is Lady Qianqing's description. It's going to take more than just one line. It's going to take more than just two lines.",
+                name: 'Lady Qian',
+                description: "Who is Lady Qian? Some say a noble woman taken to a life of crime out of sheer boredom. Some say she raised herself on the streets, doing what she needed to survive. Some say she’s just a fat woman with a lot of makeup who has a streak of kleptomania. Maybe it’s paradoxically all three.",
                 skills: [
                     {
                         id: 'Sprint',
                         name: 'Sprint',
-                        description: "This is Sprint's description. It's going to take more than just one line. It's going to take more than just two lines."
+                        description: "Hitching up her skirts, Lady Qian makes a break for it!"
                     },
                     {
                         id: 'BellyBump',
                         name: 'Belly Bump',
-                        description: "This is Belly Bump's description. It's going to take more than just one line. It's going to take more than just two lines."
+                        description: "Lady Qian inhales, inflating her body for an unstoppable leap attack!"
                     }
                 ]
             }
@@ -202,8 +202,8 @@ package {
         public static const LEVELS_FIXTURE:Array = [
             {
                 id: 'Mansion',
-                name: 'The Mansion',
-                description: "This is The Mansion's description. It's going to take more than just one line. It's going to take more than just two lines."
+                name: 'The Duchess’ Arboretum',
+                description: "How many trees does it take for a garden to become an arboretum? Exactly fifty-six, plus eight fancy statues, apparently. The duchess placed her treasure out here as an accent piece, hoping to balance the Fengshui. She also hoped that an abundance of guards would keep thieves at bay. She was wrong. Or was she?"
             },
             {
                 id: 'Temple',
@@ -217,8 +217,8 @@ package {
             },
             {
                 id: 'Mist',
-                name: 'The Mist',
-                description: "This is The Mist's description. It's going to take more than just one line. It's going to take more than just two lines."
+                name: 'The Empress’ Basement',
+                description: "A vault-like crypt. Why does the Empress’s boiler vent underground? Rumor has it the Empress hid one of her most precious treasures down here, hoping that it would be forgotten... in the mist..."
             }
         ];
 
