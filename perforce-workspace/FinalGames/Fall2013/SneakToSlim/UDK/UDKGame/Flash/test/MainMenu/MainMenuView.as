@@ -1,6 +1,7 @@
 ﻿package  {
 
     import flash.display.Bitmap;
+    import flash.display.BitmapData;
     import flash.display.DisplayObject;
     import flash.display.MovieClip;
     import flash.events.Event;
@@ -116,7 +117,7 @@
                     }
                     if (levelModel.image == null) {
                         var classRef = LevelSelectView.getPreviewAssetClass(levelModel.id);
-                        levelModel.image = new classRef() as Bitmap;
+                        levelModel.image = new Bitmap(new classRef() as BitmapData);
                     }
                     joinGameView.levelPreview.model = levelModel;
                     break;

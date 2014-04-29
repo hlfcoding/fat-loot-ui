@@ -1,6 +1,7 @@
 package {
 
     import flash.display.Bitmap;
+    import flash.display.BitmapData;
     import flash.display.MovieClip;
 
     import scaleform.clik.controls.Button;
@@ -47,7 +48,7 @@ package {
             var classRef:Class;
             for each (var id:String in Utility.pluck(source, 'id')) {
                 classRef = getAssetClass(id, destination);
-                destination[id] = new classRef() as Bitmap;
+                destination[id] = new Bitmap(new classRef() as BitmapData);
             }
         }
 

@@ -8,16 +8,6 @@
 
         public static const SELECT:String = 'levelSelect';
 
-        [Embed(source='../Assets/level-mansion.png')]   public static var MansionAsset:Class;
-        [Embed(source='../Assets/level-mist.png')]      public static var MistAsset:Class;
-        [Embed(source='../Assets/level-pit.png')]       public static var PitAsset:Class;
-        [Embed(source='../Assets/level-temple.png')]    public static var TempleAsset:Class;
-
-        [Embed(source='../Assets/level-preview-mansion.png')]   public static var MansionPreviewAsset:Class;
-        [Embed(source='../Assets/level-preview-mist.png')]      public static var MistPreviewAsset:Class;
-        [Embed(source='../Assets/level-preview-pit.png')]       public static var PitPreviewAsset:Class;
-        [Embed(source='../Assets/level-preview-temple.png')]    public static var TemplePreviewAsset:Class;
-
         public function LevelSelectView() {
             super()
             // Configure.
@@ -33,10 +23,10 @@
         override protected function getAssetClass(id:String, destination:Object):Class {
             if (destination === backgroundImages) {
                 switch (id) {
-                    case 'Mansion': return LevelSelectView.MansionAsset;
-                    case 'Mist':    return LevelSelectView.MistAsset;
-                    case 'Pit':     return LevelSelectView.PitAsset;
-                    case 'Temple':  return LevelSelectView.TempleAsset;
+                    case 'Mansion': return MansionAsset;
+                    case 'Mist':    return MistAsset;
+                    case 'Pit':     return PitAsset;
+                    case 'Temple':  return TempleAsset;
                     default: break;
                 }
             } else if (destination === previewImages) {
@@ -47,10 +37,10 @@
 
         public static function getPreviewAssetClass(id:String):Class {
             switch (id) {
-                case 'Mansion': return LevelSelectView.MansionPreviewAsset;
-                case 'Mist':    return LevelSelectView.MistPreviewAsset;
-                case 'Pit':     return LevelSelectView.PitPreviewAsset;
-                case 'Temple':  return LevelSelectView.TemplePreviewAsset;
+                case 'Mansion': return MansionPreviewAsset;
+                case 'Mist':    return MistPreviewAsset;
+                case 'Pit':     return PitPreviewAsset;
+                case 'Temple':  return TemplePreviewAsset;
                 default: break;
             }
             return Class;
