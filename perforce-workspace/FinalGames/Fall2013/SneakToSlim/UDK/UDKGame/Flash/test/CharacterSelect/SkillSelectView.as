@@ -10,6 +10,7 @@ package  {
                 return model.name;
             };
             hasBackgroundImage = false;
+            hasPreviewImages = false;
             selectPreview.imageSize = { width: 100, height: 100 };
         }
 
