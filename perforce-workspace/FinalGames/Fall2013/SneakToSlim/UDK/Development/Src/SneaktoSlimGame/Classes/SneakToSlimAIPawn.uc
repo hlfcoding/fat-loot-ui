@@ -59,6 +59,8 @@ function controlAIAnimation
 )
 {
 	local AnimNodePlayCustomAnim customNode;	
+	local SneaktoSlimPawn onePawn;
+	local SneaktoSlimPawn_Spectator specPawn;
 
 	customNode = AnimNodePlayCustomAnim(self.aiSkelComp.FindAnimNode(nodeName));
 	if(customNode == None)
@@ -75,7 +77,23 @@ function controlAIAnimation
 	{
 		customNode.StopCustomAnim(BlendOutTime);
 	}	
+
+	//If I am the server, then call all the client to play or stop the animation
+	if(Role == ROLE_Authority)
+	{
+		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
+		{
+			onePawn.clientPlayerPlayAIAnimation(self, nodename, AnimName, Rate, playOrStop, BlendInTime, BlendOutTime, bLooping, bOverride);
+		}
+
+		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn_Spectator', specPawn)
+		{
+			//specPawn.clientPlayerPlayAIAnimation(self, nodename, AnimName, Rate, playOrStop, BlendInTime, BlendOutTime, bLooping, bOverride);
+		}
+	}
 }
+
+
 
 DefaultProperties
 {
@@ -163,9 +181,9 @@ DefaultProperties
 	DetectDistance = 1000.0
 	DetectReactionTime = 0.0
 	HoldTime = 1.0
-	MaxInvestigationDistance = 1000.0
+	MaxInvestigationDistance = 2000.0
 	MinInvestigationDistance = 50.0
-	bNoEncroachCheck = true     //Enables pawns to move even when overlapping	
+	bNoEncroachCheck = false     //Enables pawns to move even when overlapping	
 	lightRadius = 400
 	MaxChaseStamina = 100
 	ChaseStaminaConsumptionRate = 30

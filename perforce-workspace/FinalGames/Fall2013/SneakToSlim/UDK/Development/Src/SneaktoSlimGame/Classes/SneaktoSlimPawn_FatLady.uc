@@ -1,5 +1,7 @@
 class SneaktoSlimPawn_FatLady extends SneaktoSlimPawn;
 
+var bool isGuideReady;
+
 simulated event ReplicatedEvent(name VarName)
 {
 	local SneaktoSlimPawn pa;
@@ -83,23 +85,27 @@ simulated event ReplicatedEvent(name VarName)
 	}
 }
 
-simulated event PostBeginPlay()
+event Tick(float DeltaTime)
 {
 	local SneakToSlimGuideController pc;
 
-    super.PostBeginPlay();
+	super.Tick(DeltaTime);
 
-	foreach WorldInfo.AllControllers(class 'SneakToSlimGuideController', pc)
+	if(self.Controller != none && !isGuideReady)
 	{
-		//Forces
-		if(!pc.isActive)
+		foreach WorldInfo.AllControllers(class 'SneakToSlimGuideController', pc)
 		{
-			pc.talkingTo = self;
-			pc.changeToTutorialState('HowToMove');	
+			//Forces
+			if(!pc.isActive)
+			{
+				pc.talkingTo = self;
+				pc.changeToTutorialState('HowToMove');	
+			}
+			break;
 		}
-		break;
+		isGuideReady = true;
 	}
- }
+}
 
 event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 {	
@@ -206,6 +212,7 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 DefaultProperties
 {
 	characterName = "FatLady";
+	isGuideReady = false;
 }
 
 

@@ -3,7 +3,8 @@ class MistTrigger extends Trigger;
 var repnotify bool isTurnedOn;
 var ParticleSystemComponent ParticalEffect;
 var () int Mistnum;
-
+var bool IsPermanant;
+var float LastingTime;
 replication {
 	if (bNetDirty)
 		isTurnedOn;
@@ -15,7 +16,9 @@ simulated event PostBeginPlay()
 	Mistnum = int(Split(self.Name,"MistTrigger_",true))+1;
 	`log("MistNumber????????????????????????????????????????????"@Mistnum);
 	if(role == role_authority){
-		setTimer(30.0,false,'ChangeisTurnedOn');
+		if(IsPermanant == false){
+		    setTimer(LastingTime,false,'ChangeisTurnedOn');
+		}
 	}
 
 }
@@ -41,7 +44,7 @@ simulated function ChangeisTurnedOn(){
 		    }
 		}
 	}
-	setTimer(10.0,false,'ChangeisTurnedOn');
+	setTimer(LastingTime,false,'ChangeisTurnedOn');
 }
 
 simulated event ReplicatedEvent(name VarName){
@@ -61,6 +64,7 @@ event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hit
 		if(sneaktoslimpawn(other)!=none){
 	        sneaktoslimpawn(other).bInvisibletoAI = true;
 	        sneaktoslimpawn(other).mistNum = Mistnum;//need to be set to mistTrigger num
+			sneaktoslimpawn(other).removePowerUp();
 		}
 	}
 }
@@ -113,5 +117,7 @@ DefaultProperties
 	bAlwaysRelevant=true
 	isTurnedOn = true
 	Components.Remove(Sprite)
+	IsPermanant = true
+	LastingTime = 30.0
 }
 

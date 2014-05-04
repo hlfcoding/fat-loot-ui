@@ -8,17 +8,14 @@ var() int BurstPower;  // How far do victims get pushed
 var() int EnergyNeededForBurst;  //Energy consumed by one Burst
 var SkeletalMeshComponent gbSkelMesh;
 var ParticleSystemComponent dustEffect;
-//var Array<MaterialInstanceConstant> teamMaterial;
+
+var StaticMeshComponent babyPlateMesh;
 
 simulated event PostBeginPlay()
 {   
 	self.mySkelComp.SetScale(0.0); //don't show fat lady model	
+	ShowPlate();
 	Super.PostBeginPlay();
-	//teamMaterial[0] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
-	//teamMaterial[1] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
-	//teamMaterial[2] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
-	//teamMaterial[3] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
-	//self.Mesh.SetMaterial(1, teamMaterial[self.GetTeamNum()]);
 }
 
 simulated event ReplicatedEvent(name VarName)
@@ -129,6 +126,42 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 	}		
 }
 
+simulated function ShowPlate()
+{
+	//local Vector SocketLocation;
+	//local Rotator SocketRotation;
+	//local SneaktoSlimBabyPlate BabyPlate;
+		
+	//if (Mesh != None)
+	//{
+	//	if (Mesh.GetSocketByName('babyPlateSocket') != None)
+	//	{
+	//		Mesh.GetSocketWorldLocationAndRotation('babyPlateSocket', SocketLocation, SocketRotation);
+			
+	//		BabyPlate = Spawn(class'SneaktoSlimBabyPlate',,, SocketLocation, SocketRotation);
+			
+	//		if (BabyPlate != None)
+	//		{
+	//			BabyPlate.SetBase(Self,, Mesh, 'babyPlateSocket');
+	//		}
+	//	}
+	//}
+
+	if (Self.Mesh != None)
+	{
+		if (Self.Mesh.GetSocketByName('babyPlateSocket') != None)
+		{
+			self.Mesh.AttachComponentToSocket(babyPlateMesh , 'babyPlateSocket');
+		}
+	}
+}
+
+simulated function HidePlate()
+{
+	if (self.Mesh.IsComponentAttached(babyPlateMesh))
+		self.Mesh.DetachComponent(babyPlateMesh);
+}
+
 
 simulated function BabyBurst(float chargeTime)
 {
@@ -142,8 +175,7 @@ simulated function BabyBurst(float chargeTime)
 	}
 	self.v_energy -= EnergyNeededForBurst; //Use the energy and then push nearby players
 
-	burstRadius = calculateBurstRadius(chargeTime);
-	`log(self.Name $ " Effective Burst radius: " $ burstRadius, true, 'Ravi');
+	burstRadius = calculateBurstRadius(chargeTime);	
 
 	foreach OverlappingActors(class'SneaktoSlimPawn', victim, burstRadius, self.Location)
 	{		
@@ -181,8 +213,7 @@ simulated function float calculateBurstRadius(float chargeTime)
 {
 	local float burstRadius;
 	if(chargeTime < MIN_BURST_CHARGE_TIME)
-	{
-		//`log(self.Name $ " Not charged enough for burst", true, 'Ravi');
+	{		
 		return 0;
 	}
 	chargeTime = FMin(chargeTime, MAX_BURST_CHARGE_TIME); //upper limit
@@ -206,32 +237,6 @@ simulated function toggleDustParticle(bool flag)
 	WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.dig',self.Location + vect(0.0, 0.0 ,-60.0));
 }
 
-//reliable client function clientMeshTranslation(int zValue)
-//{
-//	ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
-//	{
-//		if(CurrentPawn.Class == 'sneaktoslimpawn_ginsengbaby' && CurrentPawn.GetTeamNum() == self.GetTeamNum())
-//		if(CurrentPawn.GetTeamNum() == meshNum)
-//		{
-//			if(CurrentPawn.Role == ROLE_AutonomousProxy)
-//			{
-//				CurrentPawn.Mesh.SetTranslation(sneaktoslimplayercontroller_ginsengbaby(CurrentPawn.Controller).myOffset);
-//			}
-//			else if (CurrentPawn.Role == ROLE_SimulatedProxy)
-//			{
-//				CurrentPawn.Mesh.SetTranslation(sneaktoslimplayercontroller_ginsengbaby(CurrentPawn.Controller).myOffset);
-//			}
-//		}
-//	}
-//}
-
-//event Tick(float DeltaTime)
-//{
-//	//`log(self.Controller.GetStateName());
-//	//`log(self.GroundSpeed);
-//	`log(self.v_energy);
-//}
-
 DefaultProperties
 {
 	FLWalkingSpeed=220.0
@@ -244,13 +249,9 @@ DefaultProperties
 	MAX_BURST_CHARGE_TIME = 2.0
 	BurstPower = 23
 	EnergyNeededForBurst = 10
-
-	//Begin Object Name=CollisionCylinder
-	//	CollisionRadius=15.000000
-    //    CollisionHeight=48.000000
-    //End Object
-	//CylinderComponent=CollisionCylinder
 	
+	bCanBeBaseForPawns = true
+
 	Begin Object Class=SkeletalMeshComponent Name=GBSkeletalMesh	
 		SkeletalMesh = SkeletalMesh'FLCharacter.GinsengBaby.GinsengBaby_skeletal'	
 		AnimSets(0)=AnimSet'FLCharacter.GinsengBaby.GinsengBaby_animsets'
@@ -277,9 +278,12 @@ DefaultProperties
 	Components.Add(UGdust)
 
 	characterName = "GinsengBaby";
-	
-	//teamMaterial[0] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
-	//teamMaterial[1] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
-	//teamMaterial[2] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
-	//teamMaterial[3] = MaterialInstanceConstant'NodeBuddies.Materials.NodeBuddy_Red1_INST';
+
+	Begin Object Class=StaticMeshComponent   Name=BabyPlateMesh
+	StaticMesh=StaticMesh'FLCharacter.GinsengBaby.area'	
+	CastShadow=false
+	Scale=0.0f	
+	End Object
+
+	babyPlateMesh = BabyPlateMesh
 }

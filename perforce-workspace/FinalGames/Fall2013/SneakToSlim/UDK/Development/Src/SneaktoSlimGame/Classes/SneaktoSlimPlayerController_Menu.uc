@@ -14,9 +14,16 @@ var int timeLimit;
 var int scoreLimit;
 var int playerNumLimit;
 
+var string IPAddress;
+
+var array<clientInfo> clientInfoList;
+
 dllimport final function runWindowsCommand(out string s);
 dllimport final function killTheServer(out string s);
-dllimport final function sendClientMessage();
+dllimport final function string sendClientMessage(out string inputCommand, out string inputMapName);
+dllimport final function openClientInfoFile();
+dllimport final function closeClientInfoFile();
+dllimport final function string readline();
 
 //exec function selectMapInUdk(string inputString)
 //{
@@ -24,9 +31,55 @@ dllimport final function sendClientMessage();
 //		mapName = inputString;
 //}
 
-exec function sendMyMessage()
+exec function joinGameScreen(int index)
 {
-	sendClientMessage();
+	//`log("join fucking game");
+	sendMyMessage("query","null");
+	getClientInfo();
+
+	if(clientInfoList.Length == 0 || index >=  clientInfoList.Length)
+	{
+		`log("No client info");
+	}
+	else
+	{
+		ConsoleCommand("open "$clientInfoList[index].IPAddress$"?Character="$characterName$"?Time="$timeLimit);
+	}
+}
+
+exec function getClientInfo()
+{
+	local ClientInfo newClientInfo;
+
+	//clean the client info list
+	clientInfoList.Remove(0,clientInfoList.Length);
+
+	//read client info list
+	openClientInfoFile();
+
+	while(true)
+	{
+		newClientInfo = new class 'ClientInfo';
+		newClientInfo.IPAddress = readline();
+		newClientInfo.mapName = readline();
+
+		if(newClientInfo.IPAddress == "")
+		{
+			`log("quit reading ClientInfo Loop");
+			break;
+		}
+
+		`log(newClientInfo.IPAddress);
+		`log(newClientInfo.mapName);
+		clientInfoList.AddItem(newClientInfo);
+	}
+	
+	closeClientInfoFile();
+}
+
+exec function sendMyMessage(string inputCommand, string inputMapName)
+{
+	sendClientMessage(inputCommand,inputMapName);
 }
 
 simulated event PostBeginPlay()
@@ -34,6 +87,11 @@ simulated event PostBeginPlay()
 	`log("Menu_controller");
 
 	setTimer(1,true,'killZeroPlayerServer');
+
+	sendMyMessage("query","null");
+
+	IgnoreLookInput(true);
+	IgnoreMoveInput(true);
 }
 
 //kill 0 player server
@@ -134,6 +192,7 @@ exec function createRoom()
 	`log(urlAddress);
 
 	runWindowsCommand(urlAddress);
+	sendMyMessage("add",mapName);
 }
 
 //menu 4
@@ -154,10 +213,27 @@ exec function setIPAddress(string inIpAddress)
 	targetIPAddress = inIpAddress;
 }
 
-exec function createGameInUdk()
+exec function joinGameInUdk_Host()
 {
 	createRoom();
 	ConsoleCommand("open 127.0.0.1"$"?Character="$characterName);
+}
+
+exec function joinGameInUdk_NonHost()
+{
+	local int tempIndex;
+	tempIndex = 0;
+	//`log("join fucking game");
+	getClientInfo();
+
+	if(clientInfoList.Length == 0 || tempIndex >=  clientInfoList.Length)
+	{
+		`log("No client info");
+	}
+	else
+	{
+		ConsoleCommand("open "$clientInfoList[tempIndex].IPAddress$"?Character="$characterName$"?Time="$timeLimit);
+	}
 }
 
 exec function joinGameInUdk(string inIpAddress)

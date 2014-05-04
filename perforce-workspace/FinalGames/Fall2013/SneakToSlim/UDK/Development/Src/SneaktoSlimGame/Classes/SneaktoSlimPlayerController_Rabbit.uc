@@ -28,7 +28,7 @@ simulated function showRoarLines()
 	local Vector selfLocation;
 	local Rotator selfRotation, selfRotationL, selfRotationR;
 
-	selfLocation = SneaktoSlimPawn(self.Pawn).Location;
+	selfLocation = SneaktoSlimPawn(self.Pawn).Location - (100* Vector(SneaktoSlimPawn(self.Pawn).Rotation));
 	selfRotation = SneaktoSlimPawn(self.Pawn).Rotation;
 	selfRotationL = selfRotation;
 	selfRotationL.Yaw -= DegToUnrRot*15;
@@ -100,6 +100,7 @@ simulated state Teleport
 		if(sneaktoslimpawn(self.Pawn).v_energy <= perDiveEnergy)
 			return;
 
+		SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customBlink', 'Blink', 1.f, true, 0.1f, 0.2f, false, true);
 		sneaktoslimpawn(self.Pawn).v_energy -= perDiveEnergy;
 		//SwitchToCamera('Fixed');
 		Pawn.GroundSpeed = SneaktoSlimPawn_Rabbit(Pawn).TELEPORT_SPEED;
@@ -221,7 +222,7 @@ simulated state Roaring extends CustomizedPlayerWalking
 
 		foreach self.Pawn.VisibleCollidingActors(class'SneaktoSlimPawn', victim, 300)
 		{
-			if (ActorLookingAt(SneaktoSlimPawn(self.Pawn), victim, 15))
+			if (ActorLookingAt(SneaktoSlimPawn(self.Pawn),SneaktoSlimPawn(self.Pawn).Location, victim, 90) && ActorLookingAt(SneaktoSlimPawn(self.Pawn),SneaktoSlimPawn(self.Pawn).Location - (100 * vector(SneaktoSlimPawn(self.Pawn).Rotation)), victim, 15))
 			{
 				SneaktoSlimPlayerController(victim.Controller).attemptToChangeState('Stunned');
 				SneaktoSlimPlayerController(victim.Controller).GoToState('Stunned');

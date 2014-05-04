@@ -55,7 +55,7 @@ exec function OnReleaseFirstSkill()
 	{
 		sneaktoslimpawn(self.Pawn).removePowerUp();
 	}
-	if( !firstSkillUsed && SneaktoSlimPawn(Pawn).v_energy > 20.0)
+	if( !firstSkillUsed && SneaktoSlimPawn(Pawn).v_energy > 20.0  && IsInState('ChargingFireCracker') )
 	{
 		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
 
@@ -87,7 +87,7 @@ exec function OnReleaseSecondSkill()
 	{
 		sneaktoslimpawn(self.Pawn).removePowerUp();
 	}
-	if( !secondSkillUsed )
+	if( !secondSkillUsed && IsInState('ChargingDash'))
 	{
 		if(Role < ROLE_Authority)
 			ServerGotoState('Dashing');
@@ -116,6 +116,7 @@ simulated state ChargingFireCracker
 
 	simulated event BeginState(Name LastStateName)
 	{	
+		if(debugStates) `log(self.GetStateName());
 		firstSkillUsed = false;
 		fireCrackerChargeTime = WorldInfo.TimeSeconds; //time when charging started		
 		Pawn.GroundSpeed = 0;
@@ -146,7 +147,11 @@ simulated state ChargingFireCracker
 		{			
 			numFactor += 1;			
 		}
-		splight.SetLocation(Pawn.Location + vector(Pawn.Rotation) * FIRECRACKER_INDICATOR_SPEED * numFactor);
+		if(timeSpentInState > SneaktoSlimPawn_Shorty(Pawn).MIN_FIRECRACKER_CHARGE_TIME && splight == none)
+			splight = Spawn(class'SneakToSlimSpotLight', Self,,Pawn.Location + vector(Pawn.Rotation) * FIRECRACKER_INDICATOR_SPEED * numFactor);
+
+		if(splight != none)
+			splight.SetLocation(Pawn.Location + vector(Pawn.Rotation) * FIRECRACKER_INDICATOR_SPEED * numFactor);
 		
 		if( timeSpentInState >= SneaktoSlimPawn_Shorty(Pawn).MAX_FIRECRACKER_CHARGE_TIME )
 		{
@@ -158,13 +163,42 @@ simulated state ChargingFireCracker
 	simulated function PlayerMove( float DeltaTime )
 	{				
 		local Rotator rot;
-		UpdateRotation(DeltaTime);		
-		rot.Yaw = PlayerInput.aMouseX;		
-		Pawn.SetRotation( Pawn.Rotation + rot);
+		local vector		NewAccel;
+		local eDoubleClickDir	DoubleClickMove;
+		local rotator		OldRotation;
+		
+		if( Pawn == None )
+		{
+			GoToState('Dead');
+		}
+		else
+		{
+			NewAccel.Y = 0;	NewAccel.X = 0; NewAccel.Z = 0;
+
+			if (IsLocalPlayerController())
+			{
+				AdjustPlayerWalkingMoveAccel(NewAccel);
+			}
+			DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
+			// Update rotation.
+			OldRotation = Rotation;
+			UpdateRotation( DeltaTime );
+			rot.Yaw = PlayerInput.aTurn;		
+			Pawn.SetRotation( Pawn.Rotation + rot);
+			
+			if( Role < ROLE_Authority ) // then save this move and replicate it
+			{
+				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
+			}
+			else
+			{
+				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
+			}
+		}			
 	}
 
 Begin:
-	splight = Spawn(class'SneakToSlimSpotLight', Self,,Pawn.Location);
+	splight = none;	
 	numFactor = 0;	
 	SetTimer(0.01, true, 'ShowFireCrackerLandLocation');	
 }
@@ -176,6 +210,7 @@ simulated state ThrowingFireCracker
 
 	simulated event BeginState(Name LastStateName)
 	{	
+		if(debugStates) `log(self.GetStateName());
 		if (LastStateName == 'InvisibleExhausted' || LastStateName == 'InvisibleWalking')
 		{
 			attemptToChangeState('EndInvisible');
@@ -222,21 +257,54 @@ simulated state ChargingDash
 	simulated function PlayerMove( float DeltaTime )
 	{				
 		local Rotator rot;
-		UpdateRotation(DeltaTime);		
-		rot.Yaw = PlayerInput.aMouseX;		
-		Pawn.SetRotation( Pawn.Rotation + rot);
+		local vector		NewAccel;
+		local eDoubleClickDir	DoubleClickMove;
+		local rotator		OldRotation;
+		
+		if( Pawn == None )
+		{
+			GoToState('Dead');
+		}
+		else
+		{
+			NewAccel.Y = 0;	NewAccel.X = 0; NewAccel.Z = 0;
+
+			if (IsLocalPlayerController())
+			{
+				AdjustPlayerWalkingMoveAccel(NewAccel);
+			}
+			DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
+			// Update rotation.
+			OldRotation = Rotation;
+			UpdateRotation( DeltaTime );
+			rot.Yaw = PlayerInput.aTurn;		
+			Pawn.SetRotation( Pawn.Rotation + rot);
+			
+			if( Role < ROLE_Authority ) // then save this move and replicate it
+			{
+				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
+			}
+			else
+			{
+				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
+			}
+		}			
 	}
 
 	simulated event BeginState(Name LastStateName)
 	{		
+		if(debugStates) `log(self.GetStateName());
 		secondSkillUsed = false;
 		dashChargeTime = WorldInfo.TimeSeconds; //time when charging started		
 		Pawn.GroundSpeed = 0;
 		Pawn.SetRotation ( self.Rotation ); //Make shorty face same direction as camera is looking
 		ClearTimer('EnergyRegen');
 		ClearTimer('StartEnergyRegen');
-		SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');		
-		SneaktoSlimPawn_Shorty(Pawn).playerPlayOrStopCustomAnim('CustomCharge', 'Charge', 1.0f, true, 0.25, 0, true, false);
+		SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');
+		if(SneaktoSlimPawn(self.Pawn).isGotTreasure == true)
+			SneaktoSlimPawn_Shorty(Pawn).playerPlayOrStopCustomAnim('CustomCharge', 'Treasure_Sprint', 1.0f, true, 0.25, 0, true, false);
+		else
+			SneaktoSlimPawn_Shorty(Pawn).playerPlayOrStopCustomAnim('CustomCharge', 'Charge', 1.0f, true, 0.25, 0, true, false);
 	}
 
 	simulated event EndState(Name NextStateName)
@@ -244,7 +312,10 @@ simulated state ChargingDash
 		ClearTimer('UpdateEnergy');
 		SetTimer(2, false, 'StartEnergyRegen');	
 		Pawn.GroundSpeed = SneaktoSlimPawn_Shorty(Pawn).FLWalkingSpeed;	
-		SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomCharge', 'Charge', 1.0f, false, 0.25, 0, true, false);
+		if(SneaktoSlimPawn(self.Pawn).isGotTreasure == true)
+			SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomCharge', 'Treasure_Sprint', 1.0f, false, 0.25, 0, true, false);
+		else
+			SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomCharge', 'Charge', 1.0f, false, 0.25, 0, true, false);
 	}
 }
 
@@ -255,6 +326,7 @@ simulated state Dashing
 
 	simulated event BeginState(Name LastStateName)
 	{		
+		if(debugStates) `log(self.GetStateName());
 		if (LastStateName == 'InvisibleExhausted' || LastStateName == 'InvisibleWalking')
 		{
 			attemptToChangeState('EndInvisible');
@@ -265,12 +337,17 @@ simulated state Dashing
 			attemptToChangeState('EndDisguised');
 			GoToState('EndDisguised');
 		}
+
+		SneaktoSlimPawn_Shorty(Pawn).CylinderComponent.SetCylinderSize(SneaktoSlimPawn_Shorty(Pawn).CylinderComponent.CollisionRadius * 2, SneaktoSlimPawn_Shorty(Pawn).CylinderComponent.CollisionHeight);
 		SneaktoSlimPawn_Shorty(Pawn).AccelRate = SneaktoSlimPawn_Shorty(Pawn).DASH_ACCELERATION;
 		secondSkillUsed = true;
 		dashChargeTime = WorldInfo.TimeSeconds - dashChargeTime;
 		dashStartTime = WorldInfo.TimeSeconds;
 		cappedChargeTime = FMin(dashChargeTime * SneaktoSlimPawn_Shorty(Pawn).DASH_CHARGE_VS_MOVE_DURATION_FACTOR, SneaktoSlimPawn_Shorty(Pawn).MAX_DASH_TIME);
-		SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomHeadbutt', 'Headbutt', 1.0f, true, 0, 0.5, true, false);
+		if(SneaktoSlimPawn(self.Pawn).isGotTreasure == true)
+			SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomHeadbutt', 'Treasure_Sprint', 1.3f, true, 0, 0.5, true, false);
+		else
+			SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomHeadbutt', 'Headbutt', 1.3f, true, 0, 0.5, true, false);
 		if (role == role_authority)
 		{
 			SneaktoSlimPawn(self.Pawn).CallToggleSprintParticle(true, self.GetTeamNum());
@@ -318,11 +395,15 @@ simulated state Dashing
 
 	simulated event EndState(name nextState)
 	{
+		SneaktoSlimPawn_Shorty(Pawn).CylinderComponent.SetCylinderSize(SneaktoSlimPawn_Shorty(Pawn).CylinderComponent.CollisionRadius / 2, SneaktoSlimPawn_Shorty(Pawn).CylinderComponent.CollisionHeight);
 		SneaktoSlimPawn_Shorty(Pawn).AccelRate = SneaktoSlimPawn_Shorty(Pawn).NORMAL_ACCELERATION;
 		Pawn.GroundSpeed = SneaktoSlimPawn_Shorty(Pawn).FLWalkingSpeed;
 		Pawn.bForceMaxAccel = false;
 		dashChargeTime = 0;
-		SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomHeadbutt', 'Headbutt', 1.0f, false, 0, 0.5, true, false);
+		if(SneaktoSlimPawn(self.Pawn).isGotTreasure == true)
+			SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomHeadbutt', 'Treasure_Sprint', 1.0f, false, 0, 0.5, true, false);
+		else
+			SneaktoSlimPawn_Shorty(self.Pawn).playerPlayOrStopCustomAnim('CustomHeadbutt', 'Headbutt', 1.0f, false, 0, 0.5, true, false);
 		if (role == role_authority)
 		{
 			SneaktoSlimPawn(self.Pawn).CallToggleSprintParticle(false,self.GetTeamNum());

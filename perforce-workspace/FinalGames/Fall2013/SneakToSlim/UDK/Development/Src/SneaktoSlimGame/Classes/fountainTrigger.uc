@@ -58,6 +58,7 @@ simulated function bool UsedBy(Pawn User)
 	}
 	if(!destination.checkIfOccupied())
 	{
+		User.SetRotation(destination.Rotation);
 		`log("Trigger " $ Name $ " used by" $ User.Name);
 		return super.UsedBy(User);
 	}

@@ -61,10 +61,19 @@ simulated function giveTreasure(SneaktoSlimPawn User, SneaktoSlimTreasureSpawnPo
 
 event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vector HitNormal)
 {
+	local SneakToSlimPawn current;
     super.Touch(Other, OtherComp, HitLocation, HitNormal);
 	tempUser = SneaktoSlimPawn(Other);
 	if(tempUser != none)
+	{
+		foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+		{
+			//`log("clientRoarParticle" $ current.GetTeamNum());
+			current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Treasure_Stolen_Cue');
+			
+		}
 		tempUser.getTreasure(self, NONE);
+	}
 }
  
 event UnTouch(Actor Other)

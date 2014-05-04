@@ -4,12 +4,13 @@ var SneaktoSlimPawn tempUser;
 var SneaktoSlimTreasure MyTreasure;
 var repnotify bool isHaveTreasure;
 var ParticleSystemComponent ParticalEffect;
-var StaticMeshComponent LightBeamEffectRef;
+var ParticleSystemComponent LightBeamEffectRef;
 var () int BoxIndex;
 var PointLightComponent ChestLight;
 var StaticMeshComponent myEmissiveLightCube;
 var MaterialInstanceConstant EmissiveMaterialOn;
 var MaterialInstanceConstant EmissiveMaterialOff;
+var SpotLightComponent Flashlight;
 
 replication {
 	if (bNetDirty)
@@ -38,8 +39,8 @@ simulated function SneaktoSlimTreasure SpawnTreasure()
 	LightBeamEffectRef.SetHidden(false);
 	ChestLight.SetLightProperties(5.f);
 	ChestLight.SetEnabled(true);
-	PromtText = "Press E to Get the treasure";
-	PromtTextXbox = "Press A to Get the treasure";
+	PromtText = "Press 'E' to Get the treasure";
+	PromtTextXbox = "Press 'A' to Get the treasure";
 	return MyTreasure;
 }
 
@@ -66,12 +67,13 @@ simulated event ReplicatedEvent(name VarName){
 simulated function SetParticalEffectActive(bool flag){
      ParticalEffect.SetActive(flag);
 	 LightBeamEffectRef.SetHidden(!flag);
+	 Flashlight.SetEnabled(flag);
 	 if (flag)
 	 {
 		ChestLight.SetLightProperties(5.f);
 		ChestLight.SetEnabled(true);
 		myEmissiveLightCube.SetMaterial(0,EmissiveMaterialOn);
-		PromtText = "Press E to Get the treasure";
+		PromtText = "Press 'E' to Get the treasure";
 		PromtTextXbox = "Press 'A' to Get the treasure";
 	 } else
 	 {
@@ -87,6 +89,7 @@ simulated function SetParticalEffectActive(bool flag){
 simulated function bool UsedBy(Pawn User)
 {
 	local bool used;
+	local SneakToSlimPawn current;
 	used = super.UsedBy(User);
 	if(InRangePawnNumber!=SneaktoSlimPawn(User).GetTeamNum()){
 	    return used;
@@ -95,6 +98,14 @@ simulated function bool UsedBy(Pawn User)
     {
 		`log("GetTreasure!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		MyTreasure.giveTreasure(SneaktoSlimPawn(User),self);
+
+		foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+		{
+			//`log("clientRoarParticle" $ current.GetTeamNum());
+			current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Treasure_Stolen_Cue');
+			
+		}
+
 		if(role == role_authority){
 		    isHaveTreasure=false;
 		}
@@ -122,12 +133,10 @@ DefaultProperties
     Components.Add(EmissiveLightCube)
 	myEmissiveLightCube = EmissiveLightCube;
 
-    Begin Object Class=StaticMeshComponent Name=LightBeamEffect
-        StaticMesh= StaticMesh'flvfx.LightBeam.SimpleLightBeam'
-		Scale=1.5
-		Translation=(Z=200.0)
-		bUsePrecomputedShadows=True
-		LightEnvironment=MyLightEnvironment
+    Begin Object Class=ParticleSystemComponent Name=LightBeamEffect
+        Template=ParticleSystem'flvfx.Dust.Light_beam'
+        bAutoActivate=true
+		Translation=(Z=1000.0)
     End Object
 
     Components.Add(LightBeamEffect)
@@ -140,6 +149,23 @@ DefaultProperties
 	End Object
     ParticalEffect = TreasureEffectComponent;
 	Components.Add(TreasureEffectComponent)
+
+	Begin Object Class=SpotLightComponent Name=MyFlashlight
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Modulate;
+	  Radius=300.000000
+	  Brightness=4.0
+	  LightColor=(R=255,G=241,B=134)
+	  Rotation=(Pitch=-16384, Yaw=0, Roll=0)
+	  Translation=(Z=200.0)
+	End Object
+	Components.Add(MyFlashlight)
+	Flashlight=MyFlashlight
 
 	Begin Object Class=pointlightcomponent Name=TreasurePointLight
       Translation = (Z = -22.0)

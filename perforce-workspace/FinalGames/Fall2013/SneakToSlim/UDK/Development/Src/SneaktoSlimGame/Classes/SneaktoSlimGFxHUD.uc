@@ -2,8 +2,8 @@ class SneaktoSlimGFxHUD extends GFxMoviePlayer;
 
 var int lastPlayerHealth, healthBarLength;
 var float screenSizeX, screenSizeY;
-var GFxObject HealthBar, InvisibilityIcon, PowerupBackdrop, InstructionText, CountdownText;
-var GFxObject player1Score, player2Score, player3Score, player4Score, PromptText, TutorialText;
+var GFxObject HealthBar, InvisibilityIcon, PowerupBackdrop, PowerupTimerBackdrop, CountdownText;
+var GFxObject player1Score, player2Score, player3Score, player4Score, PromptText, TutorialText, TimeUpText;
 var GFxObject SpottedIcon, ClothIcon, ThunderIcon, TeaIcon, SuperSprintIcon, CurseIcon, TimerText, blackCurtain;
 var array<GFxObject> allFlashObjects;
 var bool isHUDSet;
@@ -33,14 +33,12 @@ function Init(optional LocalPlayer player)
 	SuperSprintIcon = GetVariableObject("_root.SpeedBoost");
 	CurseIcon = GetVariableObject("_root.CurseIcon");  
 	PowerupBackdrop = GetVariableObject("_root.PowerUpBackdrop");
-	InstructionText = GetVariableObject("_root.HowToUseInstruction");
-	if(SneaktoSlimPlayerController(GetPC()).PlayerInput.bUsingGamepad)
-		InstructionText.GetObject("InstructionText").SetText("Press 'X'");
-	else
-		InstructionText.GetObject("InstructionText").SetText("Press 'shift'");
+	PowerupTimerBackdrop = GetVariableObject("_root.PowerUpBackGround");
 	CountdownText = GetVariableObject("_root.CountdownText");
 	PromptText = GetVariableObject("_root.PromptText");
 	blackCurtain = GetVariableObject("_root.BlackCurtain");
+	blackCurtain.SetInt("x", 0);
+	blackCurtain.SetInt("y", 0);
 	SpottedIcon = GetVariableObject("_root.warning_sign");
 	player1Score = GetVariableObject("_root.scoreboard_one");
 	player1Score.GetObject("Coin").SetBool("visible", false);
@@ -55,6 +53,9 @@ function Init(optional LocalPlayer player)
 	player4Score.GetObject("Coin").SetBool("visible", false);
 	player4Score.ActionScriptVoid("init");
 	TimerText = GetVariableObject("_root.TimerText");
+	TimerText.ActionScriptVoid("init");
+	TimerText.SetBool("isOn", false);
+	TimeUpText = GetVariableObject("_root.TimeUpText");
 
 	//Adds all objects to array for when screen size is changed
 	allFlashObjects.AddItem(HealthBar);
@@ -65,7 +66,7 @@ function Init(optional LocalPlayer player)
 	allFlashObjects.AddItem(SuperSprintIcon);
 	allFlashObjects.AddItem(CurseIcon);
 	allFlashObjects.AddItem(PowerupBackdrop);
-	allFlashObjects.AddItem(InstructionText);
+	allFlashObjects.AddItem(PowerupTimerBackdrop);
 	allFlashObjects.AddItem(CountdownText);
 	allFlashObjects.AddItem(PromptText);
 	allFlashObjects.AddItem(TutorialText);
@@ -76,6 +77,7 @@ function Init(optional LocalPlayer player)
 	allFlashObjects.AddItem(player3Score);
 	allFlashObjects.AddItem(player4Score);
 	allFlashObjects.AddItem(TimerText);
+	allFlashObjects.AddItem(TimeUpText);
 
 	//Hardcode original flash size size
 	screenSizeX = 1280;
@@ -176,7 +178,7 @@ function TickHud(float DeltaTime)
 		//Sets healthbar's custom variable which the script uses to change its own color
 		HealthBar.SetInt("currentHealth", lastPlayerHealth);   
 		//Scales according to width size
-		GetVariableObject("_root.stamina_bar.currentBar").SetInt("width", (lastPlayerHealth * healthBarLength /100));
+		//GetVariableObject("_root.stamina_bar.currentBar").SetInt("width", (lastPlayerHealth * healthBarLength /100));
 	//}
 
 	if(flashCurtain)

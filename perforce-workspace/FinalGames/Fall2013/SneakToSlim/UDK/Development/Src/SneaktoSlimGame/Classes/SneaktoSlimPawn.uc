@@ -13,18 +13,6 @@ var SneakToSlimMovingTreasure SpawnedProjectile;
 //var SkeletalMeshComponent Mesh;
 var vector meshTranslationOffset;
 
-
-var AnimNodePlayCustomAnim sprintNode;
-var AnimNodePlayCustomAnim bellyBumpNode;
-var AnimNodePlayCustomAnim bumpingNode;
-var AnimNodePlayCustomAnim bumpReadyNode;
-var AnimNodePlayCustomAnim bumpLandNode;
-var AnimNodePlayCustomAnim vanishNode;
-var AnimNodePlayCustomAnim tiredNode;
-var AnimNodePlayCustomAnim stunNode;
-var AnimNodePlayCustomAnim hitNode;
-var AnimNodePlayCustomAnim treasureWalkNode;
-var AnimNodePlayCustomAnim searchNode;
 var SkeletalMeshComponent mySkelComp;
 var SkeletalMeshComponent AISkelComp;
 var Array<Vector> TreasureSpawnPointLocations;
@@ -45,6 +33,8 @@ var int bellyBumpHits;
 
 var SpotLightComponent AIFlashlight;
 var StaticMeshComponent AILantern;
+
+var Array<SoundCue> teamAnnouncement;
 
 struct HUDMessage
 {
@@ -72,7 +62,7 @@ var bool bInvisibletoAI; //if true, AIPawn cannot detect this pawn. used in Snea
 var int bBuffed;
 var byte bUsingBuffed[7];//should not be used anymore
 var float BuffedTimer;
-var float BuffedTimerDefault[3];// record the countdonw of buffs
+var float BuffedTimerDefault[7];// record the countdonw of buffs
 
 var() float v_energy;         // ANDY: naming v_xyz for variables (health, energy, speed, etc), and s_xyz for states (weak, high, drunk, etc)
 var int s_energized;
@@ -90,16 +80,12 @@ var() float FLExhaustedSpeed;
 
 //var bool bIsDashing;        //Xu: Whether the pawn is currently dashing
 var float SuperSprintSpeed;
-var float DashDuration;     //Xu: How long the pawn will dash for
-var bool bIsHitWall;
-var float HitWallDuration;
 var float PerDashEnergy;
 var float PerSpeedEnergy;
 var float FanRange;
 var float FanAngle;
 var bool CheatingMode;
 var RepNotify float CSpeed;
-var bool bOOM; //ANDY: bObjectOfMomentum, aka BOOM! to check if the pawn is under impact momentum from belly-bump.
 var vector knockBackVector; //Xu: used in BeingBellyBumped
 
 var SneakToSlimTreasureParticle treasureEffect;
@@ -130,6 +116,7 @@ var repnotify int invisibleNum;
 var repnotify int endinvisibleNum;
 var repnotify int mistNum;
 var repnotify bool isUsingBeer;
+var bool haveBeerCurse;
 
 var bool bPreDash;
 var() float energyRegenerateRate;
@@ -137,6 +124,11 @@ var() int PlayerBaseRadius;
 var () bool underLight;
 var int playerCount;
 var int beerNum;
+
+var int countGlobalAnnounHit[4];
+var float timePlayerHit[4];
+var int countGlobalAnnounScore;
+var int lastPlayerScore;
 
 var StaticMeshComponent treasureComponent;
 var PointLightComponent treasureLightComponent;
@@ -146,7 +138,6 @@ replication {   //ARRANGE THESE ALPHABETICALLY
 	if (bNetDirty || bNetOwner)
 		bBuffed, // only keep copy in server
 		//bIsDashing, //shoule not use this anymore when using states
-		bOOM,
 		bUsingBuffed, // only keep copy in server //shoule not use this anymore when using states
 		//myTreasure,
 		colorIndex,       //Updates energy reading for each pawn's own respective value
@@ -178,7 +169,8 @@ simulated event PostBeginPlay()
 		`log("I am running on the server!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	else
 		`log("I am running on the client!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	
+
+	treasureComponent.SetActorCollision(true, false); //so that treasure does not block others, e.g., guard
     SetSpawnPointColor();
 	setTimer(0.3,false,'ServerRemindTreasureLocation');
 	setTimer(0.3,false,'ServerInitLight');
@@ -216,12 +208,15 @@ reliable client function removePowerUp()
 		if(bUsingBuffed[0] == 1)
 		{
 			`log('remove power-ups');
+			bUsingBuffed[0] = 0;
 			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('EndInvisible');
 			SneaktoSlimPlayerController(self.Controller).GoToState('EndInvisible');
+
 		}
 		if(bUsingBuffed[1] == 1)
 		{
 			`log('remove power-ups');
+			bUsingBuffed[1] = 0;
 			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('EndDisguised');
 			SneaktoSlimPlayerController(self.Controller).GoToState('EndDisguised');
 		}
@@ -331,9 +326,43 @@ reliable client function displayTutorialText(String text)
 	}
 }
 
-unreliable client function showDemoTime(String text)
+unreliable client function updateTimeUI(int currentTime)
 {
 	local SneaktoSlimGFxHUD myFlashHUD;
+
+	if(SneaktoSlimPlayerController(self.Controller).uiOn)
+	{
+		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
+		if(!myFlashHUD.TimerText.GetBool("isOn"))
+			myFlashHUD.TimerText.SetBool("isOn", true);
+		myFlashHUD.TimerText.SetInt("time", currentTime);
+		if(currentTime == 0 && myFlashHUD.TimeUpText.GetInt("x") < myFlashHUD.screenSizeX/2)
+			myFlashHUD.TimeUpText.SetInt("x", myFlashHUD.TimeUpText.GetInt("x") + int(myFlashHUD.screenSizeX/16));
+		if(currentTime == 0 && myFlashHUD.TimeUpText.GetInt("x") > myFlashHUD.screenSizeX/2)
+			myFlashHUD.TimeUpText.SetInt("x", int(myFlashHUD.screenSizeX/2));
+		if(currentTime == 0)
+		{
+			PlayerController(self.Controller).IgnoreLookInput(true);
+			PlayerController(self.Controller).IgnoreMoveInput(true);
+		}
+	}
+}
+
+reliable client function hideTimeUI()
+{
+	local SneaktoSlimGFxHUD myFlashHUD;
+
+	if(SneaktoSlimPlayerController(self.Controller).uiOn)
+	{
+		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
+		myFlashHUD.TimerText.SetBool("visible", false);
+	}
+}
+
+unreliable client function showDemoTime(String text)
+{
+	//Not used anymore, now use updateTimeUI(int);
+	/*local SneaktoSlimGFxHUD myFlashHUD;
 
 	if(SneaktoSlimPlayerController(self.Controller).uiOn)
 	{
@@ -341,7 +370,7 @@ unreliable client function showDemoTime(String text)
 		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
 		myFlashHUD.TimerText.SetBool("isOn", true);
 		myFlashHUD.TimerText.GetObject("time_text").SetText(text);
-	}
+	}*/
 }
 
 reliable client function showWinnerText()
@@ -479,9 +508,8 @@ reliable client function showPowerupUI(int num)
 			myFlashHUD.TeaIcon.SetBool("isOn", false);
 			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
 			myFlashHUD.CurseIcon.SetBool("isOn", false);
-			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
-			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
+			myFlashHUD.CountdownText.SetInt("number", 0);
 		}
 		if(num == 2)
 		{
@@ -491,9 +519,8 @@ reliable client function showPowerupUI(int num)
 			myFlashHUD.TeaIcon.SetBool("isOn", false);
 			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
 			myFlashHUD.CurseIcon.SetBool("isOn", false);
-			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
-			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
+			myFlashHUD.CountdownText.SetInt("number", 0);
 		}
 		if(num == 3)
 		{
@@ -503,9 +530,8 @@ reliable client function showPowerupUI(int num)
 			myFlashHUD.TeaIcon.SetBool("isOn", false);
 			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
 			myFlashHUD.CurseIcon.SetBool("isOn", false);
-			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
-			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
+			myFlashHUD.CountdownText.SetInt("number", 0);
 		}
 		if(num == 4)
 		{
@@ -515,9 +541,8 @@ reliable client function showPowerupUI(int num)
 			myFlashHUD.TeaIcon.SetBool("isOn", true);
 			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
 			myFlashHUD.CurseIcon.SetBool("isOn", false);
-			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
-			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
+			myFlashHUD.CountdownText.SetInt("number", 0);
 		}
 		if(num == 5)
 		{
@@ -527,9 +552,8 @@ reliable client function showPowerupUI(int num)
 			myFlashHUD.TeaIcon.SetBool("isOn", false);
 			myFlashHUD.SuperSprintIcon.SetBool("isOn", true);
 			myFlashHUD.CurseIcon.SetBool("isOn", false);
-			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
-			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
+			myFlashHUD.CountdownText.SetInt("number", 0);
 		}
 		if(num == 6)
 		{
@@ -539,9 +563,8 @@ reliable client function showPowerupUI(int num)
 			myFlashHUD.TeaIcon.SetBool("isOn", false);
 			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
 			myFlashHUD.CurseIcon.SetBool("isOn", true);
-			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
-			myFlashHUD.InstructionText.SetBool("isOn", true);
 			myFlashHUD.CountdownText.SetBool("isOn", true);
+			myFlashHUD.CountdownText.SetInt("number", 0);
 		}
 	}
 }
@@ -558,40 +581,36 @@ reliable client function hidePowerupUI(int num)
 		{
 			myFlashHUD.InvisibilityIcon.SetBool("isOn", false);
 			myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
-			myFlashHUD.InstructionText.SetBool("isOn", false);
+			myFlashHUD.PowerupTimerBackdrop.SetBool("isOn", true);
 			//setTimer(1,false,'SyncTreasure');
 		}
 		if(num == 2)
 		{
 			myFlashHUD.ClothIcon.SetBool("isOn", false);
 			myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
-			myFlashHUD.InstructionText.SetBool("isOn", false);
+			myFlashHUD.PowerupTimerBackdrop.SetBool("isOn", true);
 			//setTimer(1,false,'SyncTreasure');
 		}
 		if(num == 3)
 		{
 			myFlashHUD.ThunderIcon.SetBool("isOn", false);
-			myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
-			myFlashHUD.InstructionText.SetBool("isOn", false);
+			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 			//setTimer(1,false,'SyncTreasure');
 		}
 		if(num == 4)
 		{
 			myFlashHUD.TeaIcon.SetBool("isOn", false);
-			myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
-			myFlashHUD.InstructionText.SetBool("isOn", false);
+			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 		}
 		if(num == 5)
 		{
 			myFlashHUD.SuperSprintIcon.SetBool("isOn", false);
-			myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
-			myFlashHUD.InstructionText.SetBool("isOn", false);
+			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 		}
 		if(num == 6)
 		{
 			myFlashHUD.CurseIcon.SetBool("isOn", false);
-			myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
-			myFlashHUD.InstructionText.SetBool("isOn", false);
+			myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 		}
 	}
 }
@@ -737,53 +756,48 @@ simulated event Destroyed()
 {
   Super.Destroyed();
 
-  sprintNode = None;
+  //sprintNode = None;
 }
 
 simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 {
 	//ready to retire theses line
-	sprintNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customSprint'));
-	bellyBumpNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customBumping'));
-	bumpingNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customBumping'));
-	bumpReadyNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customBumpReady'));
-	bumpLandNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customLand'));
-	vanishNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customVanish'));
-	tiredNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customTired'));
-	stunNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customStun'));
-	hitNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customHit'));
-	treasureWalkNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customTreasureWalk'));
-	searchNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customSearch'));
+	//sprintNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customSprint'));
+	//bellyBumpNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customBumping'));
+	//bumpingNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customBumping'));
+	//bumpReadyNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customBumpReady'));
+	//bumpLandNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customLand'));
+	//vanishNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customVanish'));
+	//tiredNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customTired'));
+	//stunNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customStun'));
+	//hitNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customHit'));
+	//treasureWalkNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customTreasureWalk'));
+	//searchNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customSearch'));
 	//	
 }
 
-exec function letshidden()
-{
-	self.SetHidden(true);
-}
+//simulated function toggleTiredAnimation(bool animMustPlay)
+//{
+//	if (tiredNode == None)
+//	{
+//		return;
+//	}
 
-simulated function toggleTiredAnimation(bool animMustPlay)
-{
-	if (tiredNode == None)
-	{
-		return;
-	}
-
-	if (animMustPlay == true)
-	{
-		if (!tiredNode.bIsPlayingCustomAnim)
-		{
-  			tiredNode.PlayCustomAnim('Tired', 1.f, 0.1f, 0.1f, true, true);
-		}
-	}
-	else
-	{
-		if (tiredNode.bIsPlayingCustomAnim)
-		{
-				tiredNode.StopCustomAnim(0.1f);
-		}
-	}
-}
+//	if (animMustPlay == true)
+//	{
+//		if (!tiredNode.bIsPlayingCustomAnim)
+//		{
+//  			tiredNode.PlayCustomAnim('Tired', 1.f, 0.1f, 0.1f, true, true);
+//		}
+//	}
+//	else
+//	{
+//		if (tiredNode.bIsPlayingCustomAnim)
+//		{
+//				tiredNode.StopCustomAnim(0.1f);
+//		}
+//	}
+//}
 
 //Player will now move but still be invincible until time out
 exec function makePlayerMoveAfterClickingKey()
@@ -1115,7 +1129,6 @@ simulated event ReplicatedEvent(name VarName)
 	{
 		if(self.isUsingBeer == true)
 		{
-			//self.isUsingBeer = false;
 			serverResetIsUsingBeer();
 			if(self.Role == ROLE_SimulatedProxy)
 			{
@@ -1123,12 +1136,14 @@ simulated event ReplicatedEvent(name VarName)
 				{
 					if(CurrentPawn.Role == ROLE_AutonomousProxy)
 					{
-						CurrentPawn.beerNum = -1;
-						CurrentPawn.bUsingBuffed[6] = 1;
+						//CurrentPawn.beerNum = -1;
+						CurrentPawn.serverSetBeerNum(true);
 						//CurrentPawn.SetUsingBuff(true);
 						CurrentPawn.hidePowerupUI(CurrentPawn.bBuffed);
 						CurrentPawn.serverResetBBuffed();
+						CurrentPawn.bUsingBuffed[6] = 1;
 						WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.lightningEffect',CurrentPawn.Location);
+						CurrentPawn.showAffectedByCurseIcon();
 					}
 				}
 			}
@@ -1162,6 +1177,14 @@ reliable server function serverResetEndDisguiseNum()
 reliable server function serverResetIsUsingBeer()
 {
 	isUsingBeer = false;
+}
+
+reliable server function serverSetBeerNum(bool affected)
+{
+	if(affected)
+		beerNum = -1;
+	else
+		beerNum = 1;
 }
 
 exec function detachball()
@@ -1256,6 +1279,27 @@ reliable client function clientBumpParticle(int teamNumber)
 		}
 			
 	}
+}
+
+reliable client function clientGlobalAnnouncement(SoundCue announcement)
+{
+	`log("clientPlayAnnouncement");
+	PlaySound(announcement);
+}
+
+reliable client function clientAnnounceBasedOnTeam(int teamNum)
+{
+	if (teamNum == GetTeamNum())
+	{
+		`log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Get_out_of_the_way_Cue");
+		PlaySound(SoundCue'flsfx.globalAnnouncement.Get_out_of_the_way_Cue');
+	}
+	else
+	{
+		`log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"$ teamNum);
+		PlaySound(teamAnnouncement[teamNum]);
+	}
+
 }
 
 simulated function callClientRoarParticle(int teamNumber)
@@ -1569,6 +1613,7 @@ server reliable function ServerResetTreasure(){
 server reliable function ServerTurnBackTreasure(){
 	local int index;
 	local SneakToSlimTreasureSpawnPoint TSP;
+	local SneakToSlimPawn CurrentPawn;
 	local int TSPnum;
 	foreach AllActors(class'SneakToSlimTreasureSpawnPoint',TSP)
 	{
@@ -1576,6 +1621,38 @@ server reliable function ServerTurnBackTreasure(){
 	}
 	index = Rand(TSPnum);
 	playerScore++;
+
+	if(self.GetTeamNum() == lastPlayerScore || lastPlayerScore == -1)
+	{
+		foreach allactors(class 'sneaktoslimpawn', CurrentPawn)
+			CurrentPawn.countGlobalAnnounScore++;
+	}
+	else
+	{
+		foreach allactors(class 'sneaktoslimpawn', CurrentPawn)
+			CurrentPawn.countGlobalAnnounScore = 1;
+	}
+	switch(countGlobalAnnounScore)
+	{
+	case 2:
+		//playsound 2
+		`log("Player XX is scoring twice");
+		break;
+	case 3:
+		//playsound 3
+		`log("Player XX is scoring thrice");
+		break;
+	case 4:
+		//playsound 4
+		`log("Player XX is scoring fourth");
+		break;
+	case 5:
+		`log("Rampage!");
+		break;
+	}
+	foreach allactors(class 'sneaktoslimpawn', CurrentPawn)
+		CurrentPawn.lastPlayerScore = self.GetTeamNum(); 
+
 	foreach AllActors(class'SneakToSlimTreasureSpawnPoint',TSP)
 	{
 		if(TSP.BoxIndex == index){
@@ -1600,11 +1677,18 @@ simulated function LostTreasure(){
 }
 
 simulated function turnBackTreasure(){
+	local SneakToSlimPawn current;
 	if(isGotTreasure == true){
 	    isGotTreasure = false;
 	    `log("turnBackTreasure");	
 	    SneaktoSlimPlayerController(self.Controller).recordHoldTreasureTime();
 	    ServerTurnBackTreasure();
+		foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+		{
+			//`log("clientRoarParticle" $ current.GetTeamNum());
+			current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Treasure_Captured_Cue');
+			
+		}
 	}
 	
 	
@@ -1691,13 +1775,72 @@ unreliable client function showCountdownTimer(int number)
 //Sets flash object to be invisible when tick method tells it to
 reliable client function hideCountdownTimer()
 {
+	local SneaktoSlimGFxHUD myFlashHUD;
+	
+	myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
+
 	if(self.Controller != none)
 	{
 		if(SneaktoSlimPlayerController(self.Controller).uiOn)
 		{
 			if(SneaktoSlimPlayerController(self.Controller).myHUD != NONE)
-				SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD.CountdownText.SetBool("isOn", false);
+			{
+				myFlashHUD.CountdownText.SetBool("isOn", false);
+				myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
+				myFlashHUD.PowerupTimerBackdrop.SetBool("isOn", false);
+			}
 		}
+	}
+}
+
+reliable client function showAffectedByCurseIcon()
+{
+	local SneaktoSlimGFxHUD myFlashHUD;
+	local float tempX, tempY;
+
+	haveBeerCurse = true;
+
+	if(SneaktoSlimPlayerController(self.Controller).uiOn)
+	{
+		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
+
+		//Swaps icon locations
+		tempX = myFlashHUD.CurseIcon.GetFloat("x");
+		tempY = myFlashHUD.CurseIcon.GetFloat("y");
+		myFlashHUD.CurseIcon.SetFloat("x", myFlashHUD.SpottedIcon.GetFloat("x"));
+		myFlashHUD.CurseIcon.SetFloat("y", myFlashHUD.SpottedIcon.GetFloat("y"));
+		myFlashHUD.SpottedIcon.SetFloat("x", tempX);
+		myFlashHUD.SpottedIcon.SetFloat("y", tempY);
+
+		myFlashHUD.CurseIcon.SetBool("isOn", true);
+		myFlashHUD.SpottedIcon.SetBool("isOn", false);
+		myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
+		myFlashHUD.PowerupTimerBackdrop.SetBool("isOn", true);
+	}
+}
+
+reliable client function hideAffectedByCurseIcon()
+{
+	local SneaktoSlimGFxHUD myFlashHUD;
+	local float tempX, tempY;
+
+	haveBeerCurse = false;
+
+	if(SneaktoSlimPlayerController(self.Controller).uiOn)
+	{
+		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
+
+		//Swaps icon locations
+		tempX = myFlashHUD.CurseIcon.GetFloat("x");
+		tempY = myFlashHUD.CurseIcon.GetFloat("y");
+		myFlashHUD.CurseIcon.SetFloat("x", myFlashHUD.SpottedIcon.GetFloat("x"));
+		myFlashHUD.CurseIcon.SetFloat("y", myFlashHUD.SpottedIcon.GetFloat("y"));
+		myFlashHUD.SpottedIcon.SetFloat("x", tempX);
+		myFlashHUD.SpottedIcon.SetFloat("y", tempY);
+
+		myFlashHUD.CurseIcon.SetBool("isOn", false);
+		myFlashHUD.PowerupTimerBackdrop.SetBool("isOn", false);
+		myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 	}
 }
 
@@ -1739,6 +1882,12 @@ reliable client function hideSpottedIcon()
 
 event Tick(float DeltaTime)
 {	
+	//local sneaktoslimpawn currentpawn;
+	//foreach allactors(class 'sneaktoslimpawn', currentpawn)
+	//{
+	//	if(currentpawn.GetTeamNum() == 0)
+	//		`log("Location: " $ currentpawn.Location);
+	//}
 	//`log("Buffed Timer" $ BuffedTimer);
 	//`log("dis num" $ self.disguiseNum $ "end dis num" $ self.endDisguiseNum $ "bbuffed" $ self.bBuffed);
 	//Nick: updates map's location to match player's location (if on)
@@ -1809,28 +1958,45 @@ event Tick(float DeltaTime)
 		self.hideCountdownTimer();
 		BuffedTimer = 0;
 	}
+	else if(bUsingBuffed[3] == 1)
+	{
+		self.hideCountdownTimer();
+		BuffedTimer = 0;
+	}
+	else if(bUsingBuffed[4] == 1)
+	{
+		self.hideCountdownTimer();
+		BuffedTimer = 0;
+	}
+	else if(bUsingBuffed[5] == 1)
+	{
+		self.hideCountdownTimer();
+		BuffedTimer = 0;
+	}
 	else if(bUsingBuffed[6] == 1)
 	{
 		 BuffedTimer += DeltaTime;
-		 self.showCountdownTimer(int(BuffedTimerDefault[0]-BuffedTimer));
+		 self.showCountdownTimer(int(BuffedTimerDefault[6]-BuffedTimer));
 
 		//inputStringToCenterHUD(BuffedTimerDefault[1] - BuffedTimer);
 
-		if(BuffedTimer >= BuffedTimerDefault[0])
+		if(BuffedTimer >= BuffedTimerDefault[6])
 		{
 			self.hideCountdownTimer();
+			self.hideAffectedByCurseIcon();
 			BuffedTimer = 0;
 			inputStringToCenterHUD(0);
 			`log("buff end ");
 			//beInvisable(false, false, false);  
-			self.beerNum = 1;
+			//self.beerNum = 1;
+			self.serverSetBeerNum(false);
 			bUsingBuffed[6] = 0;
 		}
 	}
 	else
 	{
-		self.hideCountdownTimer();
-		BuffedTimer = 0;
+		//self.hideCountdownTimer();
+		//BuffedTimer = 0;
 	}
 }
 
@@ -1930,11 +2096,6 @@ event HitWall (Object.Vector HitNormal, Actor Wall, PrimitiveComponent WallComp)
 	if(self.Controller.IsInState('UsingSuperSprint'))
 		self.Controller.GotoState('PlayerWalking');
 	super.HitWall(HitNormal, Wall, WallComp);	
-}
-
-function DeactivateHitWall()
-{
-	bIsHitWall = false;
 }
 
 exec function whosyourdaddy()   //NOT IMPLEMENTED FOR NETWORKED MODE
@@ -2121,11 +2282,6 @@ reliable client function updateStaticHUDPromtText(string _msgs)// used in countd
 {
 	`log("client update triggerPromtText to " $ _msgs);
 	staticHUDmsg.triggerPromtText = _msgs;
-}
-
-exec function playAnAnimation()
-{
-	bellyBumpNode.PlayCustomAnim('bumping', 2.f, 0.1f, 0.1f, false, true);
 }
 
 Server Reliable function ServerToggleLight()
@@ -2317,6 +2473,7 @@ simulated function playerPlayOrStopCustomAnim
 {
 	local AnimNodePlayCustomAnim customNode;
 	local SneaktoSlimPawn onePawn;
+	local SneaktoSlimPawn_Spectator specPawn;
 	
 	//find the custom Node
 	customNode = AnimNodePlayCustomAnim(self.Mesh.FindAnimNode(nodeName));
@@ -2342,6 +2499,11 @@ simulated function playerPlayOrStopCustomAnim
 		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
 		{
 			onePawn.clientPlayerPlayCustomAnim(self, nodename, AnimName, Rate, playOrStop, BlendInTime, BlendOutTime, bLooping, bOverride);
+		}
+
+		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn_Spectator', specPawn)
+		{
+			specPawn.clientPlayerPlayCustomAnim(self, nodename, AnimName, Rate, playOrStop, BlendInTime, BlendOutTime, bLooping, bOverride);
 		}
 	}
 
@@ -2381,6 +2543,46 @@ reliable client function clientPlayerPlayCustomAnim
 		}
     }
 }
+
+
+
+
+reliable client function clientPlayerPlayAIAnimation
+(
+	SneaktoSlimAIPawn whoPlayAnim,
+	name nodeName, 
+	name	AnimName,
+	float	Rate,
+	bool playOrStop,
+	optional	float	BlendInTime,
+	optional	float	BlendOutTime,
+	optional	bool	bLooping,
+	optional	bool	bOverride
+)
+{
+	local AnimNodePlayCustomAnim customNode;
+	local SneaktoSlimAIPawn onePawn;
+
+	ForEach WorldInfo.AllActors(class'SneaktoSlimAIPawn', onePawn)
+    {
+		if(onePawn == whoPlayAnim)
+		{
+			customNode = AnimNodePlayCustomAnim(onePawn.aiSkelComp.FindAnimNode(nodeName));
+			if(customNode == None)
+			{
+				`log("Invalid custom node name",false,'Lu');
+				return;
+			}
+			
+			if(playOrStop == true)
+				customNode.PlayCustomAnim(AnimName, Rate, BlendInTime, BlendOutTime, bLooping, bOverride);
+			else
+				customNode.StopCustomAnim(BlendOutTime);
+		}
+    }
+}
+
+
 
 
 //This function is used for manage material switching.
@@ -2590,21 +2792,18 @@ defaultproperties
 {
 	bJumpCapable = false;
 
-	bBuffed = 2;
+	bBuffed = 1;
 	bUsingBuffed[0] = 0;
 	bUsingBuffed[1] = 0;
 	bUsingBuffed[6] = 0;
 
 	BuffedTimerDefault[0] = 10.0; // buff invis period
-	BuffedTimerDefault[1] = 20.0; // buff disguise period
+	BuffedTimerDefault[1] = 10.0; // buff disguise period
+	BuffedTimerDefault[6] = 10.0;  // buff curse period
 	BuffedTimer = 0.0;
 	bInvisibletoAI = false;
 
-	//bIsDashing = false;
 	SuperSprintSpeed = 600;
-	DashDuration = 0.1f;
-	bIsHitWall = false;
-	HitWallDuration = 0.05;
 	PerDashEnergy = 13;
 	PerSpeedEnergy = 1.1f;
 	CheatingMode = false;
@@ -2615,8 +2814,18 @@ defaultproperties
 	mistNum = 0;
 	beerNum = 1;
 	isUsingBeer = false;
+	haveBeerCurse = false;
 
-	bOOM = false;
+	countGlobalAnnounHit[0] = 0;
+	countGlobalAnnounHit[1] = 0;
+	countGlobalAnnounHit[2] = 0;
+	countGlobalAnnounHit[3] = 0;
+	timePlayerHit[0] = 0.0;
+	timePlayerHit[1] = 0.0;
+	timePlayerHit[2] = 0.0;
+	timePlayerHit[3] = 0.0;
+	countGlobalAnnounScore = 0;
+	lastPlayerScore = -1;
 
 	//CamHeight = 42.0
 	//CamMinDistance = 40.0
@@ -2778,4 +2987,23 @@ defaultproperties
 	Components.Add(MyFlashlight);
 	AIFlashLight = MyFlashlight;
 	
+	Begin Object Class=PointLightComponent Name=MyPointlight
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Normal ;
+	  Radius=15.000000
+	  Brightness=.7
+	  LightColor=(R=235,G=235,B=110)
+	  Translation=(Z=-15)
+	End Object
+	Components.Add(MyPointlight)
+
+	teamAnnouncement[0] = SoundCue'flsfx.globalAnnouncement.Red_Player_Fire_Cue'
+	teamAnnouncement[1] = SoundCue'flsfx.globalAnnouncement.Green_Player_Fire_Cue'
+	teamAnnouncement[2] = SoundCue'flsfx.globalAnnouncement.Blue_Player_Fire_Cue'
+	teamAnnouncement[3] = SoundCue'flsfx.globalAnnouncement.White_Player_Fire_Cue'
 }

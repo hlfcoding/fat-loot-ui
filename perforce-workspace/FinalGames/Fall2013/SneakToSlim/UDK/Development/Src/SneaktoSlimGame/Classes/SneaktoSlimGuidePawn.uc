@@ -2,6 +2,8 @@ class SneaktoSlimGuidePawn extends Pawn
 	placeable;
 
 var GuideTrigger guideTrigger;
+var vector teleportLocation;
+var Rotator teleportRotation;
 
 //Ideally one pawn can be placed in each room and with an appropriate tag given in editor, 
 //we won't have to do much scripting to keep a single pawn following the player throughout the level
@@ -25,6 +27,29 @@ simulated event PostBeginPlay()
 	pc.Pawn = lady;
 	lady.Controller = pc;
 	pc.GotoState('HoldingTreasure');*/
+}
+
+function teleport()
+{
+	self.SetLocation(teleportLocation);
+	self.SetRotation(teleportRotation);
+	self.Controller.SetLocation(teleportLocation);
+	self.Controller.SetRotation(teleportRotation);
+}
+
+function playPoofAnimation(vector newLocation, Rotator newRotation)
+{
+	//playerPlayOrStopCustomAnim('customVanish', 'Vanish', 1.f, true, 0.1f, 0.1f, false, true);
+	local AnimNodePlayCustomAnim customNode;
+	local float timeLeft;
+
+	teleportLocation = newLocation;
+	teleportRotation = newRotation;
+
+	customNode = AnimNodePlayCustomAnim(self.Mesh.FindAnimNode('customVanish'));
+	customNode.PlayCustomAnim('Vanish', 1, 0.1f, 0.1f, false, true);
+	timeLeft = 1;
+	SetTimer(timeLeft, false, 'teleport');
 }
 
 event Tick(float DeltaTime)
@@ -52,6 +77,8 @@ DefaultProperties
 
 	Begin Object Class=SkeletalMeshComponent Name=GuideSkeletalMesh	
 		SkeletalMesh = SkeletalMesh'FLCharacter.Shorty.Shorty_skeletal'		
+		AnimSets(0)=AnimSet'FLCharacter.Shorty.Shorty_Anims'
+		AnimTreeTemplate = AnimTree'FLCharacter.Shorty.Shorty_AnimTree'	
 		Translation=(Z=-48.0)
 		LightEnvironment=MyLightEnvironment
 		CastShadow=true
@@ -61,6 +88,7 @@ DefaultProperties
 	End Object
 
 	Components.Add(GuideSkeletalMesh)
+	Mesh = GuideSkeletalMesh
 
 	Begin Object Class=CylinderComponent NAME=MyMesh
 		CollisionRadius=15.000000

@@ -46,8 +46,7 @@ simulated state PlayerWalking
 	}
 
 	simulated exec function OnPressFirstSkill()
-	{	
-		//cant use Burst while walking
+	{			
 	}
 
 Begin:
@@ -62,7 +61,8 @@ simulated state Burrow extends PlayerWalking
 	{
 		pauseSprintTimer();
 
-		//TO-DO		//whether under wall or objects		
+		//TO-DO		//whether under wall or objects	
+		
 		if(Role < ROLE_Authority)
 			attemptToChangeState('PlayerWalking');
 		GoToState('PlayerWalking');
@@ -76,30 +76,31 @@ simulated state Burrow extends PlayerWalking
 
 		if (sneaktoslimpawn(self.Pawn).bUsingBuffed[0] == 1)
 		{
+			sneaktoslimpawn(self.Pawn).removePowerUp();
 			attemptToChangeState('EndInvisible');
 			GoToState('EndInvisible');
-			`log("ONRELEASEFROMINVISIBLE");
+			`log("ON RELEASE FROM INVISIBLE");
 		}
 		else if (sneaktoslimpawn(self.Pawn).bUsingBuffed[1] == 1)
 		{
+			sneaktoslimpawn(self.Pawn).removePowerUp();
 			attemptToChangeState('EndDisguised');
 			GoToState('EndDisguised');
 		}
 		
 		energyConsumptionFactor = 1; //this value is not changed on server so energy cost not match. Set to 1 to temporarily fix the bug
 		burstChargeTime = WorldInfo.TimeSeconds;
-		SetTimer(0.01, true, 'drawBurstAOE');		
+		SetTimer(0.01, true, 'drawBurstAOE');
 	}
 
 	simulated function drawBurstAOE()
 	{
 		local float burstRadius;
-		local vector cylinderStartPoint;
-		cylinderStartPoint = Pawn.Location + vect(0,0,-35);
-
 		burstRadius = SneaktoSlimPawn_GinsengBaby(Pawn).calculateBurstRadius(WorldInfo.TimeSeconds - burstChargeTime);
 		if(burstRadius > 0)
-			DrawDebugCylinder(cylinderStartPoint, cylinderStartPoint + vect(0,0,2), burstRadius-10, 25, 255, 255, 255, false);
+		{			
+			SneaktoSlimPawn_GinsengBaby(Self.Pawn).babyPlateMesh.SetScale(1.5 * burstRadius/53);			
+		}
 	}
 
 	simulated exec function OnReleaseFirstSkill()
@@ -118,8 +119,7 @@ simulated state Burrow extends PlayerWalking
 	{
 		SneaktoSlimPawn(Pawn).v_energy -= ENERGY_UPDATE_FREQUENCY * SneaktoSlimPawn(Pawn).PerDashEnergy * energyConsumptionFactor;
 		if(SneaktoSlimPawn(Pawn).v_energy < SneaktoSlimPawn(Pawn).PerDashEnergy)
-		{
-			//SneaktoSlimPawn(Pawn).v_energy = 0;
+		{			
 			OnPressSecondSkill(); //forcibly stop the charge			
 		}
 	}
@@ -136,13 +136,11 @@ simulated state Burrow extends PlayerWalking
 				attemptToChangeState('HoldingTreasureBurrow');  //to server
 			GoToState('HoldingTreasureBurrow');  //local
 		}
-
-
-		`log("Stopping energy regen", true, 'Ravi');
+		
 		ClearTimer('EnergyRegen');
 		ClearTimer('StartEnergyRegen');
 		SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');
-		if (role == role_authority)
+		if (role == role_authority && prevState != 'InvisibleWalking')
 		{
 			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(true, self.GetTeamNum());
 		}
@@ -150,22 +148,33 @@ simulated state Burrow extends PlayerWalking
 
 	event EndState(Name NextStateName)
 	{
+		SneaktoSlimPawn_GinsengBaby(Self.Pawn).babyPlateMesh.SetScale(0.0f);
 		Pawn.bBlockActors = true;
-		sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(false, self.GetTeamNum());
-		sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;	
+		SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customBurst', 'Burst', 1.f, true, 0.5f, 0.5f, false, true);
+		if(NextStateName != 'InvisibleWalking')
+		{
+			sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(false, self.GetTeamNum());
+			sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;
+		}
+
 		if (role == role_authority)
 		{
 			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(false, self.GetTeamNum());
-		}
-		`log("Restarting energy regen", true, 'Ravi');
+		}		
 		ClearTimer('UpdateEnergy');
 		SetTimer(2, false, 'StartEnergyRegen');
 	}
 
+	simulated function Dive()   //set in timer so it happens only after the animation plays.
+	{
+		sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(true, self.GetTeamNum());
+	}
+
 Begin:
 	Pawn.bBlockActors = false;
-	sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(true, self.GetTeamNum());
+	SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customDive', 'Dive', 2.f, true, 0.1f, 0.1f, false, true);
 	sneaktoslimpawn(self.Pawn).bInvisibletoAI = true;
+	SetTimer(0.5f, false, 'Dive');
 	if(debugStates) logState();
 }
 

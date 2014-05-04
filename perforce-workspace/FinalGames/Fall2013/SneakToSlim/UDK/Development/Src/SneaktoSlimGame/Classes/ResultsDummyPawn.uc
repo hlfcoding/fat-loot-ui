@@ -8,6 +8,8 @@ var int playerColorIndex;
 
 function updateMesh(int index)
 {
+	local Vector translation;
+
 	playerColorIndex = index;
 
 	if(characterType == "FatLady")
@@ -16,6 +18,8 @@ function updateMesh(int index)
 		Mesh.AnimSets[0] = AnimSet'FLCharacter.lady.Lady_Anims';	
 		Mesh.SetAnimTreeTemplate(AnimTree'FLCharacter.lady.lady_AnimTree');
 		Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
+		translation = vect(0.f,0.f,-50.0f);
+		Mesh.SetTranslation(translation);
 		switch(index)
 		{
 			case 0: Mesh.SetMaterial(1, MaterialInstanceConstant 'FLCharacter.lady.lady_material_0');
@@ -33,6 +37,8 @@ function updateMesh(int index)
 		Mesh.SetSkeletalMesh(SkeletalMesh'FLCharacter.GinsengBaby.GinsengBaby_skeletal');	
 		Mesh.AnimSets[0] = AnimSet'FLCharacter.GinsengBaby.GinsengBaby_animsets';	
 		Mesh.SetAnimTreeTemplate(AnimTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree');
+		translation = vect(0.f,0.f,-50.0f);
+		Mesh.SetTranslation(translation);
 		switch(index)
 		{
 			case 0: Mesh.SetMaterial(0, MaterialInstanceConstant 'FLCharacter.GinsengBaby.GinsengBaby_material_0');
@@ -54,6 +60,8 @@ function updateMesh(int index)
 		Mesh.SetSkeletalMesh(SkeletalMesh'FLCharacter.Rabbit.rabbit_skeletal');	
 		Mesh.AnimSets[0] = AnimSet'FLCharacter.Rabbit.Rabbit_Animsets';	
 		Mesh.SetAnimTreeTemplate(AnimTree'FLCharacter.Rabbit.rabbit_AnimTree');
+		translation = vect(0.f,0.f,-50.0f);
+		Mesh.SetTranslation(translation);
 		switch(index)
 		{
 			case 0: Mesh.SetMaterial(0, MaterialInstanceConstant 'FLCharacter.Rabbit.Rabbit_material_0');
@@ -71,6 +79,8 @@ function updateMesh(int index)
 		Mesh.SetSkeletalMesh(SkeletalMesh'FLCharacter.Shorty.Shorty_skeletal');	
 		Mesh.AnimSets[0] = AnimSet'FLCharacter.Shorty.Shorty_Anims';	
 		Mesh.SetAnimTreeTemplate(AnimTree'FLCharacter.Shorty.Shorty_AnimTree');
+		translation = vect(0.f,0.f,-50.0f);
+		Mesh.SetTranslation(translation);
 		switch(index)
 		{
 			case 0: Mesh.SetMaterial(0, MaterialInstanceConstant 'FLCharacter.Shorty.Shorty_material_0');

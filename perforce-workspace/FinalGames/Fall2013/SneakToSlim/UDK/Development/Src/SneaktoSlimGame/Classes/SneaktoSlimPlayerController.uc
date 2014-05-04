@@ -7,7 +7,6 @@ class SneaktoSlimPlayerController extends GamePlayerController
 Const DegreeToRadian = 0.01745329252;
 
 var bool bPlayerCanZoom;
-var name previousStateName;
 //var bool bIsSprinting;
 var bool debugStates;
 var bool debugAnimes;
@@ -17,6 +16,7 @@ var float HoldTime;
 var int RESPAWN_TIME;
 var PlayerStart playerBase;
 var bool uiOn, pauseMenuOn;
+var int exhaustedThreshold;
 
 var int totalParticipateTime, totalSprintTime, locationTime, locationTime2, totalVaseTime;       //Timer variables
 var float totalLocationTime[20];                                                                 //Array which contains times players spend in an area. 
@@ -35,7 +35,7 @@ var int timeHoldingTreasure, timesHoldingTreasureAboveAverage, timesHoldingTreas
 var int totalLocationIndex, totalLocationIndex2;
 var int numberOfTimesHitWithBellyBump;
 var string tempString;
-var float playerInputATurn;
+var float playerInputATurn; //used in spectator mode, to sent player input to spectator controller
 
 simulated event PostBeginPlay()
 {
@@ -87,6 +87,16 @@ simulated event PostBeginPlay()
 	SetTimer(1, true, 'addToBetweenTreasureTime');
 
 	tempString = "";
+}
+
+exec function ForceGameOver()
+{
+	forceGameOverQuit();
+}
+
+reliable server function forceGameOverQuit()
+{
+	SneaktoslimGameInfo(WorldInfo.Game).GameOver();
 }
 
 simulated function addToParticipateTime()
@@ -455,152 +465,6 @@ unreliable server function trackLocation(float X, float Y, string mapName)
 			}
 		}
 	}
-	if(mapName == "fltemplemap")
-	{
-		//Sector 1
-		if((point.X >= 0.35 && point.X < 0.65) && (point.Y >= 0.0 && point.Y < 0.2))
-		{
-			if(totalLocationIndex2 != 5)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 5;
-			}
-		}
-		//Sector 2
-		if((point.X >= 0.2 && point.X < 0.35) && (point.Y >= 0.2 && point.Y < 0.35))
-		{
-			if(totalLocationIndex2 != 6)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 6;
-			}
-		}
-		//Sector 3
-		if((point.X >= 0.35 && point.X < 0.65) && (point.Y >= 0.2 && point.Y < 0.35))
-		{
-			if(totalLocationIndex2 != 7)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 7;
-			}
-		}
-		//Sector 4
-		if((point.X >= 0.65 && point.X < 0.8) && (point.Y >= 0.2 && point.Y < 0.35))
-		{
-			if(totalLocationIndex2 != 8)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 8;
-			}
-		}
-		//Sector 5
-		if((point.X >= 0.0 && point.X < 0.2) && (point.Y >= 0.35 && point.Y < 0.65))
-		{
-			if(totalLocationIndex2 != 9)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 9;
-			}
-		}
-		//Sector 6
-		if((point.X >= 0.2 && point.X < 0.35) && (point.Y >= 0.35 && point.Y < 0.65))
-		{
-			if(totalLocationIndex2 != 10)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 10;
-			}
-		}
-		//Sector 7/Center
-		if((point.X >= 0.35 && point.X < 0.65) && (point.Y >= 0.35 && point.Y < 0.65))
-		{
-			if(totalLocationIndex2 != 11)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 11;
-			}
-		}
-		//Sector 8
-		if((point.X >= 0.65 && point.X < 0.8) && (point.Y >= 0.35 && point.Y < 0.65))
-		{
-			if(totalLocationIndex2 != 12)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 12;
-			}
-		}
-		//Sector 9
-		if((point.X >= 0.8 && point.X < 1.0) && (point.Y >= 0.35 && point.Y < 0.65))
-		{
-			if(totalLocationIndex2 != 13)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 13;
-			}
-		}
-		//Sector 10
-		if((point.X >= 0.2 && point.X < 0.35) && (point.Y >= 0.65 && point.Y < 0.8))
-		{
-			if(totalLocationIndex2 != 14)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 14;
-			}
-		}
-		//Sector 11
-		if((point.X >= 0.35 && point.X < 0.65) && (point.Y >= 0.65 && point.Y < 0.8))
-		{
-			if(totalLocationIndex2 != 15)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 15;
-			}
-		}
-		//Sector 12
-		if((point.X >= 0.65 && point.X < 0.8) && (point.Y >= 0.35 && point.Y < 0.8))
-		{
-			if(totalLocationIndex2 != 16)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 16;
-			}
-		}
-		//Sector 13
-		if((point.X >= 0.35 && point.X < 0.65) && (point.Y >= 0.8 && point.Y < 1.0))
-		{
-			if(totalLocationIndex2 != 17)
-			{
-				recordRemainingLocationTime2();
-				//Resets timer
-				SetTimer(1, true, 'addToLocationTime2');
-				totalLocationIndex2 = 17;
-			}
-		}
-	}
 	if(mapName == "flmist")
 	{
 		radiusVector = point;
@@ -732,12 +596,12 @@ final function bool IsInViewCos( vector ViewVec, vector DirVec, float FOVCos )
 	return (0 <= CosAngle && FOVCos < CosAngle);
 }
 
-final function bool ActorLookingAt( Actor SeeingActor, Actor Target, float AngleInDegreeFromLOS )
+final function bool ActorLookingAt(Actor SeeingActor, Vector SeeingLocation, Actor Target, float AngleInDegreeFromLOS )
 {
 	if( Target == None || SeeingActor == None )
 		return false;
 
-	return IsInViewCos( vector(SeeingActor.Rotation), Target.Location - SeeingActor.Location, Cos(AngleInDegreeFromLOS * DegreeToRadian) );
+	return IsInViewCos( vector(SeeingActor.Rotation), Target.Location - SeeingLocation, Cos(AngleInDegreeFromLOS * DegreeToRadian) );
 }
 
 //Currently makes player input zero, while still accepting player inputs.
@@ -750,7 +614,6 @@ simulated state CustomizedPlayerWalking
 		//local Vector ZeroVector;
 		//ZeroVector = vect(0.0, 0.0, 0.0);
 
-		//previousStateName = 'Walking';
 
 		if( Pawn == None )
 		{
@@ -916,34 +779,6 @@ unreliable server function prepForQuit()
 		f.Logf("    In quad 3: " $ totalLocationTime[2]);
 		f.Logf("    In quad 4: " $ totalLocationTime[3]);
 		f.Logf("    In center: " $ totalLocationTime[4]);
-	}
-	if(tempString == "fltemplemap")
-	{
-		f.Logf("    FLTempleMap      *See .png image for more accurate region representation");
-		f.Logf("    -------------------------------");
-		f.Logf("    |           | 1   |           |");
-		f.Logf("    |      -----|-----|-----      |");
-		f.Logf("    |     |  2  | 3   |  4  |     |");
-		f.Logf("    |-----|-----|-----|-----|-----|");
-		f.Logf("    |  5  | 6   | 7   |  8  |  9  |");
-		f.Logf("    |-----|-----|-----|-----|-----|");
-		f.Logf("    |     | 10  | 11  | 12  |     |");
-		f.Logf("    |      -----|-----|-----      |");
-		f.Logf("    |           | 13  |           |");
-		f.Logf("    -------------------------------");
-		f.Logf("    In sector 1: " $ totalLocationTime[5]);
-		f.Logf("    In sector 2: " $ totalLocationTime[6]);
-		f.Logf("    In sector 3: " $ totalLocationTime[7]);
-		f.Logf("    In sector 4: " $ totalLocationTime[8]);
-		f.Logf("    In sector 5: " $ totalLocationTime[9]);
-		f.Logf("    In sector 6: " $ totalLocationTime[10]);
-		f.Logf("    In sector 7: " $ totalLocationTime[11]);
-		f.Logf("    In sector 8: " $ totalLocationTime[12]);
-		f.Logf("    In sector 9: " $ totalLocationTime[13]);
-		f.Logf("    In sector 10: " $ totalLocationTime[14]);
-		f.Logf("    In sector 11: " $ totalLocationTime[15]);
-		f.Logf("    In sector 12: " $ totalLocationTime[16]);
-		f.Logf("    In sector 13: " $ totalLocationTime[17]);
 	}
 	if(tempString == "flmist")
 	{
@@ -1131,9 +966,15 @@ exec function toggleMap()
 	{
 		myMap.toggleMap();
 		if(myMap.isOn)
+		{
 			SneaktoSlimPawn(self.Pawn).disablePlayerMovement();
+			self.IgnoreLookInput(true);
+		}
 		else
+		{
 			SneaktoSlimPawn(self.Pawn).enablePlayerMovement();
+			self.IgnoreLookInput(false);
+		}
 	}
 	
 	//Grabs camera that is set above map in editor
@@ -1143,6 +984,11 @@ exec function toggleMap()
 			topDownCamera = cam;
 	}
 	SneaktoSlimPlayerController(Controller).setCameraActor(topDownCamera);*/
+}
+
+exec function ToggleUIHUD()
+{
+	uiOn = !uiOn;
 }
 
 //When press 'ESC' key the pause menu field is active and disables/enables player movement
@@ -1232,12 +1078,12 @@ simulated state PlayerWalking
 	// when player input 'Left Shift'
 	simulated exec function FL_useBuff()
 	{
-		//Local SneaktoSlimpawn CurrentPawn;
+		Local SneaktoSlimpawn current;
 
 		if(sneaktoslimpawn(self.Pawn).mistNum == 0)
 		{
 			sneaktoslimpawn(self.Pawn).checkServerFLBuff(sneaktoslimpawn(self.Pawn).enumBuff.bBuffed, true);
-		
+
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
 			{
 				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
@@ -1246,9 +1092,14 @@ simulated state PlayerWalking
 
 				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
 				sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used , kept for "countdown"  at this moment
-
+				
 				attemptToChangeState('InvisibleWalking');
 				GoToState('InvisibleWalking');
+				WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.stateChange',SneaktoSlimPawn(self.Pawn).Location - vect(0.f,0.f,40.0f));
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Invisibility');
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
 			{			
@@ -1260,6 +1111,11 @@ simulated state PlayerWalking
 
 				attemptToChangeState('DisguisedWalking');
 				GoToState('DisguisedWalking');
+				WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.stateChange',SneaktoSlimPawn(self.Pawn).Location - vect(0.f,0.f,40.0f));
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Guard_Like_Cue');
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 3) 
 			{			
@@ -1271,6 +1127,10 @@ simulated state PlayerWalking
 
 				attemptToChangeState('UsingThunderFan');
 				GoToState('UsingThunderFan');
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Thunder_Fan');
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 4) 
 			{			
@@ -1284,6 +1144,10 @@ simulated state PlayerWalking
 				//GoToState('UsingThunderFan');
 				sneaktoslimpawn(self.Pawn).v_energy = 100;
 				ServerResetEnergy();
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Gives_Wings_Cue');
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 5)
 			{
@@ -1291,16 +1155,98 @@ simulated state PlayerWalking
 				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 				attemptToChangeState('UsingSuperSprint');
 				GoToState('UsingSuperSprint');
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					//current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Get_out_of_the_way_Cue');
+					current.clientAnnounceBasedOnTeam(SneaktoSlimPawn(self.Pawn).GetTeamNum());
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 6)
 			{
 				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
 				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 				SneaktoSlimPawn(self.Pawn).SetUsingBeer(true);
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Cursed_Blood_Cue');
+				}
 			}
 		}
 	}
+	
+	//function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
+	//{
+	//	if( Pawn == None )
+	//	{
+	//		return;
+	//	}
 
+	//	if (Role == ROLE_Authority)
+	//	{
+	//		// Update ViewPitch for remote clients
+	//		Pawn.SetRemoteViewPitch( Rotation.Pitch );
+	//	}
+
+	//	Pawn.Acceleration = NewAccel;
+
+	//	CheckJumpOrDuck();
+	//}
+
+	//function PlayerMove( float DeltaTime )
+	//{
+	//	local vector			X,Y,Z, NewAccel;
+	//	local eDoubleClickDir	DoubleClickMove;
+	//	local rotator			OldRotation;
+	//	local bool				bSaveJump;
+
+	//	if( Pawn == None )
+	//	{
+	//		GotoState('Dead');
+	//	}
+	//	else
+	//	{
+	//		GetAxes(Pawn.Rotation,X,Y,Z);
+
+	//		// Update acceleration.
+	//		NewAccel = PlayerInput.aForward*X + PlayerInput.aStrafe*Y;
+	//		NewAccel.Z	= 0;
+	//		NewAccel = Pawn.AccelRate * Normal(NewAccel);
+
+	//		if (IsLocalPlayerController())
+	//		{
+	//			AdjustPlayerWalkingMoveAccel(NewAccel);
+	//		}
+
+	//		DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
+
+	//		// Update rotation.
+	//		OldRotation = Rotation;
+	//		UpdateRotation( DeltaTime );
+	//		bDoubleJump = false;
+
+	//		if( bPressedJump && Pawn.CannotJumpNow() )
+	//		{
+	//			bSaveJump = true;
+	//			bPressedJump = false;
+	//		}
+	//		else
+	//		{
+	//			bSaveJump = false;
+	//		}
+
+	//		if( Role < ROLE_Authority ) // then save this move and replicate it
+	//		{
+	//			ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
+	//		}
+	//		else
+	//		{
+	//			ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
+	//		}
+	//		bPressedJump = bSaveJump;
+	//	}
+	//}
+	
+	
 	//Update player rotation when walking
 	simulated function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
 	{
@@ -1308,7 +1254,6 @@ simulated state PlayerWalking
 		local Vector ZeroVector;
 		ZeroVector = vect(0.0, 0.0, 0.0);
 
-		previousStateName = 'Walking';
 
 		if( Pawn == None )
 		{
@@ -1367,8 +1312,8 @@ simulated state PlayerWalking
 			// Update rotation.
 			OldRotation = Rotation;
 			UpdateRotation( DeltaTime );			
-			//playerInputATurn = PlayerInput.aTurn;		temporarily commented. might use later - Ravi
-			//sendInputToServer(playerInputATurn);
+			playerInputATurn = PlayerInput.aTurn;
+			sendInputToServer(playerInputATurn);
 
 			if( Role < ROLE_Authority ) // then save this move and replicate it
 			{
@@ -1404,9 +1349,9 @@ Begin:
 }
 
 //used to send player turn input to spectator
-server reliable function sendInputToServer(float playerInputATurn)
+server reliable function sendInputToServer(float inputPlayerInputATurn)
 {
-	self.playerInputATurn = playerInputATurn;	
+	self.playerInputATurn = inputPlayerInputATurn;	
 }
 
 simulated function changeAnimTreeToTreasure()
@@ -1501,25 +1446,34 @@ reliable server function ServerResetEnergy()
 	sneaktoslimpawn(self.Pawn).v_energy = 100;
 }
 
+
+
 simulated state UsingThunderFan extends CustomizedPlayerWalking
 {
 	simulated function UseThunderFan()
 	{
-		local SneaktoSlimPawn victim;
-		`log("UsingThunderFan!!");
-
-		foreach self.Pawn.VisibleCollidingActors(class'SneaktoSlimPawn', victim, 300)
-		{
-			if (ActorLookingAt(SneaktoSlimPawn(self.Pawn), victim, 45))
-			{				
-				victim.knockBackVector = (victim.Location - self.Location);
-				victim.knockBackVector = 25 * Normal(victim.knockBackVector);
+		//local SneaktoSlimPawn victim;
+		////local SneaktoSlimBuddhaPalm slapHand;
+		//`log("UsingThunderFan!!");
+		
+		////slapHand = Spawn(class'SneaktoSlimBuddhaPalm', , , SneaktoSlimPawn(Self.Pawn).Location);
+		//foreach self.Pawn.VisibleCollidingActors(class'SneaktoSlimPawn', victim, 300)
+		//{
+		//	if (ActorLookingAt(SneaktoSlimPawn(self.Pawn), SneaktoSlimPawn(self.Pawn).Location, victim, 45))
+		//	{				
+		//		victim.knockBackVector = (victim.Location - self.Location);
+		//		victim.knockBackVector = 25 * Normal(victim.knockBackVector);
 			
-				victim.knockBackVector.Z = 0; //attempting to keep the hit player grounded.					
-				SneaktoSlimPlayerController(victim.Controller).attemptToChangeState('BeingBellyBumped');//already done by server, no need to call server again
-				SneaktoSlimPlayerController(victim.Controller).GoToState('BeingBellyBumped');//already done by server, no need to call server again
-			}
-		}
+		//		victim.knockBackVector.Z = 0; //attempting to keep the hit player grounded.					
+		//		SneaktoSlimPlayerController(victim.Controller).attemptToChangeState('BeingBellyBumped');//already done by server, no need to call server again
+		//		SneaktoSlimPlayerController(victim.Controller).GoToState('BeingBellyBumped');//already done by server, no need to call server again
+		//	}
+		//}
+		
+		if( Role < Role_Authority )
+			ServerSpawnThunderFan();
+		else
+			SpawnThunderFan();
 	}
 
 	simulated function StopThunderFan()
@@ -1531,6 +1485,27 @@ simulated state UsingThunderFan extends CustomizedPlayerWalking
 Begin:
 	UseThunderFan();
 	SetTimer(0.5f, false, 'StopThunderFan');	
+}
+
+simulated exec function TTF()
+{
+		if( Role < Role_Authority )
+			ServerSpawnThunderFan();
+		else
+			SpawnThunderFan();
+}
+
+simulated function SpawnThunderFan()
+{
+	local SneaktoSlimBuddhaPalm slapHand;
+	`log("UsingTempThunderFan!!");
+	slapHand = Spawn(class'SneaktoSlimBuddhaPalm', , , SneaktoSlimPawn(Self.Pawn).Location + vect(0,0,-50) + (40*Vector(SneaktoSlimPawn(Self.Pawn).Rotation)));
+	slapHand.Init(Vector(SneaktoSlimPawn(Self.Pawn).Rotation));
+}
+
+reliable server function ServerSpawnThunderFan()
+{
+	SpawnThunderFan();
 }
 
 simulated state UsingSuperSprint
@@ -1585,7 +1560,6 @@ simulated state UsingSuperSprint
 		local Vector ZeroVector;
 		ZeroVector = vect(0.0, 0.0, 0.0);
 
-		previousStateName = 'Walking';
 
 		if( Pawn == None )
 		{
@@ -1630,8 +1604,16 @@ Begin:
 
 simulated state InvisibleWalking extends PlayerWalking
 {
+	local name previousStateName;
+
+	simulated event BeginState(Name LastStateName)
+	{
+		previousStateName = LastStateName;
+	}
+
 	simulated exec function use()           //E-button
 	{
+		sneaktoslimpawn(self.Pawn).removePowerUp();
 		attemptToChangeState('EndInvisible');
 		GoToState('EndInvisible');
 		super.Use();
@@ -1645,6 +1627,9 @@ simulated state InvisibleWalking extends PlayerWalking
 
 	exec function OnPressFirstSkill()
 	{
+		if (self.Class == class'SneaktoSlimPlayerController_FatLady')
+		{
+		}
 		if (self.Class == class'SneaktoSlimPlayerController_Rabbit')
 		{
 			//Player can't belly bump if pause menu is on
@@ -1656,6 +1641,7 @@ simulated state InvisibleWalking extends PlayerWalking
 			else
 			{
 				SneaktoSlimPawn(self.Pawn).incrementBumpCount();
+				sneaktoslimpawn(self.Pawn).removePowerUp();
 				attemptToChangeState('Roaring');
 				GoToState('Roaring');
 			}
@@ -1711,9 +1697,19 @@ simulated state InvisibleWalking extends PlayerWalking
 			{
 				SneaktoSlimPawn(self.Pawn).incrementSprintCount();
 				resumeSprintTimer();
-				if(Role < ROLE_Authority)
-					attemptToChangeState('Burrow');
-				GoToState('Burrow');
+				if(previousStateName == 'PlayerWalking')
+				{
+					if(Role < ROLE_Authority)
+						attemptToChangeState('Burrow');
+					GoToState('Burrow');
+				}
+				else if(previousStateName == 'Burrow')
+				{
+					sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(false, self.GetTeamNum());
+					if(Role < ROLE_Authority)
+						attemptToChangeState('PlayerWalking');
+					GoToState('PlayerWalking');
+				}
 				//TO-DO: 
 				//change the model
 				//particle system: dust
@@ -1738,6 +1734,13 @@ Begin:
 	if(debugStates) logState();
 
 	goInvisible();
+	sleep(1.0);
+	if(previousStateName == 'Burrow')
+	{
+		if(Role < ROLE_Authority)
+			attemptToChangeState('Burrow');
+		GoToState('Burrow');
+	}	
 }
 
 
@@ -1840,34 +1843,42 @@ simulated state Exhausted extends PlayerWalking
 
 	simulated exec function FL_useBuff()
 	{
+		Local SneaktoSlimpawn current;
+
 		if(sneaktoslimpawn(self.Pawn).mistNum == 0)
 		{
-		//no "super" because we have to rewtire/ override!
 			sneaktoslimpawn(self.Pawn).checkServerFLBuff(sneaktoslimpawn(self.Pawn).enumBuff.bBuffed, true);
-		
+
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
 			{
 				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
 
-				sneaktoslimpawn(self.Pawn).bBuffed= 0;
-				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-				sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used 
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 
-				attemptToChangeState('InvisibleExhausted');
-				GoToState('InvisibleExhausted');
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used , kept for "countdown"  at this moment
+				
+				attemptToChangeState('InvisibleWalking');
+				GoToState('InvisibleWalking');
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Invisibility');
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
 			{			
 				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
 
-				sneaktoslimpawn(self.Pawn).bBuffed = 0;
-
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
 				sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
 
-				attemptToChangeState('DisguisedExhausted');
-				GoToState('DisguisedExhausted');
-
+				attemptToChangeState('DisguisedWalking');
+				GoToState('DisguisedWalking');
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Guard_Like_Cue');
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 3) 
 			{			
@@ -1879,6 +1890,10 @@ simulated state Exhausted extends PlayerWalking
 
 				attemptToChangeState('UsingThunderFan');
 				GoToState('UsingThunderFan');
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Thunder_Fan');
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 4) 
 			{			
@@ -1892,6 +1907,10 @@ simulated state Exhausted extends PlayerWalking
 				//GoToState('UsingThunderFan');
 				sneaktoslimpawn(self.Pawn).v_energy = 100;
 				ServerResetEnergy();
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Gives_Wings_Cue');
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 5)
 			{
@@ -1899,12 +1918,21 @@ simulated state Exhausted extends PlayerWalking
 				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 				attemptToChangeState('UsingSuperSprint');
 				GoToState('UsingSuperSprint');
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					//current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Get_out_of_the_way_Cue');
+					current.clientAnnounceBasedOnTeam(SneaktoSlimPawn(self.Pawn).GetTeamNum());
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 6)
 			{
 				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
 				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 				SneaktoSlimPawn(self.Pawn).SetUsingBeer(true);
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Cursed_Blood_Cue');
+				}
 			}
 		}
 	}
@@ -1929,6 +1957,7 @@ simulated state InvisibleExhausted extends InvisibleWalking
 {
 	simulated exec function use()           //E-button
 	{
+		sneaktoslimpawn(self.Pawn).removePowerUp();
 		attemptToChangeState('EndInvisible');
 		GoToState('EndInvisible');
 	}
@@ -1962,7 +1991,7 @@ simulated state caughtByAI extends CustomizedPlayerWalking
 	{
 		sneaktoslimpawn(self.Pawn).v_energy = 100;
 		sneaktoslimpawn(self.Pawn).beerNum = 1;
-		sneaktoslimpawn(self.Pawn).BuffedTimer = 20;
+		sneaktoslimpawn(self.Pawn).BuffedTimer = 20;  //to clear the countdown
 		//Removed animation statement from here because Vanish animation is already played once.
 	}
 
@@ -1987,9 +2016,17 @@ simulated state caughtByAI extends CustomizedPlayerWalking
 
 	simulated function movehar()
 	{
+		local SneaktoSlimTreasureSpawnPoint treasureChest;  
+
 		`log(sneaktoslimpawn(self.Pawn).Name $ ": Moving " $ sneaktoslimpawn(self.Pawn).name $ " to location " $ playerBase.Name , true, 'Ravi');
 		sneaktoslimpawn(self.Pawn).flashCurtain(false);
 		sneaktoslimpawn(self.Pawn).SetLocation(playerBase.Location);
+
+		foreach allactors(class 'SneaktoSlimTreasureSpawnPoint', treasureChest)
+		{
+			SneaktoSlimPawn(self.Pawn).SetRotation(rotator(treasureChest.Location - playerBase.Location));
+			self.SetRotation(rotator(treasureChest.Location - playerBase.Location)); //Camera's orientation
+		}
 
 		//guard can catch u when u r in vase ?
 		//freeVaseFromPawn() has bug, anyway
@@ -2049,8 +2086,10 @@ simulated state DisguisedWalking extends PlayerWalking
 {
 	simulated exec function use()           //E-button
 	{
+		sneaktoslimpawn(self.Pawn).removePowerUp();
 		attemptToChangeState('EndDisguised');
 		GoToState('EndDisguised');
+		super.Use();
 	}
 
 	exec function OnPressFirstSkill()
@@ -2076,6 +2115,18 @@ simulated state DisguisedWalking extends PlayerWalking
 				attemptToChangeState('ChargingFireCracker');
 
 			GotoState('ChargingFireCracker');
+		}
+		else if(self.Class == class'SneaktoSlimPlayerController_FatLady')
+		{
+			 if(pauseMenuOn)
+				return;
+			 if(sneaktoslimpawn(self.Pawn).v_energy <= Sneaktoslimpawn_fatlady(self.Pawn).PerDashEnergy)
+				return;
+			 else 
+			 {
+				attemptToChangeState('PreBellyBump');
+				GoToState('PreBellyBump');
+			 }
 		}
 	}
 
@@ -2166,6 +2217,7 @@ simulated state DisguisedExhausted extends DisguisedWalking
 {
 	simulated exec function use()           //E-button
 	{
+		sneaktoslimpawn(self.Pawn).removePowerUp();
 		attemptToChangeState('EndDisguised');
 		GoToState('EndDisguised');
 	}
@@ -2390,43 +2442,67 @@ simulated function ExhaustedCheck()
 	//Add more conditions for new states
 	if (self.IsInState('HoldingTreasureExhausted') == true)
 	{
-		if (sneaktoslimpawn(self.Pawn).v_energy >= 20.0)
+		if (sneaktoslimpawn(self.Pawn).v_energy >= exhaustedThreshold)
+		{
+			attemptToChangeState('HoldingTreasureWalking');
 			GoToState('HoldingTreasureWalking');
+		}
 	}
 	else if (self.IsInState('HoldingTreasureWalking') == true && !self.IsInState('HoldingTreasureSprinting') && !self.IsInState('HoldingTreasureBurrow'))
 	{
-		if (sneaktoslimpawn(self.Pawn).v_energy < 20.0)
+		if (sneaktoslimpawn(self.Pawn).v_energy < exhaustedThreshold)
+		{
+			attemptToChangeState('HoldingTreasureExhausted');
 			GoToState('HoldingTreasureExhausted');
+		}
 	}
 	else if (self.IsInState('DisguisedExhausted') == true)
 	{
-		if (sneaktoslimpawn(self.Pawn).v_energy >= 20.0)
+		if (sneaktoslimpawn(self.Pawn).v_energy >= exhaustedThreshold)
+		{
+			attemptToChangeState('DisguisedWalking');
 			GoToState('DisguisedWalking');
+		}
 	}
-	else if (self.IsInState('DisguisedWalking') == true/* && !self.IsInState('DisguisedSprinting')*/)
+	else if (self.IsInState('DisguisedWalking') == true && sneaktoslimpawn(self.Pawn).GroundSpeed < sneaktoslimpawn(self.Pawn).FLSprintingSpeed/* && !self.IsInState('DisguisedSprinting')*/)
 	{
-		if (sneaktoslimpawn(self.Pawn).v_energy < 20.0)
+		if (sneaktoslimpawn(self.Pawn).v_energy < exhaustedThreshold)
+		{
+			attemptToChangeState('DisguisedExhausted');
 			GoToState('DisguisedExhausted');
+		}
 	}
 	else if (self.IsInState('InvisibleExhausted') == true)
 	{
-		if (sneaktoslimpawn(self.Pawn).v_energy >= 20.0)
+		if (sneaktoslimpawn(self.Pawn).v_energy >= exhaustedThreshold)
+		{
+			attemptToChangeState('InvisibleWalking');
 			GoToState('InvisibleWalking');
+		}
 	}
 	else if (self.IsInState('InvisibleWalking') == true && !self.IsInState('InvisibleSprinting'))
 	{
-		if (sneaktoslimpawn(self.Pawn).v_energy < 20.0)
+		if (sneaktoslimpawn(self.Pawn).v_energy < exhaustedThreshold)
+		{
+			attemptToChangeState('InvisibleExhausted');
 			GoToState('InvisibleExhausted');
+		}
 	}
 	else if (self.IsInState('Exhausted') == true)
 	{
-		if(sneaktoslimpawn(self.Pawn).v_energy >= 20.0)
+		if(sneaktoslimpawn(self.Pawn).v_energy >= exhaustedThreshold)
+		{
+			attemptToChangeState('PlayerWalking');
 			GoToState('PlayerWalking');
+		}
 	}
-	else if (self.IsInState('PlayerWalking') && !self.IsInState('Sprinting') && !self.IsInState('Burrow'))
+	else if (self.IsInState('PlayerWalking') && !self.IsInState('Sprinting') && !self.IsInState('Burrow') && !self.IsInState('DisguisedWalking') && !self.IsInState('InvisibleWalking') && !self.IsInState('HoldingTreasureWalking'))
 	{
-		if(sneaktoslimpawn(self.Pawn).v_energy < 20.0)
+		if(sneaktoslimpawn(self.Pawn).v_energy < exhaustedThreshold)
+		{
+			attemptToChangeState('Exhausted');
 			GoToState('Exhausted');
+		}
 	}
 	
 }
@@ -2510,6 +2586,22 @@ simulated state Stunned extends CustomizedPlayerWalking
 {
 	event BeginState (Name LastStateName)
 	{
+		sneaktoslimpawn(self.Pawn).countGlobalAnnounHit[self.GetTeamNum()]++;
+		if(sneaktoslimpawn(self.Pawn).countGlobalAnnounHit[self.GetTeamNum()] == 1) //First time got hit
+		{
+			sneaktoslimpawn(self.Pawn).timePlayerHit[self.GetTeamNum()] = WorldInfo.TimeSeconds; //record the hitting time
+		}
+		else
+		{
+			if(WorldInfo.TimeSeconds - sneaktoslimpawn(self.Pawn).timePlayerHit[self.GetTeamNum()] <= 5)
+			{
+				//playsound
+				`log("Player XX is getting hit twice!!!!!!!");
+			}
+			sneaktoslimpawn(self.Pawn).timePlayerHit[self.GetTeamNum()] = WorldInfo.TimeSeconds;
+			sneaktoslimpawn(self.Pawn).countGlobalAnnounHit[self.GetTeamNum()] == 1;
+		}
+			
 		SetTimer(2.0f, false, 'StunnedPeriod');
 		if(SneaktoSlimPawn(self.Pawn).isGotTreasure)    //if self is holding treasure...
 		{            
@@ -2799,12 +2891,8 @@ server reliable function newServerPlayerRestart()
 		currentPawn.bInvisibletoAI = false;
 
 		//bIsDashing = false;
-		currentPawn.DashDuration = 0.1f;
-		currentPawn.bIsHitWall = false;
 		currentPawn.disguiseNum = -1;
 		currentPawn.endDisguiseNum = -1;
-
-		currentPawn.bOOM = false;
 
 		currentPawn.bPreDash = false;
 		currentPawn.underLight = false;
@@ -2838,4 +2926,5 @@ defaultproperties
 
 	debugStates = true;
 	debugAnimes = true;
+	exhaustedThreshold = 10;
 }

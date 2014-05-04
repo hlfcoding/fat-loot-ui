@@ -30,7 +30,8 @@ var bool endMatchAtEndTime;
 event PreBeginPlay()
 {
 	endMatchAtEndTime = true;
-	timePerMatch = 300;
+	//Added one second to time because GameOver function activates when time is at 1
+	timePerMatch = 301;
 	uniqueMatchDate = TimeStamp();
 	uniqueMatchDate = Repl(uniqueMatchDate, ":", ";");    //.txt format doesn't allow colons in filenames
 	uniqueMatchDate = Repl(uniqueMatchDate, "/", ",");    //.txt format doesn't allow slashs in filenames
@@ -43,7 +44,7 @@ event PreBeginPlay()
 	InitTeamOccupied();
 }
 
-function GameOver()
+reliable server function GameOver()
 {
 	local SneaktoSlimPawn pawn;
 	local array<int> scoreBoard;
@@ -160,7 +161,8 @@ event Tick(float deltaTime)
 		}
 		foreach WorldInfo.AllPawns(class'SneaktoSlimPawn', pawn)
 		{
-			pawn.showDemoTime(time);
+			//pawn.showDemoTime(time);
+			pawn.updateTimeUI(timePerMatch - currentTime - 1);
 		}
 	}
 	else
@@ -188,8 +190,13 @@ event PostLogin( PlayerController NewPlayer )
 	}
 	else if (WorldInfo.IsInSeamlessTravel() || NewPlayer.HasClientLoadedCurrentWorld())
 	{
-		if(NumPlayers == 0)
+		if(NumPlayers == 0 && 
+			(WorldInfo.GetMapName() == "flmist" || 
+			 WorldInfo.GetMapName() == "fltemplemaptopplatform" || 
+			 WorldInfo.GetMapName() == "demoday"))
+		{
 			SetTimer(timePerMatch, false, 'GameOver',);
+		}
 		NumPlayers++;
 	}
 	else
@@ -452,7 +459,7 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	InName     = Left(ParseOption ( Options, "Name"), 20);
 
 	InCharacter = ParseOption(Options, "Character");
-	NewPlayer.SetCharacter(InCharacter);
+	//NewPlayer.SetCharacter(InCharacter);
 
 	//InTime = ParseOption(Options, "Time");
 	//if(int(InTime) != 0)
@@ -581,6 +588,8 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 		NewPlayer = Spawn(class 'SneaktoSlimPlayerController',,, StartSpot.Location, SpawnRotation);
 		NewPlayer.Pawn = Spawn(class 'SneaktoSlimPawn',,,StartSpot.Location,SpawnRotation);
 	}
+
+	NewPlayer.SetCharacter(InCharacter);
 
 	//attach PlayerReplicationInfo
 	if(!IsSpectator && InTeam < 4)

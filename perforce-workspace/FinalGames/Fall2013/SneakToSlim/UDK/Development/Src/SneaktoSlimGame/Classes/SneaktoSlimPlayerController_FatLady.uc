@@ -34,7 +34,6 @@ Begin:
 
 	ClearTimer('EnergyRegen');
 
-	previousStateName = 'BellyBump';
 	//Don't belly bump if map is on
 	if(myMap != NONE && !myMap.isOn)
 		//!sneaktoslimpawn(self.Pawn).vaseIMayBeUsing.occupied )
@@ -48,6 +47,10 @@ Begin:
 
 simulated state InBellyBump extends CustomizedPlayerWalking
 {
+	event BeginState (Name LastStateName)
+	{
+		sneaktoslimpawn(self.Pawn).CylinderComponent.SetCylinderSize(sneaktoslimpawn(self.Pawn).CylinderComponent.CollisionRadius * 2, sneaktoslimpawn(self.Pawn).CylinderComponent.CollisionHeight);
+	}
 
 	simulated function Timer()
 	{    
@@ -77,6 +80,10 @@ simulated state InBellyBump extends CustomizedPlayerWalking
 		}
 	}
 
+	event EndState(Name NextStateName)
+	{
+		sneaktoslimpawn(self.Pawn).CylinderComponent.SetCylinderSize(sneaktoslimpawn(self.Pawn).CylinderComponent.CollisionRadius / 2, sneaktoslimpawn(self.Pawn).CylinderComponent.CollisionHeight);
+	}
 
 Begin:
 	if(debugStates) logState();
@@ -208,30 +215,35 @@ simulated state Sprinting extends PlayerWalking
 		}
 	}
 
-
-	// when player input 'Left Shift', also overwrite the same func in playerWalking
 	simulated exec function FL_useBuff()
 	{
+		Local SneaktoSlimpawn current;
+
 		if(sneaktoslimpawn(self.Pawn).mistNum == 0)
 		{
-			//no "super" because we have to rewtire/ override!
 			sneaktoslimpawn(self.Pawn).checkServerFLBuff(sneaktoslimpawn(self.Pawn).enumBuff.bBuffed, true);
-		
+
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 1) 
 			{
 				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
-				sneaktoslimpawn(self.Pawn).bBuffed= 0;
-				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
-				sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used 
 
-				attemptToChangeState('InvisibleSprinting');
-				GoToState('InvisibleSprinting');
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
+
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 1;//should not be used , kept for "countdown"  at this moment
+				
+				attemptToChangeState('InvisibleWalking');
+				GoToState('InvisibleWalking');
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Invisibility');
+				}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
 			{			
 				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
-				sneaktoslimpawn(self.Pawn).bBuffed = 0;
 
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
 				sneaktoslimpawn(self.Pawn).bUsingBuffed[1] = 1;//should not be used 
 				OnReleaseSecondSkill();
@@ -239,7 +251,64 @@ simulated state Sprinting extends PlayerWalking
 				SetTimer(0.05, true, 'removeEnergyWithTime');
 				attemptToChangeState('DisguisedWalking');
 				GoToState('DisguisedWalking');
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Guard_Like_Cue');
+				}
+			}
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 3) 
+			{			
+				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
 
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				sneaktoslimpawn(self.Pawn).bUsingBuffed[2] = 1;//should not be used 
+
+				attemptToChangeState('UsingThunderFan');
+				GoToState('UsingThunderFan');
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Thunder_Fan');
+				}
+			}
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 4) 
+			{			
+				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
+
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
+				//TODO: remove the use of bUsingBuffed[], this info is kept by state mechanism already
+				//sneaktoslimpawn(self.Pawn).bUsingBuffed[2] = 1;//should not be used 
+
+				//attemptToChangeState('UsingThunderFan');
+				//GoToState('UsingThunderFan');
+				sneaktoslimpawn(self.Pawn).v_energy = 100;
+				ServerResetEnergy();
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Gives_Wings_Cue');
+				}
+			}
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 5)
+			{
+				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
+				attemptToChangeState('UsingSuperSprint');
+				GoToState('UsingSuperSprint');
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					//current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Get_out_of_the_way_Cue');
+					current.clientAnnounceBasedOnTeam(SneaktoSlimPawn(self.Pawn).GetTeamNum());
+				}
+			}
+			if(sneaktoslimpawn(self.Pawn).bBuffed == 6)
+			{
+				SneaktoSlimPawn(self.Pawn).incrementPowerupCount();
+				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
+				SneaktoSlimPawn(self.Pawn).SetUsingBeer(true);
+				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				{
+					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Cursed_Blood_Cue');
+				}
 			}
 		}
 	}
@@ -503,7 +572,7 @@ simulated state HoldingTreasureSprinting extends Sprinting
 				ClearTimer('EnergyRegen');
 				ClearTimer('StartEnergyRegen');
 				SwitchToCamera('ShoulderCam');                                                                                  //change camera
-				SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',1.f,true,0.5,0.5,true,false);     //play animation
+				SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',2.f,true,0.5,0.5,true,false);     //play animation
 				SneaktoSlimPawn(self.Pawn).v_energy = SneaktoSlimPawn(self.Pawn).v_energy - SneaktoSlimPawn(self.Pawn).PerSpeedEnergy;
 				if (sneaktoslimpawn(self.Pawn).v_energy < 0)
 						sneaktoslimpawn(self.Pawn).v_energy = 0;

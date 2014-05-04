@@ -6,14 +6,21 @@ var float yawOfPlayerSpectatingAs;
 var float playerInputATurnOfPlayerSpectatingAs;
 var float zOfPlayerSpectatingAs;
 var int rotationsSetNum; //while this var is less than ROTATIONS_TO_BE_SET, spectator's yaw is set to player's yaw
-var float ROTATION_SET_FREQUENCY;
 var int ROTATIONS_TO_BE_SET;
+var float LOCATION_UPDATE_FREQUENCY;
 var float correctiveYaw;
+var float YAW_ERROR_THRESHOLD;
 
 replication
 {
 	if(bNetDirty && Role == ROLE_Authority)
 		yawOfPlayerSpectatingAs, zOfPlayerSpectatingAs, playerInputATurnOfPlayerSpectatingAs;
+}
+
+simulated event PostBeginPlay()
+{
+    super.PostBeginPlay();
+	SetTimer(0.05, false, 'doPostProcessing');
 }
 
 reliable server function ServerGotoState(name state)
@@ -46,20 +53,20 @@ simulated state FollowPlayer
 	simulated event BeginState(Name prevState)
 	{
 		correctiveYaw = 0;
+		rotationsSetNum = 0;
 		Pawn.GroundSpeed = 0;		
 	}
 
 	simulated event EndState(Name nextState)
 	{
 		Pawn.GroundSpeed = SneaktoSlimPawn_Spectator(Pawn).SpectatorWalkingSpeed;		
-		ClearTimer('updateLocationAndRotation');
-		ClearTimer('setRotationFlag');
+		ClearTimer('updateLocationAndRotation');		
 	}
 
 	simulated function PlayerMove( float DeltaTime )
 	{				
-		//if(rotationsSetNum >= ROTATIONS_TO_BE_SET)
-		//	UpdateRotationUsingOtherInput(DeltaTime);		
+		if(rotationsSetNum >= ROTATIONS_TO_BE_SET)
+			UpdateRotationUsingOtherInput(DeltaTime);		
 	}
 
 	exec function OnPressSecondSkill()
@@ -88,8 +95,7 @@ Begin:
 	`log(Name $ " In FollowPlayer state", true, 'Ravi');
 	changePlayerSpectatingAs(0);
 
-	SetTimer(0.05, true, 'updateLocationAndRotation');
-	//SetTimer(ROTATION_SET_FREQUENCY, true, 'setRotationFlag');
+	SetTimer(LOCATION_UPDATE_FREQUENCY, true, 'updateLocationAndRotation');	
 }
 
 simulated function setRotationFlag()
@@ -116,17 +122,14 @@ simulated function changePlayerSpectatingAs(int teamNumToSpectateAs)
 
 simulated function updateLocationAndRotation()
 {
-	local Rotator playerRotation;
+	local Rotator playerRotation;	
+	local int deltaMultiplier;
+	local float targetMinusCurrentYaw;
 	//local Vector behindPlayer;
-	local Vector playerServerLoc;
-	//local Vector distance;
-	//distance.X = 50;
-	//distance.Y = 50;
-	
+	local Vector playerServerLoc;	
 
 	if(playerSpectatingAs != none)
 	{
-		//`log(playerSpectatingAs.Name);
 		playerServerLoc = playerSpectatingAs.Location;
 		if(Role == ROLE_Authority)
 		{
@@ -138,17 +141,27 @@ simulated function updateLocationAndRotation()
 		{
 			playerServerLoc.Z = zOfPlayerSpectatingAs;
 			playerRotation.Yaw = normalizeYaw(yawOfPlayerSpectatingAs); 
-			if(true || rotationsSetNum < ROTATIONS_TO_BE_SET)
+			if(rotationsSetNum < ROTATIONS_TO_BE_SET)
 			{
-				self.SetRotation(playerRotation);					
-				//correctiveYaw = normalizeYaw(playerRotation.Yaw) - self.Rotation.Yaw - playerInputATurnOfPlayerSpectatingAs;
-				//`log("Corrective yaw is: " $ correctiveYaw);
+				self.SetRotation(playerRotation);				
 				rotationsSetNum++;
 			}
-		}		
+			targetMinusCurrentYaw = playerRotation.Yaw - self.Rotation.Yaw;
+
+			if( abs(targetMinusCurrentYaw) < YAW_ERROR_THRESHOLD )
+				deltaMultiplier = 0;
+			else				
+			{
+				targetMinusCurrentYaw = normalizeYaw(targetMinusCurrentYaw);
+				if(targetMinusCurrentYaw <= 65536/2)
+					deltaMultiplier = 1;
+				else
+					deltaMultiplier = -1;
+			}
+			correctiveYaw = deltaMultiplier * YAW_ERROR_THRESHOLD;
+		}
 		//behindPlayer = playerSpectatingAs.Location - distance;//vector(playerRotation) * 120;
-		//behindPlayer.Z -= 30;
-		
+		//behindPlayer.Z -= 30;		
 		Pawn.SetLocation(playerServerLoc);
 	}
 }
@@ -163,17 +176,14 @@ simulated function UpdateRotationUsingOtherInput( float DeltaTime )
 		Pawn.SetDesiredRotation(ViewRotation);
 	}
 	
-	// Calculate Delta to be applied on ViewRotation
-	DeltaRot.Yaw = playerInputATurnOfPlayerSpectatingAs;
-	if(correctiveYaw != 0)
-	{
-		DeltaRot.Yaw = DeltaRot.Yaw  + correctiveYaw;	
-		correctiveYaw = 0;
-	}
-
+	if( (playerInputATurnOfPlayerSpectatingAs > 0 && correctiveYaw > 0) ||
+		(playerInputATurnOfPlayerSpectatingAs < 0 && correctiveYaw < 0) )	
+		DeltaRot.Yaw = playerInputATurnOfPlayerSpectatingAs  + correctiveYaw;
+	else
+		DeltaRot.Yaw = playerInputATurnOfPlayerSpectatingAs;
+	
 	ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );	
 	ViewRotation.Yaw = normalizeYaw(ViewRotation.Yaw);
-	//`log("my yaw = " $ ViewRotation.Yaw);
 	SetRotation(ViewRotation);
 
 	ViewShake( deltaTime );
@@ -187,15 +197,7 @@ simulated function UpdateRotationUsingOtherInput( float DeltaTime )
 
 simulated function float normalizeYaw(float yaw)
 {
-	//local int quotient;
-	//quotient = yaw / 65536;
-	//if(quotient >= 1 || quotient <= -1)
-	//	yaw = yaw - quotient * 65536;	
-
-	//if( yaw >= 32768 )
-	//	yaw = 32768 - 65536;
-
-    if(yaw < 0)
+	if(yaw < 0)
 		yaw = 65536 + yaw;
 
 	if(yaw > 65536)
@@ -209,9 +211,27 @@ reliable server function serverChangePlayerSpectatingAs(int teamNumToSpectateAs)
 	changePlayerSpectatingAs(teamNumToSpectateAs);
 }
 
+function doPostProcessing()
+{
+	// To fix custom post processing chain when not running in editor or PIE.
+	local localPlayer LP;
+
+	LP = LocalPlayer(self.Player); 
+	if(LP != None) 
+	{ 
+		LP.RemoveAllPostProcessingChains(); 
+		LP.InsertPostProcessingChain(LP.Outer.GetWorldPostProcessChain(),INDEX_NONE,true); 
+		if(self.myHUD != None)
+		{
+			self.myHUD.NotifyBindPostProcessEffects();
+		}
+	} 
+}
+
 DefaultProperties
 {
-	ROTATION_SET_FREQUENCY = 1
-	ROTATIONS_TO_BE_SET = 1
+	YAW_ERROR_THRESHOLD = 250
+	LOCATION_UPDATE_FREQUENCY = 0.04
+	ROTATIONS_TO_BE_SET = 2
 	Physics=PHYS_None	
 }

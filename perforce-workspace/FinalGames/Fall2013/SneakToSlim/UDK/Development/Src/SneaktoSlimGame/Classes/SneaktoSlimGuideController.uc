@@ -22,34 +22,71 @@ simulated event PostBeginPlay()
 
 	//Add Text script for different vars associated with a state
 	HowToMoveDialoguePC.AddItem("");      //This text is loaded before client HUD is initialized
-	HowToMoveDialoguePC.AddItem("How to move.");
-	HowToMoveDialoguePC.AddItem("Use the 'A', 'W', 'S', 'D' keys to move.");
-	HowToMoveDialoguePC.AddItem("Move the mouse to rotate the camera.");
-	HowToMoveDialoguePC.AddItem("See the treasure pedestal in front of you?");
-	HowToMoveDialoguePC.AddItem("Talk to the person in front.");
+	HowToMoveDialoguePC.AddItem("Ah, good, you made it inside.");
+	HowToMoveDialoguePC.AddItem("Welcome to the Academy of the Snatching Hand, premiere thief school!");
+	HowToMoveDialoguePC.AddItem("Time for your training to start!");
+	HowToMoveDialoguePC.AddItem("What your standing on right now is your HOME BASE.");
+	HowToMoveDialoguePC.AddItem("You know it’s yours because it clearly matches your wardrobe color palette.");
+	HowToMoveDialoguePC.AddItem("The HOME BASE is essential to any thief.");
+	HowToMoveDialoguePC.AddItem("Any treasure you bring back here will be sent back to your vault, safe and sound.");
+	HowToMoveDialoguePC.AddItem("Of course, to steal treasure, you’re going to have to get to it.");
+	HowToMoveDialoguePC.AddItem("Use your MOUSE to look around and the WASD keys to move.");
+	HowToMoveDialoguePC.AddItem("Come TALK to me over by that glowing CHEST.");
+	//Xbox controller text
 	HowToMoveDialogueXbox.AddItem("");      //This text is loaded before client HUD is initialized
-	HowToMoveDialogueXbox.AddItem("How to move.");
-	HowToMoveDialogueXbox.AddItem("Use the left thumb stick to move.");
-	HowToMoveDialogueXbox.AddItem("Move the right thumb stick to rotate the camera.");
-	HowToMoveDialogueXbox.AddItem("See the treasure pedestal in front of you?");
-	HowToMoveDialogueXbox.AddItem("Talk to the person in front.");
+	HowToMoveDialogueXbox.AddItem("Ah, good, you made it inside.");
+	HowToMoveDialogueXbox.AddItem("Welcome to the Academy of the Snatching Hand, premiere thief school!");
+	HowToMoveDialogueXbox.AddItem("Time for your training to start!");
+	HowToMoveDialogueXbox.AddItem("What your standing on right now is your HOME BASE.");
+	HowToMoveDialogueXbox.AddItem("You know it’s yours because it clearly matches your wardrobe color palette.");
+	HowToMoveDialogueXbox.AddItem("The HOME BASE is essential to any thief.");
+	HowToMoveDialogueXbox.AddItem("Any treasure you bring back here will be sent back to your vault, safe and sound.");
+	HowToMoveDialogueXbox.AddItem("Of course, to steal treasure, you’re going to have to get to it.");
+	HowToMoveDialogueXbox.AddItem("Use the RIGHT THUMB STICK to look around and the LEFT THUMB STICK to move.");
+	HowToMoveDialogueXbox.AddItem("Come TALK to me over by that glowing CHEST.");
 	
-	TreasureDialoguePC.AddItem("Let me explain the purpose of treasure.");
-	TreasureDialoguePC.AddItem("Returning collected treasure to your home base scores you a point.");
-	TreasureDialoguePC.AddItem("At the end of a match, the player with the most points wins.");
-	TreasureDialoguePC.AddItem("Walk up to the pedestal and press 'e' to grab it.");
-	TreasureDialogueXbox.AddItem("Let me explain the purpose of treasure.");
-	TreasureDialogueXbox.AddItem("Returning collected treasure to your home base scores you a point.");
-	TreasureDialogueXbox.AddItem("At the end of a match, the player with the most points wins.");
-	TreasureDialogueXbox.AddItem("Walk up to the pedestal and press 'A' to grab it.");
+	TreasureDialoguePC.AddItem("Good job kid, you walked down a hallway (slow clap).");
+	TreasureDialoguePC.AddItem("Practice this skill, you will need it in the heists to come.");
+	TreasureDialoguePC.AddItem("The TREASURE you seek rests in PEDESTALS like these.");
+	TreasureDialoguePC.AddItem("You can tell it’s in there because of the glowing golden aura.");
+	TreasureDialoguePC.AddItem("How gauche, I think it looks rather tacky.");
+	TreasureDialoguePC.AddItem("Walk up the stand and press 'E' to take the TREASURE ...");
+	TreasureDialoguePC.AddItem("... now, take it to your HOME BASE.");
+	TreasureDialoguePC.AddItem("I’ll meet you there.");
+	TreasureDialogueXbox.AddItem("Good job kid, you walked down a hallway (slow clap).");
+	TreasureDialogueXbox.AddItem("Practice this skill, you will need it in the heists to come.");
+	TreasureDialogueXbox.AddItem("The TREASURE you seek rests in PEDESTALS like these.");
+	TreasureDialogueXbox.AddItem("You can tell it’s in there because of the glowing golden aura.");
+	TreasureDialogueXbox.AddItem("How gauche, I think it looks rather tacky.");
+	TreasureDialogueXbox.AddItem("Walk up the stand and press 'A' to take the TREASURE ...");
+	TreasureDialogueXbox.AddItem("... now, take it to your HOME BASE.");
+	TreasureDialogueXbox.AddItem("I’ll meet you there.");
 
-	GuardsDialoguePC.AddItem("Good job. Now try getting the treasure while dealing with the guard");
-	GuardsDialoguePC.AddItem("WATCH OUT! for guards at ALL costs!!!");
-	GuardsDialoguePC.AddItem("You can't beat these skilled protectors in combat.");
-	GuardsDialoguePC.AddItem("Tip: If you are out in the light, guards will have a better chance of spotting you.");
-	GuardsDialoguePC.AddItem("Talk to me again to move on to the next lesson.");
+	GuardsDialoguePC.AddItem("Nice! The TREASURE has been sent back to your personal vault.");
+	GuardsDialoguePC.AddItem("Look before you, the PEDESTAL has its TREASURE back.");
+	GuardsDialoguePC.AddItem("These rich jerks replace their TREASURE right away from their vaults!");
+	GuardsDialoguePC.AddItem("More for us, I guess!");
+	GuardsDialoguePC.AddItem("Now, if thieving was this easy, everyone would be doing it.");
+	GuardsDialoguePC.AddItem("Most palaces have GUARDS to protect their TREASURES. There’s one now!");
+	GuardsDialoguePC.AddItem("Sneak past the GUARD and retrieve another TREASURE.");
+	GuardsDialoguePC.AddItem("Sneak in the shadows and avoid their line of sight.");
+	GuardsDialoguePC.AddItem("If a GUARD catches you ...");
+	GuardsDialoguePC.AddItem("... you’ll be sent back to your HOME BASE and...");
+	GuardsDialoguePC.AddItem("... they'll confiscate your TREASURE.");
+	GuardsDialoguePC.AddItem("TALK to me once your ready to continue.");
 	GuardsDialogueXbox = GuardsDialoguePC;
 
+	//"Okay, now let me tell you this. Your not alone."
+	//"There are other thieves to look out for."
+	//"You’re going to have to fight them for the palace’s treasure!"
+	//“Every character has their own special abilities."
+	//"These draw on your internal ENERGY. Use them too much, and you’ll get EXHAUSTED.”
+	//"In this case, your character Lady Qianxin can ..."
+	//"SPRINT by holding RIGHT CLICK on the mouse and ..."
+	//"BELLY BUMP by clicking the LEFT MOUSE button."
+	//"Look, one of your fellow students has ‘volunteered’ to help you practice your BUMPING skills"
+	//"Once you feel you have mastered the arts of Moving, Stealing, Sneaking and Fighting. Get out there and start thieving!"
+	//"When your done, press 'ESC' and quit to return to the main menu."
 	AbilitiesDialoguePC.AddItem("You can activate different abilities by clicking on the mouse.");
 	AbilitiesDialoguePC.AddItem("Each character has different abilities, but for now ...");
 	AbilitiesDialoguePC.AddItem("As the fat lady, you can run by holding the right mouse button and ...");
@@ -66,47 +103,6 @@ simulated event PostBeginPlay()
 	AbilitiesDialogueXbox.AddItem("Try it on the other player in the room or ...");
 	AbilitiesDialogueXbox.AddItem("explore the area to see how different interactable objects work.");
 	AbilitiesDialogueXbox.AddItem("When your done, press 'Start' and quit to return to the main menu.");
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-	/*SpectateDialogue.AddItem("See those characters down there?");
-	SpectateDialogue.AddItem("That's what a typical game looks like.");
-	SpectateDialogue.AddItem("See if you can notice the small details to play.");
-	SpectateDialogue.AddItem("When your done observing, move on to the next room.");
-
-	//Explain interactable objects
-	InteractableObjectsDialogue.AddItem("Talk to my sisters to understand how interactable objects function.");
-	InteractableObjectsDialogue.AddItem("Or if you want to skip this section, ...");
-	InteractableObjectsDialogue.AddItem("just know that pressing 'e' when in close proximity actives them.");
-
-	TeleporterDialogue.AddItem("Teleporters come in pairs of two and ...");
-	TeleporterDialogue.AddItem("each teleporter has a pre-determined location set for each map.");
-	TeleporterDialogue.AddItem("Press 'e' to use this teleporter.");
-
-	VaseDialogue.AddItem("Use vases to hide from others and mount a sneak attack.");
-	VaseDialogue.AddItem("Press 'e' to hide in this vase.");
-	VaseDialogue.AddItem("If another player tries to use a vase your hiding in, ...");
-	VaseDialogue.AddItem("it'll break and you'll be stunned.");
-	VaseDialogue.AddItem("Press 'e' again to exit.");
-
-	ShelfDialogue.AddItem("You can find Power Ups in shelfves like these.");
-	ShelfDialogue.AddItem("Press 'e' to search the shelf.");
-	ShelfDialogue.AddItem("Check the lower-left side of the screen to see if you've got something.");
-	ShelfDialogue.AddItem("If so, press 'shift' to activate it.");
-	ShelfDialogue.AddItem("If not try searching again.");
-
-	FirstCheckPointDialogue.AddItem("Now let's practice what you learn.");
-	FirstCheckPointDialogue.AddItem("Your first challenge is to sneak past the guard in the next room.");
-	FirstCheckPointDialogue.AddItem("If you get caught, you'll be sent back here.");
-	FirstCheckPointDialogue.AddItem("Good luck!");
-
-	SecondCheckPointDialogue.AddItem("Good job.");
-	SecondCheckPointDialogue.AddItem("Now for your final test.");
-	SecondCheckPointDialogue.AddItem("Try to score a point.");
-	SecondCheckPointDialogue.AddItem("Use everything you learned to good practice.");
-	SecondCheckPointDialogue.AddItem("Good luck!");
-	
-	FinalDialogue.AddItem("Great job you've completed the tutorial level.");
-	FinalDialogue.AddItem("Now your ready to play.");
-	FinalDialogue.AddItem("Have fun online and we hope you enjoy your game.");*/
 	
 	//State isn't used but set to keep things from accidently activating 
 	changeToTutorialState('WaitOnFirstLoad');
@@ -141,6 +137,7 @@ function readNextDialogueEntry()
 	local SneaktoSlimAIPawn aiPawn;
 	local SneaktoSlimPawn_FatLady lady;
 	local SneaktoSlimPlayerController_FatLady pclady;
+	local SneaktoSlimTreasureSpawnPoint treasurePoint;
 
 	//Stops if all dialogue has been read
 	if(currentDialogue.Length == 0)
@@ -149,6 +146,22 @@ function readNextDialogueEntry()
 		talkingTo.hideTutorialTextObject();
 		PauseTimer(true, 'readNextDialogueEntry');
 
+		if(currentState == "HowToMove")
+		{
+			foreach WorldInfo.AllActors(class'PathNode', node)
+			{
+				if(string(node.Tag) == "TreasureBase")
+				{
+					SneaktoSlimGuidePawn(self.Pawn).playPoofAnimation(node.Location, self.Rotation);
+				}
+			}
+			foreach WorldInfo.AllActors(class'GuideTrigger', guideTrigger)
+			{
+				if(string(guideTrigger.Tag) == "HowToMove")
+					guideTrigger.Tag = 'ExplainTreasure';
+			}
+		}
+
 		//Moves guard by treasure to home base and switches its dialogue and state
 		if(currentState == "ExplainTreasure")
 		{
@@ -156,9 +169,8 @@ function readNextDialogueEntry()
 			{
 				if(string(node.Tag) == "HomeBase")
 				{
-					self.Pawn.SetLocation(node.Location);
-					rotate.Yaw = self.Pawn.Rotation.Yaw - (90*DegToRad*RadToUnrRot);
-					self.SetRotation(rotate);
+					//rotate.Yaw = self.Pawn.Rotation.Yaw - (120*DegToRad*RadToUnrRot);
+					SneaktoSlimGuidePawn(self.Pawn).playPoofAnimation(node.Location, node.Rotation);
 				}
 			}
 			foreach WorldInfo.AllActors(class'GuideTrigger', guideTrigger)
@@ -201,11 +213,15 @@ function readNextDialogueEntry()
 				if(count == 1)
 				{
 					lady = Spawn(class 'SneaktoSlimPawn_FatLady',,,node.Location);
-					pclady = Spawn(class 'SneaktoSlimPlayerController_FatLady',,,node.Location);
-					lady.isGotTreasure = true;
-					pclady.GotoState('HoldingTreasure');
+					pclady = Spawn(class 'SneaktoSlimPlayerController_FatLady',,,node.Location, node.Rotation);
 					lady.Controller = pclady;
 					pclady.Pawn = lady;
+					lady.SetRotation(node.Rotation);
+					foreach WorldInfo.AllActors(class 'SneaktoSlimTreasureSpawnPoint', treasurePoint);
+					lady.isGotTreasure = true;
+					pclady.GotoState('HoldingTreasure');
+					pclady.changeAnimTreeToTreasure();
+					treasurePoint.MyTreasure.giveTreasure(lady,treasurePoint);
 				}
 			}
 		}
@@ -223,11 +239,16 @@ function readNextDialogueEntry()
 		//`log(entry);
 
 		//Sets timer for HowToMove to activate read loop every five seconds instead of two after first line is read
-		if(currentState == "HowToMove" && self.timeBetweenLines == 1 && currentDialogue.Length == 4)
+		if(currentState == "HowToMove" && self.timeBetweenLines == 1 && currentDialogue.Length == 9)
 		{
 			self.timeBetweenLines = 5;
 			ClearTimer('readNextDialogueEntry');
 			SetTimer(timeBetweenLines, true, 'readNextDialogueEntry');
+		}
+		if(currentState == "HowToMove" && currentDialogue.Length == 1)
+		{
+			SneaktoSlimPlayerController(talkingTo.Controller).IgnoreLookInput(false);
+			SneaktoSlimPlayerController(talkingTo.Controller).IgnoreMoveInput(false);
 		}
 	}
 }
@@ -267,6 +288,8 @@ function changeToTutorialState(name stateName)
 	{
 		case "HowToMove":
 			timeBetweenLines = 1;
+			SneaktoSlimPlayerController(talkingTo.Controller).IgnoreLookInput(true);
+			SneaktoSlimPlayerController(talkingTo.Controller).IgnoreMoveInput(true);
 			self.isUsingXboxController = SneaktoSlimPlayerController(talkingTo.Controller).PlayerInput.bUsingGamepad;       //Will return false since controller isn't set immediately when in debug mode
 			if(isUsingXboxController)
 				currentDialogue = HowToMoveDialogueXbox;

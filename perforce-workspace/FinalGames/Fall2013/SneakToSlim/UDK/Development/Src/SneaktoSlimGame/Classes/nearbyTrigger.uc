@@ -25,22 +25,34 @@ simulated function StartSpawnBuffItem(){
 	Local int randNum;
 	//if(Role == ROLE_Authority){
         randNum = Rand(100);
+		//if(randNum < (1*100/powerupNum)){
+  //          BuffType = 1;
+		//}
+		//else if(randNum < (2*100/powerupNum)){
+		//	BuffType = 2;
+		//}
+		//else if(randNum < (3*100/powerupNum)){
+		//	BuffType = 3;
+		//}
+		//else if(randNum < (4*100/powerupNum)){
+		//	BuffType = 4;
+		//}
+		//else if(randNum < (5*100/powerupNum)){
+		//	BuffType = 5;
+		//}
+		//else{
+		//	BuffType = 6;
+		//}
 		if(randNum < (1*100/powerupNum)){
-            BuffType = 1;
+            BuffType = 3;
 		}
 		else if(randNum < (2*100/powerupNum)){
-			BuffType = 2;
-		}
-		else if(randNum < (3*100/powerupNum)){
-			BuffType = 3;
-		}
-		else if(randNum < (4*100/powerupNum)){
 			BuffType = 4;
 		}
-		else if(randNum < (5*100/powerupNum)){
+		else if(randNum < (3*100/powerupNum)){
 			BuffType = 5;
 		}
-		else{
+		else {
 			BuffType = 6;
 		}
     //}
@@ -101,22 +113,31 @@ simulated function ChangeBuff(int type){
 simulated function bool UsedBy(Pawn User)
 {
 	local bool used;
+	//local SneakToSlimPawn current;
 	used = super.UsedBy(User);
         if(InRangePawnNumber!=SneaktoSlimPawn(User).GetTeamNum()){
 			return used;
         }
+
+		`log("BeerNum of Player who is trying to get a powerup: " $ SneaktoSlimPawn(User).beerNum);
+		if(SneaktoSlimPawn(User).beerNum != 1) {
+			return used;
+		}
 		//Only use power if user is currently not using a power
-	     if(BuffType !=0){
-	         SneaktoSlimPawn(User).bBuffed = BuffType;
+	     if(BuffType !=0) {
+			
+				SneaktoSlimPawn(User).bBuffed = BuffType;
+			
 			//SneaktoSlimPawn(User).inputStringToHUD("get invis powerup, press Shift to use");
+
 			
 			//Tells the user as a client to update its UI
-			 SneaktoSlimPawn(User).showPowerupUI(BuffType);
-			 ChangeBuff(0);
-			 //if(Role == ROLE_Authority){
-		     setTimer(10.0,false,'StartSpawnBuffItem');
-	         //}
-		}
+				SneaktoSlimPawn(User).showPowerupUI(BuffType);
+				ChangeBuff(0);
+				//if(Role == ROLE_Authority){
+				setTimer(10.0,false,'StartSpawnBuffItem');
+				//}
+	     }
         
 
 		Sneaktoslimpawn(User).playerPlayOrStopCustomAnim('customSearch', 'Search', 1.f, true, 0, 0, false, true);
@@ -131,12 +152,12 @@ DefaultProperties
 	PromtText = "Press 'E' to Check the shelf"
 	PromtTextXbox = "Press 'A' to Check the shelf"
 	eqGottenText = ""
-	powerupNum = 6
+	powerupNum = 4
 
 	Begin Object Class=ParticleSystemComponent Name=TeapotEffectComponent
         Template=ParticleSystem'flparticlesystem.Steam'
         bAutoActivate = true
-		//Translation=(X=-50, Y= 0, Z=30.0)
+		Translation=(X=0, Y= 0, Z=20.0)
 		Scale = 0.5
 	End Object
     ParticalEffect = TeapotEffectComponent
@@ -162,7 +183,10 @@ DefaultProperties
     steamParticleColor[0]=(R=0,G=0,B=0,A=255)
 	steamParticleColor[1]=(R=255,G=255,B=180,A=26) //invisible
 	steamParticleColor[2]=(R=26,G=80,B=255,A=26) //disquise
-	steamParticleColor[3]=(R=120,G=255,B=26,A=26) //burp
+	steamParticleColor[3]=(R=120,G=255,B=26,A=26) //regeneration
+	//4  thunder fan
+	//5  super sprint
+	//6  curse
 
 
 	//set collision component

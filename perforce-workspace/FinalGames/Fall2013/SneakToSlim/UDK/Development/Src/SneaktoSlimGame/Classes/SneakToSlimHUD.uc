@@ -130,10 +130,10 @@ simulated function PostBeginPlay()
 //Skips if hud is already set when inner function completes
 unreliable server function setCharacterHUD()
 {
-	if(!FlashHUD.isHUDSet)
-		FlashHUD.setHealthBarHead(SneakToSlimPawn(PlayerOwner.Pawn).characterName);
+	//if(!FlashHUD.isHUDSet)
+	//	FlashHUD.setHealthBarHead(SneakToSlimPawn(PlayerOwner.Pawn).characterName);
 	if(!FlashMap.isHUDSet)
-		FlashMap.setMiniMapHead(SneakToSlimPawn(PlayerOwner.Pawn).characterName);
+		FlashMap.setMiniMapHead(SneakToSlimPawn(PlayerOwner.Pawn).GetTeamNum());
 }
 
 //Calculates current map dimensions based on distance between corner nodes set in editor
@@ -188,7 +188,7 @@ function findMapDimensions()
 		mapHeight = sqrt(square(topLeft.X - bottomLeft.X) + square(topLeft.Y - bottomLeft.Y));
 	}
 	//Same code as if(demoday)
-	else if(WorldInfo.GetMapName() == "fltemplemap" || WorldInfo.GetMapName() == "fltemplemaptopplatform")
+	else if(WorldInfo.GetMapName() == "fltemplemaptopplatform")
 	{
 		//Breaks if map corners at not placed in editor
 		if(corners.Length != 4)
@@ -332,7 +332,7 @@ function Vector WorldPointTo2DScreenPoint(Vector point3D)
 		screenPoint.Y = prime2.Y;
 	}
 	//same
-	else if(FlashMap.mapName == "fltemplemap" || FlashMap.mapName == "fltemplemaptopplatform")
+	else if(FlashMap.mapName == "fltemplemaptopplatform")
 	{
 		prime.X = point3D.Y;    //Rotate point -90 deg (clockwise about origin)
 		prime.Y = -point3D.X;
@@ -406,6 +406,7 @@ simulated event DrawHUD()
 			if(self.trackFountain)
 			{
 				FlashMap.setFountainPoint(WorldPointTo2DScreenPoint(self.fountainLocation));
+				FlashMap.rect.SetBool("visible", true);
 			}
 		}
 		//map = SneaktoSlimPlayerController(SneaktoSlimPawn(PlayerOwner.Pawn).Controller).myMap;
