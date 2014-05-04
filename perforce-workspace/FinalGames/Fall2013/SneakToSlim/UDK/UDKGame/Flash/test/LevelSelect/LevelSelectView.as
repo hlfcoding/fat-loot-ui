@@ -27,6 +27,7 @@
                     case 'Mist':    return MistAsset;
                     case 'Pit':     return PitAsset;
                     case 'Temple':  return TempleAsset;
+                    case 'Vault':   return VaultAsset;
                     default: break;
                 }
             } else if (destination === previewImages) {
@@ -41,6 +42,7 @@
                 case 'Mist':    return MistPreviewAsset;
                 case 'Pit':     return PitPreviewAsset;
                 case 'Temple':  return TemplePreviewAsset;
+                case 'Vault':   return VaultPreviewAsset;
                 default: break;
             }
             return Class;

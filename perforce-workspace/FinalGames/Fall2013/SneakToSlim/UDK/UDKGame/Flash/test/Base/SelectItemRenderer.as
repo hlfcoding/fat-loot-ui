@@ -43,8 +43,11 @@ package  {
                 return;
             }
             super.setData(data);
+            if (data.locked === true) {
+                this.enabled = false;
+            }
             // Background image support.
-            if (data.backgroundImage != null) {
+            if (data.backgroundImage != null && data.locked !== true) {
                 var shouldDrawImage:Boolean = backgroundImage == null || contains(backgroundImage);
                 if (shouldDrawImage) {
                     if (backgroundImage != null) {

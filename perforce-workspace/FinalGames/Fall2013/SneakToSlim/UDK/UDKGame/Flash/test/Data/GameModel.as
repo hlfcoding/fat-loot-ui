@@ -21,8 +21,8 @@ package {
             // Init static vars as needed.
             if (GameModel.levels == null || GameModel.characters == null) {
                 if (MainMenuView.USE_FIXTURES) {
-                    GameModel.levels = GameModel.LEVELS_FIXTURE;
-                    GameModel.characters = GameModel.CHARACTERS_FIXTURE;
+                    GameModel.levels = GameModel.finalizeStore(GameModel.LEVELS_FIXTURE);
+                    GameModel.characters = GameModel.finalizeStore(GameModel.CHARACTERS_FIXTURE);
                     GameModel.games = GameModel.GAMES_FIXTURE;
                 }
             }
@@ -41,7 +41,18 @@ package {
             return false;
         }
 
+        public static function finalizeStore(store:Array):Array {
+            return store.filter(function(item:Object, index:uint, store:Array):Boolean {
+                var shouldKeep:Boolean = true;
+                if (item.incomplete === true) {
+                    shouldKeep = false;
+                }
+                return shouldKeep;
+            });
+        }
+
         public static const CHARACTERS_FIXTURE:Array = [
+            // Presented in the order given.
             {
                 id: 'Rabbit',
                 name: 'Tiger',
@@ -113,6 +124,7 @@ package {
         ];
 
         public static const GAMES_FIXTURE:Array = [
+            // Presented in the order given.
             {
                 id: 0,
                 level: 'Temple',
@@ -200,25 +212,34 @@ package {
         ];
 
         public static const LEVELS_FIXTURE:Array = [
+            // Presented in the order given.
             {
-                id: 'Mansion',
+                id: 'Vault',
+                name: 'The Empress’ Basement',
+                description: "A vault-like crypt. Why does the Empress’s boiler vent underground? Rumor has it the Empress hid one of her most precious treasures down here, hoping that it would be forgotten... in the mist..."
+            },
+            {
+                id: 'Temple',
                 name: 'The Duchess’ Arboretum',
                 description: "How many trees does it take for a garden to become an arboretum? Exactly fifty-six, plus eight fancy statues, apparently. The duchess placed her treasure out here as an accent piece, hoping to balance the Fengshui. She also hoped that an abundance of guards would keep thieves at bay. She was wrong. Or was she?"
             },
             {
-                id: 'Temple',
-                name: 'The Temple',
-                description: "This is The Temple's description. It's going to take more than just one line. It's going to take more than just two lines."
+                id: 'Mansion',
+                locked: true,
+                name: 'The Mansion',
+                description: "This is The Mansion's description. It's going to take more than just one line. It's going to take more than just two lines."
             },
             {
                 id: 'Pit',
+                incomplete: true,
                 name: 'The Pit',
                 description: "This is The Pit's description. It's going to take more than just one line. It's going to take more than just two lines."
             },
             {
                 id: 'Mist',
-                name: 'The Empress’ Basement',
-                description: "A vault-like crypt. Why does the Empress’s boiler vent underground? Rumor has it the Empress hid one of her most precious treasures down here, hoping that it would be forgotten... in the mist..."
+                incomplete: true,
+                name: 'The Mist',
+                description: "This is The Mist's description. It's going to take more than just one line. It's going to take more than just two lines."
             }
         ];
 
