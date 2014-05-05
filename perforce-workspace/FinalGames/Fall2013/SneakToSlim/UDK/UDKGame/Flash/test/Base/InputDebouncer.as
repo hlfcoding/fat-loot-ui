@@ -2,7 +2,6 @@ package {
 
     import flash.events.Event;
     import flash.events.TimerEvent;
-    import flash.events.Event;
     import flash.utils.Timer;
 
     import scaleform.clik.core.UIComponent;
