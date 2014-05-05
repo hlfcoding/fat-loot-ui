@@ -14,8 +14,13 @@ package  {
                 var model:Object = item;
                 return model.level;
             };
+            addEventListener(MainRepository.GAMES_UPDATE, refreshData);
             // Commit.
             columnNames = ['Map Name', 'Space', 'Location (IP)'];
+            refreshData();
+        }
+
+        public function refreshData():void {
             source = MainMenuView.sharedApplication.games;
             init();
         }
