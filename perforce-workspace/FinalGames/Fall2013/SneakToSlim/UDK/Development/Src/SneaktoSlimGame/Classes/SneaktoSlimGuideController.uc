@@ -252,6 +252,7 @@ function readNextDialogueEntry()
 		}
 	}
 }
+
 function activateGuide()
 {
 	local SneaktoSlimGuideController guide;

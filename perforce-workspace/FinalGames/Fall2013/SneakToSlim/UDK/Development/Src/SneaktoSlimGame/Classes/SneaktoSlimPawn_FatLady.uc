@@ -87,13 +87,23 @@ simulated event ReplicatedEvent(name VarName)
 
 event Tick(float DeltaTime)
 {
-	local SneakToSlimGuideController pc;
+	local SneakToSlimGuidePawn pc;
 
 	super.Tick(DeltaTime);
 
 	if(self.Controller != none && !isGuideReady)
 	{
-		foreach WorldInfo.AllControllers(class 'SneakToSlimGuideController', pc)
+		activateGuideOnce();
+	}
+}
+
+reliable server function activateGuideOnce()
+{
+	local SneakToSlimGuidePawn pc;
+
+	if(self.Controller != none && !isGuideReady)
+	{
+		foreach WorldInfo.AllPawns(class 'SneakToSlimGuidePawn', pc)
 		{
 			//Forces
 			if(!pc.isActive)
@@ -104,6 +114,39 @@ event Tick(float DeltaTime)
 			break;
 		}
 		isGuideReady = true;
+	}
+}
+
+reliable client function playGuidePoofAnimation()
+{
+	local AnimNodePlayCustomAnim customNode;
+	local SneaktoSlimGuidePawn guidePawn;
+
+	foreach WorldInfo.AllPawns(class 'SneaktoSlimGuidePawn', guidePawn)
+	{
+		customNode = AnimNodePlayCustomAnim(guidePawn.Mesh.FindAnimNode('customVanish'));
+		customNode.PlayCustomAnim('Vanish', 1, 0.1f, 0.1f, false, true);
+	}
+}
+
+//Since text scrolls every # seconds, this function lets user speed read
+exec function skipLine()
+{
+	skipGuideLine();
+}
+
+reliable server function skipGuideLine()
+{
+	local SneakToSlimGuidePawn pc;
+
+	foreach WorldInfo.AllPawns(class 'SneakToSlimGuidePawn', pc)
+	{
+		if(pc.isActive)
+		{
+			pc.ClearTimer('readNextDialogueEntry');
+			pc.SetTimer(pc.timeBetweenLines, false, 'readNextDialogueEntry');
+			pc.readNextDialogueEntry();
+		}
 	}
 }
 

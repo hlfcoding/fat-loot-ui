@@ -1,7 +1,7 @@
 class SneaktoSlimGFxMap extends GFxMoviePlayer;
 
 var float screenSizeX, screenSizeY;
-var GFxObject Map, playerIcon, demoTime, winnerDisplayText, winnerDisplayBackground, minimapText, rect;
+var GFxObject Map, playerIcon, demoTime, winnerDisplayText, winnerDisplayBackground, minimapText, rect, MapBackground;
 var MiniMap miniMap;
 var Texture2D mapTexture;
 var vector player2DScreenPoint;
@@ -26,6 +26,8 @@ function Init(optional LocalPlayer player)
 	else
 		minimapText.SetText("Click 'm'");
 	Map = GetVariableObject("_root.Minimap");
+	MapBackground = GetVariableObject("_root.MiniMapBackground");
+	MapBackground.SetFloat("alpha", 0.75);
 	flashMapX = Map.GetFloat("x");
 	flashMapY = Map.GetFloat("y");
 	flashMapHeight = Map.GetFloat("height");
@@ -43,6 +45,7 @@ function Init(optional LocalPlayer player)
 
 	//Adds all objects to array for when screen size is changed
 	allFlashObjects.AddItem(Map);
+	allFlashObjects.AddItem(MapBackground);
 	allFlashObjects.AddItem(minimapText);
 	allFlashObjects.AddItem(playerIcon);
 	allFlashObjects.AddItem(rect);
@@ -115,6 +118,7 @@ function bool setMapTexture()
 	if(!(mapName == "demoday" || mapName == "fltemplemaptopplatform" || mapName == "flmist"))
 	{
 		Map.SetBool("visible", false);
+		MapBackground.SetBool("visible", false);
 		playerIcon.SetBool("visible", false);
 		GetVariableObject("_root").GetObject("Minimap_text").SetBool("visible", false);
 		return false;
@@ -228,12 +232,13 @@ function setFountainPoint(vector loc)
 		else
 		{
 			//Scales values to match screen size
-			loc.X *= screenSizeX;   
+			loc.X *= screenSizeY;   
 			loc.Y *= screenSizeY; 
 
 			//Map specify conversion to scale point to ignore image margins
-			result.X = (Map.GetFloat("width") - (Map.GetFloat("width") * 134/150) - (Map.GetFloat("width")*8/150) + Map.GetFloat("x")) + ((Map.GetFloat("width")*134/150) * ((loc.X - Map.GetFloat("x"))/Map.GetFloat("width")));
-			result.Y = (Map.GetFloat("height") - (Map.GetFloat("height") * 134/150) - (Map.GetFloat("height")*8/150) + Map.GetFloat("y")) + ((Map.GetFloat("height")*134/150) * ((loc.Y - Map.GetFloat("y"))/Map.GetFloat("height")));
+			result.X = (Map.GetInt("width") - (Map.GetInt("width") * 134/150) - (Map.GetInt("width")*8/150)) + ((Map.GetInt("width")*134/150) * (loc.X / Map.GetInt("width")));
+			result.Y = (Map.GetInt("height") - (Map.GetInt("height") * 134/150) - (Map.GetInt("height")*8/150)) + ((Map.GetInt("height")*134/150) * (loc.Y / Map.GetInt("height")));
+			result.X += ((screenSizeX - screenSizeY) / 2);
 		}
 	}
 	else if(mapName == "flmist")
@@ -260,8 +265,9 @@ function setFountainPoint(vector loc)
 			loc.Y *= screenSizeY; 
 
 			//Map specify conversion to scale point to ignore image margins
-			result.X = (Map.GetFloat("width") - (Map.GetFloat("width") * 120/150) - (Map.GetFloat("width")*15/150) + Map.GetFloat("x")) + ((Map.GetFloat("width")*120/150) * ((loc.X - Map.GetFloat("x"))/Map.GetFloat("width")));
-			result.Y = (Map.GetFloat("height") - (Map.GetFloat("height") * 120/150) - (Map.GetFloat("height")*15/150) + Map.GetFloat("y")) + ((Map.GetFloat("height")*120/150) * ((loc.Y - Map.GetFloat("y"))/Map.GetFloat("height")));
+			result.X = (Map.GetInt("width") - (Map.GetInt("width") * 120/150) - (Map.GetInt("width")*15/150)) + ((Map.GetInt("width")*120/150) * (loc.X/Map.GetInt("width")));
+			result.Y = (Map.GetInt("height") - (Map.GetInt("height") * 120/150) - (Map.GetInt("height")*15/150)) + ((Map.GetInt("height")*120/150) * (loc.Y/Map.GetInt("height")));
+			//result.X += ((screenSizeX - screenSizeY) / 2);
 		}
 	}
 	rect.SetFloat("x", result.X);
@@ -417,6 +423,10 @@ function TickMap(float DeltaTime)
 				Map.SetFloat("height", flashMapHeight*scaleFactorY);
 				Map.SetFloat("x", screenSizeX - (flashMapWidth+10)*scaleFactorX);
 				Map.SetFloat("y", screenSizeY - (flashMapHeight+10)*scaleFactorY);
+				MapBackground.SetFloat("width", flashMapWidth*scaleFactorX);
+				MapBackground.SetFloat("height", flashMapHeight*scaleFactorY);
+				MapBackground.SetFloat("x", screenSizeX - (flashMapWidth+10)*scaleFactorX);
+				MapBackground.SetFloat("y", screenSizeY - (flashMapHeight+10)*scaleFactorY);
 
 				/*`log("x " $ Map.GetFloat("x"));
 				`log("x prime " $ (Map.GetFloat("width") - (Map.GetFloat("width") * 70/150) - (Map.GetFloat("width")*40/150) + Map.GetFloat("x")));
@@ -456,25 +466,29 @@ function TickMap(float DeltaTime)
 					scalePlayerIcon = true;
 				}
 
-				Map.SetFloat("width", screenSizeX);
-				Map.SetFloat("height", screenSizeY);
-				Map.SetFloat("x", 0);
+				Map.SetInt("width", screenSizeY);
+				Map.SetInt("height", screenSizeY);
+				Map.SetFloat("x", (screenSizeX - screenSizeY) / 2);
 				Map.SetFloat("y", 0);
+				MapBackground.SetInt("width", screenSizeX);
+				MapBackground.SetInt("height", screenSizeY);
+				MapBackground.SetFloat("x", 0);
+				MapBackground.SetFloat("y", 0);
 
 				//Passes player relative location to its controller for tracking/metric purposes
 				player.trackLocation(player2DScreenPoint.X, player2DScreenPoint.Y, self.mapName);
 
 				//Scales values to match screen size
-				player2DScreenPoint.X *= screenSizeX;   
+				player2DScreenPoint.X *= screenSizeY;   
 				player2DScreenPoint.Y *= screenSizeY; 
 				transformedX = player2DScreenPoint.X;
 				transformedY = player2DScreenPoint.Y;
 
 				//Map specify conversion to scale point to ignore image margins
-				transformedX = (Map.GetFloat("width") - (Map.GetFloat("width") * 134/150) - (Map.GetFloat("width")*8/150) + Map.GetFloat("x")) + ((Map.GetFloat("width")*134/150) * ((player2DScreenPoint.X - Map.GetFloat("x"))/Map.GetFloat("width")));
-				transformedY = (Map.GetFloat("height") - (Map.GetFloat("height") * 134/150) - (Map.GetFloat("height")*8/150) + Map.GetFloat("y")) + ((Map.GetFloat("height")*134/150) * ((player2DScreenPoint.Y - Map.GetFloat("y"))/Map.GetFloat("height")));
+				transformedX = (Map.GetInt("width") - (Map.GetInt("width") * 134/150) - (Map.GetInt("width")*8/150)) + ((Map.GetInt("width")*134/150) * (player2DScreenPoint.X/Map.GetInt("width")));
+				transformedY = (Map.GetInt("height") - (Map.GetInt("height") * 134/150) - (Map.GetInt("height")*8/150)) + ((Map.GetInt("height")*134/150) * (player2DScreenPoint.Y/Map.GetInt("height")));
 
-				playerIcon.SetFloat("x", transformedX);
+				playerIcon.SetFloat("x", transformedX + Map.GetFloat("x"));
 				playerIcon.SetFloat("y", transformedY);
 			}
 		}
@@ -498,6 +512,10 @@ function TickMap(float DeltaTime)
 				Map.SetFloat("height", flashMapHeight*scaleFactorY);
 				Map.SetFloat("x", screenSizeX - (flashMapWidth+10)*scaleFactorX);
 				Map.SetFloat("y", screenSizeY - (flashMapHeight+10)*scaleFactorY);
+				MapBackground.SetFloat("width", flashMapWidth*scaleFactorX);
+				MapBackground.SetFloat("height", flashMapHeight*scaleFactorY);
+				MapBackground.SetFloat("x", screenSizeX - (flashMapWidth+10)*scaleFactorX);
+				MapBackground.SetFloat("y", screenSizeY - (flashMapHeight+10)*scaleFactorY);
 
 				//Passes player relative location to its controller for tracking/metric purposes
 				player.trackLocation(player2DScreenPoint.X, player2DScreenPoint.Y, self.mapName);
@@ -531,25 +549,29 @@ function TickMap(float DeltaTime)
 					scalePlayerIcon = true;
 				}
 
-				Map.SetFloat("width", screenSizeX);
-				Map.SetFloat("height", screenSizeY);
-				Map.SetFloat("x", 0);
+				Map.SetInt("width", screenSizeY);
+				Map.SetInt("height", screenSizeY);
+				Map.SetFloat("x", (screenSizeX - screenSizeY) / 2);
 				Map.SetFloat("y", 0);
+				MapBackground.SetInt("width", screenSizeX);
+				MapBackground.SetInt("height", screenSizeY);
+				MapBackground.SetFloat("x", 0);
+				MapBackground.SetFloat("y", 0);
 
 				//Passes player relative location to its controller for tracking/metric purposes
 				player.trackLocation(player2DScreenPoint.X, player2DScreenPoint.Y, self.mapName);
 
 				//Scales values to match screen size
-				player2DScreenPoint.X *= screenSizeX;   
+				player2DScreenPoint.X *= screenSizeY;   
 				player2DScreenPoint.Y *= screenSizeY; 
 				transformedX = player2DScreenPoint.X;
 				transformedY = player2DScreenPoint.Y;
 
 				//Map specify conversion to scale point to ignore image margins
-				transformedX = (Map.GetFloat("width") - (Map.GetFloat("width") * 120/150) - (Map.GetFloat("width")*15/150) + Map.GetFloat("x")) + ((Map.GetFloat("width")*120/150) * ((player2DScreenPoint.X - Map.GetFloat("x"))/Map.GetFloat("width")));
-				transformedY = (Map.GetFloat("height") - (Map.GetFloat("height") * 120/150) - (Map.GetFloat("height")*15/150) + Map.GetFloat("y")) + ((Map.GetFloat("height")*120/150) * ((player2DScreenPoint.Y - Map.GetFloat("y"))/Map.GetFloat("height")));
+				transformedX = (Map.GetInt("width") - (Map.GetInt("width") * 120/150) - (Map.GetInt("width")*15/150)) + ((Map.GetInt("width")*120/150) * (player2DScreenPoint.X/Map.GetInt("width")));
+				transformedY = (Map.GetInt("height") - (Map.GetInt("height") * 120/150) - (Map.GetInt("height")*15/150)) + ((Map.GetInt("height")*120/150) * (player2DScreenPoint.Y/Map.GetInt("height")));
 
-				playerIcon.SetFloat("x", transformedX);
+				playerIcon.SetFloat("x", transformedX + Map.GetFloat("x"));
 				playerIcon.SetFloat("y", transformedY);
 			}
 		}

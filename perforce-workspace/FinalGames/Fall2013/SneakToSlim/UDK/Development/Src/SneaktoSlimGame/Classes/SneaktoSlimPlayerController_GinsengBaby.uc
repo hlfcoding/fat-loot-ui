@@ -150,7 +150,7 @@ simulated state Burrow extends PlayerWalking
 	{
 		SneaktoSlimPawn_GinsengBaby(Self.Pawn).babyPlateMesh.SetScale(0.0f);
 		Pawn.bBlockActors = true;
-		SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customBurst', 'Burst', 1.f, true, 0.5f, 0.5f, false, true);
+		SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customBurst', 'Burst', 1.f, true, 0.1f, 0.1f, false, true);
 		if(NextStateName != 'InvisibleWalking')
 		{
 			sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslation(false, self.GetTeamNum());

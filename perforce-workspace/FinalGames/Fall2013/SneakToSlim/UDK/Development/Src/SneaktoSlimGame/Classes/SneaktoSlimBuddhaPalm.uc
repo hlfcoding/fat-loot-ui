@@ -13,10 +13,12 @@ simulated event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocat
 	{
 		`log("PALM TOUCHED AN STSPAWN!!");
 		victim.knockBackVector = (victim.Location - self.Location);
-		victim.knockBackVector = 50 * Normal(victim.knockBackVector);
+		victim.knockBackVector = 150 * Normal(victim.knockBackVector);
+			//2000 * Normal(victim.knockBackVector);
 		victim.knockBackVector.Z = 0; //attempting to keep the hit player grounded.
 		
-		SneaktoSlimPlayerController(victim.Controller).GoToState('BeingBellyBumped');//already done by server, no need to call server again
+		SneaktoSlimPlayerController(victim.Controller).GoToState('BeingBellyBumped');
+		SneaktoSlimPlayerController(victim.Controller).attemptToChangeState('BeingBellyBumped');
 	}
 }
 
@@ -25,7 +27,7 @@ DefaultProperties
 	Begin Object Class=StaticMeshComponent   Name=BuddhaPalmMesh
 		StaticMesh= StaticMesh'FLCharacter.Character.hand'
 		CastShadow= true
-		Scale= 80.00
+		Scale= 1.00
 		//Rotation=(Pitch=0,Yaw=16383,Roll=0)
         CollideActors=true
 		BlockActors=true

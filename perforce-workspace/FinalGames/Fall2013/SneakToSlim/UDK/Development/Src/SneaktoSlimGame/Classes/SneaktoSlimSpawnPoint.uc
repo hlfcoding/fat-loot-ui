@@ -60,11 +60,21 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 	
 		if(temp.isGotTreasure == true && temp.GetTeamNum() == teamID)
 		{
+			playTreasureCapturedParticle();
 			temp.turnBackTreasure();
 		}
 	}		
 }
 
+function playTreasureCapturedParticle()
+{
+	local SneakToSlimPawn current;
+	foreach worldinfo.allactors(class 'SneakToSlimPawn', current)
+	{
+		current.clientSpawnParticle(ParticleSystem'flparticlesystem.treasureCaptureEffect', self.Location,rot(0,0,0));
+	}
+	//WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.treasureCaptureEffect',self.Location);
+}
 event UnTouch(Actor Other)
 {
     super.UnTouch(Other);

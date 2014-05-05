@@ -1330,6 +1330,11 @@ reliable client function clientRoarParticle(int teamNumber)
 	}
 }
 
+unreliable client function clientSpawnParticle(ParticleSystem ps, vector loc, Rotator rot)
+{
+	WorldInfo.MyEmitterPool.SpawnEmitter(ps,loc,rot);
+}
+
 simulated function CallToggleSprintParticle(bool flag, byte teamNum)
 {
 	local SneakToSlimPawn current;

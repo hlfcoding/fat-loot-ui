@@ -1,6 +1,6 @@
 class GuideTrigger extends ITrigger;
 
-var SneaktoSlimGuideController guideController;
+var SneaktoSlimGuidePawn guidePawn;
 var SneaktoSlimPawn fatlady;
 
 event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hitNormal)
@@ -44,10 +44,10 @@ simulated function bool UsedBy(Pawn User)
 	used = super.UsedBy(User);
 
     //Passes tag name to guide's player controller and activates scripted event
-	if(guideController != none)
+	if(guidePawn != none)
 	{
-		guideController.talkingTo = SneakToSlimPawn(User);
-		guideController.changeToTutorialState(self.Tag);
+		guidePawn.talkingTo = SneakToSlimPawn(User);
+		guidePawn.changeToTutorialState(self.Tag);
 		return true;
 	}
     return used;

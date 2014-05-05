@@ -99,7 +99,6 @@ function adjustFlashScoreboardSizes(int ranks[4])
 {
 	local int sizesWidth[4], sizesHeight[4];
 	local int count;
-	local GFxObject flashScoreboard;
 
 	sizesWidth[0] = 150;
 	sizesHeight[0] = 156;
@@ -110,32 +109,94 @@ function adjustFlashScoreboardSizes(int ranks[4])
 	sizesWidth[3] = 60;
 	sizesHeight[3] = 66;
 
+	`log("AdjustFlashScoreboardSizes");
+	`log("  Player 1: " $ ranks[0] $ " | " $ "Player 2: " $ ranks[1] $ " | " $ "Player 3: " $ ranks[2] $ " | " $ "Player 4: " $ ranks[3]);
+	`log("  Widths: " $ sizesWidth[0] $ " | " $ sizesWidth[1] $ " | " $ sizesWidth[2] $ " | " $ sizesWidth[3]);
+	`log("  Heights: " $ sizesHeight[0] $ " | " $ sizesHeight[1] $ " | " $ sizesHeight[2] $ " | " $ sizesHeight[3]);
+
 	for(count = 0; count < 4; count++)
 	{
 		switch(count+1)
 		{
-			case 1: flashScoreboard = FlashResults.player1Score;
+			case 1: switch(ranks[count])
+					{
+						case 1: FlashResults.player1Score.SetFloat("width", sizesWidth[0]);
+								FlashResults.player1Score.SetFloat("height", sizesHeight[0]);
+								`log("      Case Player 1/" $ (count+1) $ " - Rank 1/" $ ranks[count]);
+								break;
+						case 2: FlashResults.player1Score.SetFloat("width", sizesWidth[1]);
+								FlashResults.player1Score.SetFloat("height", sizesHeight[1]);
+								`log("      Case Player 1/" $ (count+1) $ " - Rank 2/" $ ranks[count]);
+								break;
+						case 3: FlashResults.player1Score.SetFloat("width", sizesWidth[2]);
+								FlashResults.player1Score.SetFloat("height", sizesHeight[2]);
+								`log("      Case Player 1/" $ (count+1) $ " - Rank 3/" $ ranks[count]);
+								break;
+						case 4: FlashResults.player1Score.SetFloat("width", sizesWidth[3]);
+								FlashResults.player1Score.SetFloat("height", sizesHeight[3]);
+								`log("      Case Player 1/" $ (count+1) $ " - Rank 4/" $ ranks[count]);
+								break;
+					}
 					break;
-			case 2: flashScoreboard = FlashResults.player2Score;
+			case 2: switch(ranks[count])
+					{
+						case 1: FlashResults.player2Score.SetFloat("width", sizesWidth[0]);
+								FlashResults.player2Score.SetFloat("height", sizesHeight[0]);
+								`log("      Case Player 2/" $ (count+1) $ " - Rank 1/" $ ranks[count]);
+								break;
+						case 2: FlashResults.player2Score.SetFloat("width", sizesWidth[1]);
+								FlashResults.player2Score.SetFloat("height", sizesHeight[1]);
+								`log("      Case Player 2/" $ (count+1) $ " - Rank 2/" $ ranks[count]);
+								break;
+						case 3: FlashResults.player2Score.SetFloat("width", sizesWidth[2]);
+								FlashResults.player2Score.SetFloat("height", sizesHeight[2]);
+								`log("      Case Player 2/" $ (count+1) $ " - Rank 3/" $ ranks[count]);
+								break;
+						case 4: FlashResults.player2Score.SetFloat("width", sizesWidth[3]);
+								FlashResults.player2Score.SetFloat("height", sizesHeight[3]);
+								`log("      Case Player 2/" $ (count+1) $ " - Rank 4/" $ ranks[count]);
+								break;
+					}
 					break;
-			case 3: flashScoreboard = FlashResults.player3Score;
+			case 3: switch(ranks[count])
+					{
+						case 1: FlashResults.player3Score.SetFloat("width", sizesWidth[0]);
+								FlashResults.player3Score.SetFloat("height", sizesHeight[0]);
+								`log("      Case Player 3/" $ (count+1) $ " - Rank 1/" $ ranks[count]);
+								break;
+						case 2: FlashResults.player3Score.SetFloat("width", sizesWidth[1]);
+								FlashResults.player3Score.SetFloat("height", sizesHeight[1]);
+								`log("      Case Player 3/" $ (count+1) $ " - Rank 2/" $ ranks[count]);
+								break;
+						case 3: FlashResults.player3Score.SetFloat("width", sizesWidth[2]);
+								FlashResults.player3Score.SetFloat("height", sizesHeight[2]);
+								`log("      Case Player 3/" $ (count+1) $ " - Rank 3/" $ ranks[count]);
+								break;
+						case 4: FlashResults.player3Score.SetFloat("width", sizesWidth[3]);
+								FlashResults.player3Score.SetFloat("height", sizesHeight[3]);
+								`log("      Case Player 3/" $ (count+1) $ " - Rank 4/" $ ranks[count]);
+								break;
+					}
 					break;
-			case 4: flashScoreboard = FlashResults.player4Score;
-					break;
-		}
-		switch(ranks[count])
-		{
-			case 1: flashScoreboard.SetFloat("width", sizesWidth[0]);
-					flashScoreboard.SetFloat("height", sizesHeight[0]);
-					break;
-			case 2: flashScoreboard.SetFloat("width", sizesWidth[1]);
-					flashScoreboard.SetFloat("height", sizesHeight[1]);
-					break;
-			case 3: flashScoreboard.SetFloat("width", sizesWidth[2]);
-					flashScoreboard.SetFloat("height", sizesHeight[2]);
-					break;
-			case 4: flashScoreboard.SetFloat("width", sizesWidth[3]);
-					flashScoreboard.SetFloat("height", sizesHeight[3]);
+			case 4: switch(ranks[count])
+					{
+						case 1: FlashResults.player4Score.SetFloat("width", sizesWidth[0]);
+								FlashResults.player4Score.SetFloat("height", sizesHeight[0]);
+								`log("      Case Player 4/" $ (count+1) $ " - Rank 1/" $ ranks[count]);
+								break;
+						case 2: FlashResults.player4Score.SetFloat("width", sizesWidth[1]);
+								FlashResults.player4Score.SetFloat("height", sizesHeight[1]);
+								`log("      Case Player 4/" $ (count+1) $ " - Rank 2/" $ ranks[count]);
+								break;
+						case 3: FlashResults.player4Score.SetFloat("width", sizesWidth[2]);
+								FlashResults.player4Score.SetFloat("height", sizesHeight[2]);
+								`log("      Case Player 4/" $ (count+1) $ " - Rank 3/" $ ranks[count]);
+								break;
+						case 4: FlashResults.player4Score.SetFloat("width", sizesWidth[3]);
+								FlashResults.player4Score.SetFloat("height", sizesHeight[3]);
+								`log("      Case Player 4/" $ (count+1) $ " - Rank 4/" $ ranks[count]);
+								break;
+					}
 					break;
 		}
 	}
