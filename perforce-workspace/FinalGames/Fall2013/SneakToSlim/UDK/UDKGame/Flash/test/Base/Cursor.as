@@ -15,7 +15,7 @@ package {
         }
 
         public function enterFrameHandler(event:Event):void {
-            var screen:MovieClip = MovieClip(root);
+            var screen:MovieClip = root as MovieClip;
             x = screen.mouseX;
             y = screen.mouseY;
         }
