@@ -4,10 +4,6 @@ package {
 
         public static const MAX_PLAYERS:Number = 4;
 
-        public static var characters:Array;
-        public static var games:Array;
-        public static var levels:Array;
-
         public var level:Object;
         public var location:String;
         public var name:String;
@@ -18,24 +14,16 @@ package {
         public var timeLimit:String;
 
         public function GameModel(params:Object) {
-            // Init static vars as needed.
-            if (GameModel.levels == null || GameModel.characters == null) {
-                if (MainMenuView.USE_FIXTURES) {
-                    GameModel.levels = GameModel.finalizeStore(GameModel.LEVELS_FIXTURE);
-                    GameModel.characters = GameModel.finalizeStore(GameModel.CHARACTERS_FIXTURE);
-                    GameModel.games = GameModel.GAMES_FIXTURE;
-                }
-            }
             // Init model.
             for (var key:String in params) {
                 this[key] = params[key];
             }
         }
 
-        public static function getLevelById(id:String):Object {
-            for each (var level:Object in GameModel.levels) {
-                if (level.id === id) {
-                    return level;
+        public static function getById(id, store:Array):Object {
+            for each (var item:Object in store) {
+                if (item.id === id) {
+                    return item;
                 }
             }
             return false;

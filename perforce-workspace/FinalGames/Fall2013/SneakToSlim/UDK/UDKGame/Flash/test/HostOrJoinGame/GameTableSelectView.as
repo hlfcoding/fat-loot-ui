@@ -16,7 +16,7 @@ package  {
             };
             // Commit.
             columnNames = ['Map Name', 'Space', 'Location (IP)'];
-            source = GameModel.games;
+            source = MainMenuView.sharedApplication.games;
             init();
         }
 

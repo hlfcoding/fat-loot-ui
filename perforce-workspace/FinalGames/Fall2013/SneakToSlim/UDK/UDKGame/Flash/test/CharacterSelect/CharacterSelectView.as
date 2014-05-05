@@ -17,7 +17,7 @@
             };
             skillSelectView.selectMenu.addEventListener(ListEvent.INDEX_CHANGE, onSkillSelect);
             // Commit.
-            source = GameModel.characters;
+            source = MainMenuView.sharedApplication.characters;
             init();
         }
 

@@ -24,19 +24,43 @@
         public var joinGameView:JoinGameView;
         public var versionLabel:Label;
 
+        protected static var _sharedApplication:MainMenuView;
+
+        // Data stores.
+        protected var _games:Array;
+        protected var _characters:Array;
+        protected var _levels:Array;
+
+        // Data models.
         protected var _gameModel:GameModel; // TODO: Sync all changes to shared game model.
 
         public function MainMenuView() {
-            super();
+            if (MainMenuView._sharedApplication == null) {
+                super();
+                MainMenuView._sharedApplication = this;
+            } else if (MainMenuView.DEBUG) {
+                throw new Error('MainMenuView is a singleton.');
+            }
             shouldDebug = MainMenuView.DEBUG;
             addVersionLabel();
             load('RootMenuView', 'rootMenuView');
             rootView = rootMenuView;
+            if (MainMenuView.USE_FIXTURES) {
+                initFromFixtures();
+            }
             gameModel = new GameModel({
                 level: null,
                 location: 'TODO: Get IP',
                 players: []
             });
+        }
+
+        public static function get sharedApplication():MainMenuView { return _sharedApplication; }
+
+        protected function initFromFixtures():void {
+            games = GameModel.GAMES_FIXTURE;
+            levels = GameModel.LEVELS_FIXTURE;
+            characters = GameModel.CHARACTERS_FIXTURE;
         }
 
         override public function addChild(child:DisplayObject):DisplayObject {
@@ -64,7 +88,7 @@
                     case hostOrJoinGameView.joinButton:
                         toViewName = 'joinGameView';
                         var selectedModel:Object = hostOrJoinGameView.gameTableView.selectedModel;
-                        gameModel.level = GameModel.getLevelById(selectedModel.level);
+                        gameModel.level = GameModel.getById(selectedModel.level, levels);
                         gameModel.location = selectedModel.location;
                         MainMenuView.sendCommand('joinGameScreen');
                         break;
@@ -178,23 +202,28 @@
 
         // UDK endpoints.
 
-        public function set games(games:Array):void {
-            GameModel.games = games;
+        public function get games():Array { return _games; }
+        public function set games(value:Array):void {
+            _games = GameModel.finalizeStore(value);
+            if (MainMenuView.DEBUG) { trace('GAMES', games); }
         }
 
-        public function set characters(characters:Array):void {
-            GameModel.characters = characters;
+        public function get characters():Array { return _characters; }
+        public function set characters(value:Array):void {
+            _characters = GameModel.finalizeStore(value);
+            if (MainMenuView.DEBUG) { trace('CHARACTERS', characters); }
         }
 
-        public function set levels(levels:Array):void {
-            GameModel.levels = levels;
+        public function get levels():Array { return _levels; }
+        public function set levels(value:Array):void {
+            _levels = GameModel.finalizeStore(value);
+            if (MainMenuView.DEBUG) { trace('LEVELS', levels); }
         }
 
-        public function get gameModel():GameModel {
-            return _gameModel;
-        }
+        public function get gameModel():GameModel { return _gameModel; }
         public function set gameModel(value:GameModel):void {
             _gameModel = value as GameModel;
+            if (MainMenuView.DEBUG) { trace('GAME', gameModel); }
         }
 
         public function restore(toViewName:String, toGameModel:Object):void {

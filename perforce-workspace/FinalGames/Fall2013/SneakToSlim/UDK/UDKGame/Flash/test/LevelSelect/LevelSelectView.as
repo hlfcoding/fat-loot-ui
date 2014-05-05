@@ -16,7 +16,7 @@
                 return model.name;
             };
             // Commit.
-            source = GameModel.levels;
+            source = MainMenuView.sharedApplication.levels;
             init();
         }
 
