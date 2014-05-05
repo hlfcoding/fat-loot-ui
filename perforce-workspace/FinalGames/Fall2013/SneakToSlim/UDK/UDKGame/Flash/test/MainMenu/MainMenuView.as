@@ -26,12 +26,8 @@
 
         protected static var _sharedApplication:MainMenuView;
 
-        // Data stores.
-        protected var _games:Array;
-        protected var _characters:Array;
-        protected var _levels:Array;
-
-        // Data models.
+        // Data. Doesn't included proxy accessors.
+        protected var repository:MainRepository;
         protected var _gameModel:GameModel; // TODO: Sync all changes to shared game model.
 
         public function MainMenuView() {
@@ -45,8 +41,9 @@
             addVersionLabel();
             load('RootMenuView', 'rootMenuView');
             rootView = rootMenuView;
+            repository = new MainRepository();
             if (MainMenuView.USE_FIXTURES) {
-                initFromFixtures();
+                repository.initFromFixtures();
             }
             gameModel = new GameModel({
                 level: null,
@@ -56,12 +53,6 @@
         }
 
         public static function get sharedApplication():MainMenuView { return _sharedApplication; }
-
-        protected function initFromFixtures():void {
-            games = GameModel.GAMES_FIXTURE;
-            levels = GameModel.LEVELS_FIXTURE;
-            characters = GameModel.CHARACTERS_FIXTURE;
-        }
 
         override public function addChild(child:DisplayObject):DisplayObject {
             super.addChild(child);
@@ -88,7 +79,7 @@
                     case hostOrJoinGameView.joinButton:
                         toViewName = 'joinGameView';
                         var selectedModel:Object = hostOrJoinGameView.gameTableView.selectedModel;
-                        gameModel.level = GameModel.getById(selectedModel.level, levels);
+                        gameModel.level = MainRepository.getById(selectedModel.level, levels);
                         gameModel.location = selectedModel.location;
                         MainMenuView.sendCommand('joinGameScreen');
                         break;
@@ -200,23 +191,22 @@
             Utility.sendCommand(name, value);
         }
 
-        // UDK endpoints.
+        // UDK data endpoints.
 
-        public function get games():Array { return _games; }
+        // Proxy to repository.
+        public function get games():Array { return repository.games; }
         public function set games(value:Array):void {
-            _games = GameModel.finalizeStore(value);
-            if (MainMenuView.DEBUG) { trace('GAMES', games); }
+            repository.games = value;
+            if (MainMenuView.DEBUG) { trace('GAMES', repository.games); }
         }
-
-        public function get characters():Array { return _characters; }
+        public function get characters():Array { return repository.characters; }
         public function set characters(value:Array):void {
-            _characters = GameModel.finalizeStore(value);
+            repository.characters = value;
             if (MainMenuView.DEBUG) { trace('CHARACTERS', characters); }
         }
-
-        public function get levels():Array { return _levels; }
+        public function get levels():Array { return repository.levels; }
         public function set levels(value:Array):void {
-            _levels = GameModel.finalizeStore(value);
+            repository.levels = value;
             if (MainMenuView.DEBUG) { trace('LEVELS', levels); }
         }
 
