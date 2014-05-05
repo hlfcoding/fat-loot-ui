@@ -64,51 +64,79 @@
             var commandName:String;
             var toViewName:String;
             var isRestoreRequest:Boolean = false;
-            // Handle natural navigation:
+            var isExitRequest:Boolean = false;
+            // Handle natural navigation by matching to existing triggers:
             if (sender is Event) {
-                switch (sender.target) {
-                    // From root menu.
-                    case rootMenuView.networkedGameButton:
-                        toViewName = 'hostOrJoinGameView';
-                        MainMenuView.sendCommand('lobbyScreen');
-                        break;
-                    case rootMenuView.tutorialButton:   MainMenuView.sendCommand('playTutorialInUdk'); break;
-                    case rootMenuView.creditButton:     MainMenuView.sendCommand('showCreditInUdk'); break;
-                    case rootMenuView.quitButton:       MainMenuView.sendCommand('quitGameInUdk'); break;
-                    // From host-or-join view.
-                    case hostOrJoinGameView.joinButton:
-                        toViewName = 'joinGameView';
-                        var selectedModel:Object = hostOrJoinGameView.gameTableView.selectedModel;
-                        gameModel.level = MainRepository.getById(selectedModel.level, levels);
-                        gameModel.location = selectedModel.location;
-                        MainMenuView.sendCommand('joinGameScreen');
-                        break;
-                    case hostOrJoinGameView.hostButton:
-                        toViewName = 'hostGameView';
-                        MainMenuView.sendCommand('hostGameScreen');
-                        break;
-                    // From host view.
-                    case hostGameView.hostButton:
-                        toViewName = 'joinGameView';
-                        gameModel.level = hostGameView.levelSelectView.selectedModel;
-                        MainMenuView.sendCommand('hostGameInUdk', gameModel.location);
-                        MainMenuView.sendCommand('joinGameScreen_Host');
-                        break;
-                    // From join view.
-                    case joinGameView.joinButton:
-                        gameModel.level = joinGameView.levelPreview.model;
-                        commandName = 'joinGameInUdk'.concat(
-                            (previousView is HostGameView) ? '_Host' : '_NonHost'
-                        );
-                        MainMenuView.sendCommand(commandName, gameModel.location);
-                        break;
-                    default: break;
+                // From root menu.
+                if (rootMenuView != null) {
+                    switch (sender.target) {
+                        case rootMenuView.networkedGameButton:
+                            toViewName = 'hostOrJoinGameView';
+                            MainMenuView.sendCommand('lobbyScreen');
+                            break;
+                        case rootMenuView.tutorialButton:   MainMenuView.sendCommand('playTutorialInUdk'); break;
+                        case rootMenuView.creditButton:     MainMenuView.sendCommand('showCreditInUdk'); break;
+                        case rootMenuView.quitButton:       MainMenuView.sendCommand('quitGameInUdk'); break;
+                        default: break;
+                    }
+
+                }
+                // From host-or-join view.
+                if (hostOrJoinGameView != null) {
+                    switch (sender.target) {
+                        case hostOrJoinGameView.joinButton:
+                            toViewName = 'joinGameView';
+                            var selectedModel:Object = hostOrJoinGameView.gameTableView.selectedModel;
+                            gameModel.level = MainRepository.getById(selectedModel.level, levels);
+                            gameModel.location = selectedModel.location;
+                            MainMenuView.sendCommand('joinGameScreen');
+                            break;
+                        case hostOrJoinGameView.hostButton:
+                            toViewName = 'hostGameView';
+                            MainMenuView.sendCommand('hostGameScreen');
+                            break;
+                        default: break;
+                    }
+                }
+                // From host view.
+                if (hostGameView != null) {
+                    switch (sender.target) {
+                        case hostGameView.hostButton:
+                            toViewName = 'joinGameView';
+                            gameModel.level = hostGameView.levelSelectView.selectedModel;
+                            MainMenuView.sendCommand('hostGameInUdk', gameModel.location);
+                            MainMenuView.sendCommand('joinGameScreen_Host');
+                            break;
+                        default: break;
+                    }
+                }
+                // From join view.
+                if (joinGameView != null) {
+                    switch (sender.target) {
+                        case joinGameView.joinButton:
+                            gameModel.level = joinGameView.levelPreview.model;
+                            commandName = 'joinGameInUdk'.concat(
+                                (previousView is HostGameView) ? '_Host' : '_NonHost'
+                            );
+                            MainMenuView.sendCommand(commandName, gameModel.location);
+                            isExitRequest = true;
+                            break;
+                        default: break;
+                    }
                 }
             // Handle restores.
             } else if (sender is String) {
                 isRestoreRequest = true;
                 toViewName = sender as String;
             }
+            // Exit if needed.
+            if (isExitRequest) {
+                if (shouldDebug) {
+                    trace('EXIT');
+                }
+                return;
+            }
+            // Guard.
             if (toViewName == null) {
                 if (shouldDebug) {
                     throw new Error('No destination view name.');
