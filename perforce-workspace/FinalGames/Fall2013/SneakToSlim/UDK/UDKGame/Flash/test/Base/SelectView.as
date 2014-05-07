@@ -76,17 +76,17 @@ package {
             selectPreviewModel = selectedModel;
         }
 
-        public function set source(source:Array):void {
+        public function set source(value:Array):void {
             if (hasBackgroundImage) {
                 if (backgroundImages == null) {
                     backgroundImages = {};
-                    loadImages(source, backgroundImages);
+                    loadImages(value, backgroundImages);
                 }
-                for each (var data:Object in source) {
+                for each (var data:Object in value) {
                     data.backgroundImage = backgroundImages[data.id];
                 }
             }
-            collection.setSource(source);
+            collection.setSource(value);
             selectMenu.columnWidth = selectMenu.width / collection.length;
             selectMenu.selectedIndex = 0;
             selectedModel = getModelAtIndex(0);
