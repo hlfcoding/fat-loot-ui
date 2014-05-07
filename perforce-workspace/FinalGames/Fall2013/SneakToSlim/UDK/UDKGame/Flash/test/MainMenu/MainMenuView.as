@@ -15,7 +15,7 @@
         public static const DEBUG:Boolean = true; // Disable in general for production builds.
         public static const USE_FIXTURES:Boolean = true;
         public static const SEND_COMMANDS:Boolean = true; // Disable for preview or debugger builds.
-        public static const VERSION:String = '0.25.0';
+        public static const VERSION:String = '0.26.0';
 
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
