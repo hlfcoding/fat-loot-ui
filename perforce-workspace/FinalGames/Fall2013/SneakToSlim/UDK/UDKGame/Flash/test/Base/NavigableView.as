@@ -14,12 +14,14 @@ package {
         public var defaultTransition:String;
 
         protected var shouldDebug:Boolean;
+        protected var aggressiveMemoryManagement:Boolean;
 
         protected var _navigationStack:Vector.<MovieClip>;
 
         public function NavigableView() {
             super();
             shouldDebug = false;
+            aggressiveMemoryManagement = false;
             _navigationStack = new <MovieClip>[];
             defaultTransition = NavigableView.TRANSITION_DEFAULT;
         }
@@ -37,6 +39,12 @@ package {
                 throw new Error('No view class named: ' + className);
             }
             view = new classRef();
+            if (view.hasOwnProperty('addEventListeners')) {
+                view.addEventListeners();
+            }
+            if (view.hasOwnProperty('init')) {
+                view.init();
+            }
             if (shouldAutoAssign) {
                 this[propertyName] = view;
             }
@@ -144,8 +152,10 @@ package {
             if (view.hasOwnProperty('navigationBackButton') && view.navigationBackButton != null) {
                 view.navigationBackButton.removeEventListener(ButtonEvent.CLICK, navigateBack);
             }
-            if (view.hasOwnProperty('removeEventListeners')) {
-                view.removeEventListeners();
+            if (aggressiveMemoryManagement) {
+                if (view.hasOwnProperty('removeEventListeners')) {
+                    view.removeEventListeners();
+                }
             }
             // Subclass needs to extend this method and implement here freeing
             // the view by nulling its own reference(s) to the view.
@@ -160,11 +170,13 @@ package {
             if (view.hasOwnProperty('navigationBackButton') && view.navigationBackButton != null) {
                 view.navigationBackButton.addEventListener(ButtonEvent.CLICK, navigateBack);
             }
-            if (view.hasOwnProperty('addEventListeners')) {
-                view.addEventListeners();
-            }
-            if (view.hasOwnProperty('init')) {
-                view.init();
+            if (aggressiveMemoryManagement) {
+                if (view.hasOwnProperty('addEventListeners')) {
+                    view.addEventListeners();
+                }
+                if (view.hasOwnProperty('init')) {
+                    view.init();
+                }
             }
         }
 

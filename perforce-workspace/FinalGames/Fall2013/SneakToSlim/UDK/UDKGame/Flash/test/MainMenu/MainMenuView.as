@@ -205,12 +205,14 @@
 
         override protected function willPopView(view:MovieClip):void {
             super.willPopView(view);
-            switch (view) {
-                case rootMenuView:          rootMenuView = null; break;
-                case hostOrJoinGameView:    hostOrJoinGameView = null; break;
-                case hostGameView:          hostGameView = null; break;
-                case joinGameView:          joinGameView = null; break;
-                default: break;
+            if (aggressiveMemoryManagement) {
+                switch (view) {
+                    case rootMenuView:          rootMenuView = null; break;
+                    case hostOrJoinGameView:    hostOrJoinGameView = null; break;
+                    case hostGameView:          hostGameView = null; break;
+                    case joinGameView:          joinGameView = null; break;
+                    default: break;
+                }
             }
         }
 
