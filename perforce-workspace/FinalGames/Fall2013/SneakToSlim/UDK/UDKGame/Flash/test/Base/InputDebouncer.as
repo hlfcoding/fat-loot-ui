@@ -13,8 +13,14 @@ package {
 
         public function InputDebouncer(handlerFunction:Function, delay:Number=500) {
             super(delay, 1);
-            addEventListener(TimerEvent.TIMER_COMPLETE, debouncedFunction);
             this.handlerFunction = handlerFunction;
+        }
+
+        public function addEventListeners():void {
+            addEventListener(TimerEvent.TIMER_COMPLETE, debouncedFunction);
+        }
+        public function removeEventListeners():void {
+            removeEventListener(TimerEvent.TIMER_COMPLETE, debouncedFunction);
         }
 
         public function debouncedFunction(event:Event):void {

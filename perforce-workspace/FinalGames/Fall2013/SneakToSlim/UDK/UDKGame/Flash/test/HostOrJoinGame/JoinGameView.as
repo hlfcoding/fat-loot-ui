@@ -22,7 +22,6 @@ package  {
         public function JoinGameView() {
             super();
             inputDebouncer = new InputDebouncer(onGameLocationChange);
-            testGameLocationInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
             levelPreview.nameLabel.visible = true;
             levelPreview.imageSize = { width: 427, height: 267 };
             levelPreview.imageOffset = {
@@ -30,6 +29,21 @@ package  {
                 y: 0
             };
             addChild(Utility.hideViewOverflow(levelPreview));
+        }
+
+        public function init():void {
+            characterSelectView.init();
+        }
+
+        public function addEventListeners():void {
+            characterSelectView.addEventListeners();
+            inputDebouncer.addEventListeners();
+            testGameLocationInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+        }
+        public function removeEventListeners():void {
+            characterSelectView.removeEventListeners();
+            inputDebouncer.removeEventListeners();
+            testGameLocationInput.removeEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
         }
 
         public function get navigationBackButton():Button {

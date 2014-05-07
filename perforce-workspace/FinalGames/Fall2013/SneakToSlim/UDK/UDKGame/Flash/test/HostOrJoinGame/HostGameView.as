@@ -31,16 +31,34 @@ package  {
         public function HostGameView() {
             super();
             inputDebouncer = new InputDebouncer(onGameSettingChange);
-            gameNameInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
-            playerLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
-            scoreLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
-            timeLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
-            levelSelectView.addEventListener(LevelSelectView.SELECT, onLevelSelect);
             // Restyle.
             gameNameInput.defaultTextFormat.color =
             playerLimitInput.defaultTextFormat.color =
             scoreLimitInput.defaultTextFormat.color =
             timeLimitInput.defaultTextFormat.color = 0x0F3D0D;
+        }
+
+        public function init():void {
+            levelSelectView.init();
+        }
+
+        public function addEventListeners():void {
+            inputDebouncer.addEventListeners();
+            gameNameInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            playerLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            scoreLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            timeLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            levelSelectView.addEventListeners();
+            levelSelectView.addEventListener(LevelSelectView.SELECT, onLevelSelect);
+        }
+        public function removeEventListeners():void {
+            inputDebouncer.removeEventListeners();
+            gameNameInput.removeEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            playerLimitInput.removeEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            scoreLimitInput.removeEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            timeLimitInput.removeEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            levelSelectView.removeEventListeners();
+            levelSelectView.removeEventListener(LevelSelectView.SELECT, onLevelSelect);
         }
 
         public function get navigationBackButton():Button {

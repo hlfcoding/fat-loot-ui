@@ -9,16 +9,28 @@
         public var gameModel:GameModel;
 
         public function CharacterSelectView() {
-            super()
+            super();
             // Configure.
             selectMenu.labelFunction = function(item:Object):String {
                 var model:Object = item;
                 return model.name;
             };
-            skillSelectView.selectMenu.addEventListener(ListEvent.INDEX_CHANGE, onSkillSelect);
-            // Commit.
+        }
+
+        override public function init():void {
             source = MainMenuView.sharedApplication.characters;
-            init();
+            super.init();
+        }
+
+        override public function addEventListeners():void {
+            super.addEventListeners();
+            skillSelectView.addEventListeners();
+            skillSelectView.selectMenu.addEventListener(ListEvent.INDEX_CHANGE, onSkillSelect);
+        }
+        override public function removeEventListeners():void {
+            super.removeEventListeners();
+            skillSelectView.removeEventListeners();
+            skillSelectView.selectMenu.removeEventListener(ListEvent.INDEX_CHANGE, onSkillSelect);
         }
 
         override protected function getAssetClass(id:String, destination:Object):Class {

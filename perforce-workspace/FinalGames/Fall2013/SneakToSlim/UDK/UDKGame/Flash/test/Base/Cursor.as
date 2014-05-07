@@ -11,6 +11,7 @@ package {
                 Mouse.hide();
             }
             mouseEnabled = false;
+            // Cursor will never be disposed. No need to ever be removed.
             addEventListener(Event.ENTER_FRAME, enterFrameHandler);
         }
 

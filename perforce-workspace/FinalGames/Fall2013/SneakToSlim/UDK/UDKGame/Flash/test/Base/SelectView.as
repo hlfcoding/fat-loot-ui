@@ -33,15 +33,22 @@ package {
             collection = DataProvider(selectMenu.dataProvider);
             collection.itemRendererName = 'SelectItemRenderer';
             selectMenu.rowHeight = selectMenu.height;
+        }
+
+        public function init():void {
+            selectMenu.selectedIndex = 0;
+            selectedModel = getModelAtIndex(0);
+        }
+
+        public function addEventListeners():void {
             selectMenu.addEventListener(ListEvent.ITEM_ROLL_OVER, handleItemFocus);
             selectMenu.addEventListener(ListEvent.ITEM_ROLL_OUT, handleItemFocus);
             selectMenu.addEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
         }
-
-        public function init():void {
-            // Init.
-            selectMenu.selectedIndex = 0;
-            selectedModel = getModelAtIndex(0);
+        public function removeEventListeners():void {
+            selectMenu.removeEventListener(ListEvent.ITEM_ROLL_OVER, handleItemFocus);
+            selectMenu.removeEventListener(ListEvent.ITEM_ROLL_OUT, handleItemFocus);
+            selectMenu.removeEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
         }
 
         protected function loadImages(source:Array, destination:Object):void {

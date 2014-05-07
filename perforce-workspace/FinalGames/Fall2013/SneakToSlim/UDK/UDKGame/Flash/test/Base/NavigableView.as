@@ -28,7 +28,7 @@ package {
             var classRef:Class;
             var view:MovieClip;
             var shouldAutoAssign:Boolean = propertyName != null;
-            if (shouldAutoAssign && this[propertyName] != null) {
+            if (shouldAutoAssign && this.hasOwnProperty(propertyName) && this[propertyName] != null) {
                 return this[propertyName];
             }
             try {
@@ -39,9 +39,6 @@ package {
             view = new classRef();
             if (shouldAutoAssign) {
                 this[propertyName] = view;
-            }
-            for each (var button:Button in view.navigationButtons) {
-                button.addEventListener(ButtonEvent.CLICK, handleNavigationRequest);
             }
             return view;
         }
@@ -92,16 +89,12 @@ package {
             var toViewIndex:int = _navigationStack.indexOf(toView);
             // Popping.
             if (toViewIndex !== -1 && toViewIndex !== _navigationStack.length - 1) {
+                willPopView(fromView);
                 _navigationStack.splice(toViewIndex + 1, _navigationStack.length - (toViewIndex + 1));
-                if (fromView != null && fromView.navigationBackButton != null) {
-                    fromView.navigationBackButton.removeEventListener(ButtonEvent.CLICK, navigateBack);
-                }
             // Pushing.
             } else {
+                willPushView(toView);
                 _navigationStack.push(toView);
-                if (toView.navigationBackButton != null) {
-                    toView.navigationBackButton.addEventListener(ButtonEvent.CLICK, navigateBack);
-                }
             }
             // Render and present.
             for each (var view:MovieClip in _navigationStack) {
@@ -139,6 +132,39 @@ package {
         protected function transitionOut(view:MovieClip, transition:String):void {
             if (view != null) {
                 view.visible = false;
+            }
+        }
+        protected function willPopView(view:MovieClip):void {
+            if (view == null) { return; }
+            if (view.hasOwnProperty('navigationButtons')) {
+                for each (var button:Button in view.navigationButtons) {
+                    button.removeEventListener(ButtonEvent.CLICK, handleNavigationRequest);
+                }
+            }
+            if (view.hasOwnProperty('navigationBackButton') && view.navigationBackButton != null) {
+                view.navigationBackButton.removeEventListener(ButtonEvent.CLICK, navigateBack);
+            }
+            if (view.hasOwnProperty('removeEventListeners')) {
+                view.removeEventListeners();
+            }
+            // Subclass needs to extend this method and implement here freeing
+            // the view by nulling its own reference(s) to the view.
+        }
+        protected function willPushView(view:MovieClip):void {
+            if (view == null) { return; }
+            if (view.hasOwnProperty('navigationButtons')) {
+                for each (var button:Button in view.navigationButtons) {
+                    button.addEventListener(ButtonEvent.CLICK, handleNavigationRequest);
+                }
+            }
+            if (view.hasOwnProperty('navigationBackButton') && view.navigationBackButton != null) {
+                view.navigationBackButton.addEventListener(ButtonEvent.CLICK, navigateBack);
+            }
+            if (view.hasOwnProperty('addEventListeners')) {
+                view.addEventListeners();
+            }
+            if (view.hasOwnProperty('init')) {
+                view.init();
             }
         }
 

@@ -14,7 +14,7 @@
 
         public static const DEBUG:Boolean = true; // Disable in general for production builds.
         public static const USE_FIXTURES:Boolean = true;
-        public static const SEND_COMMANDS:Boolean = true; // Disable for preview builds.
+        public static const SEND_COMMANDS:Boolean = true; // Disable for preview or debugger builds.
         public static const VERSION:String = '0.25.0';
 
         public var cursor:Cursor;
@@ -201,6 +201,17 @@
                 }
             }
             return didNavigate;
+        }
+
+        override protected function willPopView(view:MovieClip):void {
+            super.willPopView(view);
+            switch (view) {
+                case rootMenuView:          rootMenuView = null; break;
+                case hostOrJoinGameView:    hostOrJoinGameView = null; break;
+                case hostGameView:          hostGameView = null; break;
+                case joinGameView:          joinGameView = null; break;
+                default: break;
+            }
         }
 
         protected function addVersionLabel():void {

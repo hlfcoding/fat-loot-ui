@@ -15,9 +15,11 @@
                 var model:Object = item;
                 return model.name;
             };
-            // Commit.
+        }
+
+        override public function init():void {
             source = MainMenuView.sharedApplication.levels;
-            init();
+            super.init();
         }
 
         override protected function getAssetClass(id:String, destination:Object):Class {

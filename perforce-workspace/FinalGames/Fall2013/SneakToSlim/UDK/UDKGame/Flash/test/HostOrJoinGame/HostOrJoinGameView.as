@@ -19,8 +19,21 @@
         public function HostOrJoinGameView() {
             super();
             joinButton.enabled = false;
+        }
+
+        public function init():void {
+            gameTableView.init();
+        }
+
+        public function addEventListeners():void {
+            gameTableView.addEventListeners();
             gameTableView.selectMenu.addEventListener(ListEvent.INDEX_CHANGE, onGameSelect);
             refreshButton.addEventListener(ButtonEvent.CLICK, handleRefresh);
+        }
+        public function removeEventListeners():void {
+            gameTableView.removeEventListeners();
+            gameTableView.selectMenu.removeEventListener(ListEvent.INDEX_CHANGE, onGameSelect);
+            refreshButton.removeEventListener(ButtonEvent.CLICK, handleRefresh);
         }
 
         public function get navigationBackButton():Button {

@@ -26,16 +26,9 @@ package {
             super();
             collection = DataProvider(selectMenu.dataProvider);
             collection.itemRendererName = 'TableItemRenderer';
-            if (selectPreview != null) {
-                selectMenu.addEventListener(ListEvent.ITEM_ROLL_OVER, handleItemFocus);
-                selectMenu.addEventListener(ListEvent.ITEM_ROLL_OUT, handleItemFocus);
-            }
-            selectMenu.addEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
-            selectTopBar.addEventListener(IndexEvent.INDEX_CHANGE, handleSort);
         }
 
         public function init():void {
-            // Init.
             selectMenu.selectedIndex = 0;
             selectedModel = getModelAtIndex(0);
             if (selectPreview != null) {
@@ -48,6 +41,23 @@ package {
                 selectTopBar.setActualSize(contentWidth, baseHeight);
                 //selectTopBar.buttonWidth = contentWidth / columnNames.length;
             }
+        }
+
+        public function addEventListeners():void {
+            if (selectPreview != null) {
+                selectMenu.addEventListener(ListEvent.ITEM_ROLL_OVER, handleItemFocus);
+                selectMenu.addEventListener(ListEvent.ITEM_ROLL_OUT, handleItemFocus);
+            }
+            selectMenu.addEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
+            selectTopBar.addEventListener(IndexEvent.INDEX_CHANGE, handleSort);
+        }
+        public function removeEventListeners():void {
+            if (selectPreview != null) {
+                selectMenu.removeEventListener(ListEvent.ITEM_ROLL_OVER, handleItemFocus);
+                selectMenu.removeEventListener(ListEvent.ITEM_ROLL_OUT, handleItemFocus);
+            }
+            selectMenu.removeEventListener(ListEvent.INDEX_CHANGE, handleItemSelect);
+            selectTopBar.removeEventListener(IndexEvent.INDEX_CHANGE, handleSort);
         }
 
         public function get selectedModel():Object { return _selectedModel; }

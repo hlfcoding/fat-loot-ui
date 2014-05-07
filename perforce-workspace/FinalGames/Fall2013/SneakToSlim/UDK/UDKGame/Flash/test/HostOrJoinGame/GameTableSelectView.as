@@ -15,15 +15,21 @@ package  {
                 var model:Object = item;
                 return model.level;
             };
-            MainMenuView.sharedRepository.addEventListener(MainRepository.GAMES_UPDATE, refreshData);
-            // Commit.
-            columnNames = ['Map Name', 'Space', 'Location (IP)'];
-            refreshData();
         }
 
-        public function refreshData(sender:Object=null):void {
-            source = MainMenuView.sharedApplication.games;
-            init();
+        override public function init():void {
+            columnNames = ['Map Name', 'Space', 'Location (IP)'];
+            refreshData(this);
+            super.init();
+        }
+
+        override public function addEventListeners():void {
+            super.addEventListeners();
+            MainMenuView.sharedRepository.addEventListener(MainRepository.GAMES_UPDATE, refreshData);
+        }
+        override public function removeEventListeners():void {
+            super.removeEventListeners();
+            MainMenuView.sharedRepository.removeEventListener(MainRepository.GAMES_UPDATE, refreshData);
         }
 
         override protected function get columnPropertyNames():Array {
@@ -40,6 +46,10 @@ package  {
             if (value != null) {
                 MainMenuView.sendCommand('selectGameInUdk', value.location);
             }
+        }
+
+        protected function refreshData(sender:Object):void {
+            source = MainMenuView.sharedApplication.games;
         }
 
     }
