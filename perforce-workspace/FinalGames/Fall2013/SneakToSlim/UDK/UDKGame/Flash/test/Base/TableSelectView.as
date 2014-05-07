@@ -72,9 +72,11 @@ package {
 
         public function set source(source:Array):void {
             source.forEach(formatItem);
+            collection.cleanUp();
             collection.setSource(source);
             selectMenu.selectedIndex = 0;
             selectedModel = getModelAtIndex(0);
+            selectMenu.invalidateRenderers();
         }
 
         public function formatItem(item:Object, index:int, source:Array):Object {

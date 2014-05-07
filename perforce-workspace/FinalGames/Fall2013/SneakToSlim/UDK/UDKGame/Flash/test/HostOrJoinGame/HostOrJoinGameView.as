@@ -40,6 +40,13 @@
         }
 
         public function handleRefresh(event:ButtonEvent):void {
+            // This is a way to test list updating. Refreshing will remove the
+            // first game. Eventually there should be no games left.
+            /*
+            var games:Array = (root as MainMenuView).games.slice(); // Copy.
+            games.shift();
+            (root as MainMenuView).games = games;
+            */
             MainMenuView.sendCommand('requestGamesInUdk');
         }
 

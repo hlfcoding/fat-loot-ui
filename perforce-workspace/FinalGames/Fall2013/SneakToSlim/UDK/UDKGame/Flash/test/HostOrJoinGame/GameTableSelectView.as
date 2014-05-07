@@ -1,5 +1,6 @@
 package  {
 
+    import flash.events.Event;
 
     public class GameTableSelectView extends TableSelectView {
 
@@ -14,13 +15,13 @@ package  {
                 var model:Object = item;
                 return model.level;
             };
-            addEventListener(MainRepository.GAMES_UPDATE, refreshData);
+            MainMenuView.sharedRepository.addEventListener(MainRepository.GAMES_UPDATE, refreshData);
             // Commit.
             columnNames = ['Map Name', 'Space', 'Location (IP)'];
             refreshData();
         }
 
-        public function refreshData():void {
+        public function refreshData(sender:Object=null):void {
             source = MainMenuView.sharedApplication.games;
             init();
         }

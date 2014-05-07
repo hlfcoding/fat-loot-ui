@@ -26,8 +26,8 @@
 
         protected static var _sharedApplication:MainMenuView;
 
-        // Data. Doesn't included proxy accessors.
-        protected var repository:MainRepository;
+        // Data. Doesn't include proxy accessors.
+        public var repository:MainRepository;
         protected var _gameModel:GameModel; // TODO: Sync all changes to shared game model.
 
         public function MainMenuView() {
@@ -53,6 +53,7 @@
         }
 
         public static function get sharedApplication():MainMenuView { return _sharedApplication; }
+        public static function get sharedRepository():MainRepository { return _sharedApplication.repository; }
 
         override public function addChild(child:DisplayObject):DisplayObject {
             super.addChild(child);
