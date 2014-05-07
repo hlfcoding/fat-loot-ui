@@ -18,6 +18,17 @@ package {
             return (_rowHeight * _rowCount) > height;
         }
 
+        override protected function configUI():void {
+            super.configUI();
+            if (scrollBar != null) {
+                scrollBar.upArrow.enabled = 
+                scrollBar.downArrow.enabled = 
+                scrollBar.upArrow.visible = 
+                scrollBar.downArrow.visible =
+                scrollBar.track.visible = false;
+            }
+        }
+
         override protected function draw():void {
             super.draw();
             /*
