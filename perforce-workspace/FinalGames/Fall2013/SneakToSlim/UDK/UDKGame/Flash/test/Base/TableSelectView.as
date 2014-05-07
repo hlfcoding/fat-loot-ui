@@ -20,10 +20,13 @@ package {
         public var selectScrollBar:ScrollBar;
         public var selectTopBar:ButtonBar;
 
+        public var hasDividers:Boolean;
+
         protected var _selectedModel:Object;
 
         public function TableSelectView() {
             super();
+            hasDividers = true;
             collection = DataProvider(selectMenu.dataProvider);
             collection.itemRendererName = 'TableItemRenderer';
         }
@@ -80,16 +83,17 @@ package {
             return [];
         }
 
-        public function set source(source:Array):void {
-            source.forEach(formatItem);
+        public function set source(value:Array):void {
+            value.forEach(transformItem);
             collection.cleanUp();
-            collection.setSource(source);
+            collection.setSource(value);
             selectMenu.selectedIndex = 0;
             selectedModel = getModelAtIndex(0);
             selectMenu.invalidateRenderers();
         }
 
-        public function formatItem(item:Object, index:int, source:Array):Object {
+        protected function transformItem(item:Object, index:int, source:Array):Object {
+            item.hasDividers = hasDividers;
             return item;
         }
 

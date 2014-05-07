@@ -9,6 +9,7 @@ package  {
         public function GameTableSelectView() {
             super();
             // Configure.
+            hasDividers = false;
             selectMenu.extraPropertyNames = new <String>['space', 'location'];
             // - First label.
             selectMenu.labelFunction = function(item:Object):String {
@@ -36,7 +37,8 @@ package  {
             return ['level', 'space', 'location'];
         }
 
-        override public function formatItem(item:Object, index:int, source:Array):Object {
+        override protected function transformItem(item:Object, index:int, source:Array):Object {
+            item = super.transformItem(item, index, source);
             item.space = item._playerCount.toString().concat(' / ', GameModel.MAX_PLAYERS, ' players');
             return item;
         }
