@@ -70,81 +70,81 @@ package {
             },
             {
                 id: 1,
-                level: 'Mansion',
+                level: 'Vault',
                 _playerCount: 2,
                 location: '128.125.121.1'
             },
             {
                 id: 2,
-                level: 'Pit',
+                level: 'Temple',
                 _playerCount: 3,
                 location: '128.125.121.2'
             },
             {
                 id: 3,
-                level: 'Mist',
+                level: 'Vault',
                 _playerCount: 4,
                 location: '128.125.121.3'
             },
             {
                 id: 4,
-                level: 'Mansion',
+                level: 'Temple',
                 _playerCount: 1,
-                location: '128.125.121.0'
+                location: '128.125.121.4'
             },
             {
-                id: 1,
-                level: 'Mansion',
+                id: 5,
+                level: 'Temple',
                 _playerCount: 1,
-                location: '128.125.121.0'
+                location: '128.125.121.5'
             },
             {
-                id: 1,
-                level: 'Mansion',
+                id: 6,
+                level: 'Temple',
                 _playerCount: 1,
-                location: '128.125.121.0'
+                location: '128.125.121.6'
             },
             {
-                id: 1,
-                level: 'Mansion',
+                id: 7,
+                level: 'Temple',
                 _playerCount: 1,
-                location: '128.125.121.0'
+                location: '128.125.121.7'
             },
             {
-                id: 1,
-                level: 'Mansion',
+                id: 8,
+                level: 'Temple',
                 _playerCount: 1,
-                location: '128.125.121.0'
+                location: '128.125.121.8'
             },
             {
-                id: 1,
-                level: 'Mansion',
+                id: 9,
+                level: 'Vault',
                 _playerCount: 1,
-                location: '128.125.121.0'
+                location: '128.125.121.9'
             },
             {
-                id: 1,
-                level: 'Mansion',
+                id: 10,
+                level: 'Vault',
                 _playerCount: 1,
-                location: '128.125.121.0'
+                location: '128.125.121.10'
             },
             {
-                id: 1,
-                level: 'Mansion',
+                id: 11,
+                level: 'Vault',
                 _playerCount: 1,
-                location: '128.125.121.0'
+                location: '128.125.121.11'
             },
             {
-                id: 1,
-                level: 'Mansion',
+                id: 12,
+                level: 'Vault',
                 _playerCount: 1,
-                location: '128.125.121.0'
+                location: '128.125.121.12'
             },
             {
-                id: 1,
-                level: 'Mansion',
+                id: 13,
+                level: 'Vault',
                 _playerCount: 1,
-                location: '128.125.121.0'
+                location: '128.125.121.13'
             }
         ];
 
