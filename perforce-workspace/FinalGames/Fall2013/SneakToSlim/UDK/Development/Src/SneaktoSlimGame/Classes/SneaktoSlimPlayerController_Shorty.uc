@@ -244,6 +244,14 @@ Begin:
 /******************************* DASH STATES START *****************************/
 simulated state ChargingDash
 {
+	simulated exec function use()
+	{
+		if(SneaktoSlimPawn(self.Pawn).isGotTreasure == true)
+			return;
+		else
+			super.Use();
+	}
+
 	simulated function UpdateEnergy()
 	{
 		SneaktoSlimPawn(Pawn).v_energy -= ENERGY_UPDATE_FREQUENCY * SneaktoSlimPawn_Shorty(Pawn).DASH_ENERGY_CONSUMPTION_RATE;
@@ -323,6 +331,14 @@ simulated state Dashing
 {
 	local float dashStartTime;
 	local float cappedChargeTime;
+
+	simulated exec function use()
+	{
+		if(SneaktoSlimPawn(self.Pawn).isGotTreasure == true)
+			return;
+		else
+			super.Use();
+	}
 
 	simulated event BeginState(Name LastStateName)
 	{		

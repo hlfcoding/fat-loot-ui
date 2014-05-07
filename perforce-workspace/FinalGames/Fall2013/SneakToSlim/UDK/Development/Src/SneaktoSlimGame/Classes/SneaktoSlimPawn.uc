@@ -1141,6 +1141,11 @@ simulated event ReplicatedEvent(name VarName)
 						//CurrentPawn.SetUsingBuff(true);
 						CurrentPawn.hidePowerupUI(CurrentPawn.bBuffed);
 						CurrentPawn.serverResetBBuffed();
+						if(CurrentPawn.Controller.IsInState('UsingSuperSprint'))
+						{
+							SneaktoSlimPlayerController(CurrentPawn.Controller).attemptToChangeState('PlayerWalking');
+							SneaktoSlimPlayerController(CurrentPawn.Controller).GotoState('PlayerWalking');
+						}
 						CurrentPawn.bUsingBuffed[6] = 1;
 						WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.lightningEffect',CurrentPawn.Location);
 						CurrentPawn.showAffectedByCurseIcon();
@@ -1750,10 +1755,16 @@ event Landed (Object.Vector HitNormal, Actor FloorActor)
 		c.GoToState('PlayerWalking');	
 }
 
-simulated function fadeOutCurtain()
+simulated function showCurtain()
 {
 	self.flashCurtain(true);
 }
+
+simulated function hideCurtain()
+{
+	self.flashCurtain(false);
+}
+
 
 reliable client function flashCurtain(bool whichAlpha)
 {
@@ -2148,9 +2159,9 @@ exec function dontFollowPlayers()
 
 server reliable function serverDontFollowPlayers()
 {
-	local SneakToSlimAINavMeshController guard;
+	local SneakToSlimAIController guard;
 
-	foreach AllActors(class'SneakToSlimAINavMeshController', guard)
+	foreach AllActors(class'SneakToSlimAIController', guard)
 	{
 		guard.stopSeeingPlayers();
 	}
@@ -2164,9 +2175,9 @@ exec function followPlayers()
 
 server reliable function serverFollowPlayers()
 {
-	local SneakToSlimAINavMeshController guard;
+	local SneakToSlimAIController guard;
 
-	foreach AllActors(class'SneakToSlimAINavMeshController', guard)
+	foreach AllActors(class'SneakToSlimAIController', guard)
 	{
 		guard.resumeSeeingPlayers();
 	}
@@ -2797,7 +2808,7 @@ defaultproperties
 {
 	bJumpCapable = false;
 
-	bBuffed = 1;
+	bBuffed = 5;
 	bUsingBuffed[0] = 0;
 	bUsingBuffed[1] = 0;
 	bUsingBuffed[6] = 0;

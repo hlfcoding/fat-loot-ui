@@ -182,6 +182,10 @@ simulated state HoldingTreasureBurrow extends Burrow
 {	
 	local SneaktoSlimPawn onePawn;
 
+	simulated exec function use()
+	{
+	}
+
 	simulated exec function OnPressFirstSkill()
 	{
 	}

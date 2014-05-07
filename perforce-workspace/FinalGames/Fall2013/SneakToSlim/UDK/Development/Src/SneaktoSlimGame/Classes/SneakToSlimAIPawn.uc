@@ -165,7 +165,7 @@ DefaultProperties
 	aiSkelComp = AISkeletalMesh
 	Components.Add(AISkeletalMesh)
 
-	ControllerClass=class'SneakToSlimAINavMeshController'
+	ControllerClass=class'SneakToSlimAIController'
     bJumpCapable=false
     bCanJump=false
 

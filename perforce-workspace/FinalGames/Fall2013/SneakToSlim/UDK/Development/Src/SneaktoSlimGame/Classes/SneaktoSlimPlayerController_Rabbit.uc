@@ -94,6 +94,13 @@ Begin:
 
 simulated state Teleport
 {
+	simulated exec function use()
+	{
+		if(SneaktoSlimPawn(self.Pawn).isGotTreasure == true)
+			return;
+		else
+			super.Use();
+	}
 	
 	event BeginState (Name LastStateName)
 	{

@@ -153,7 +153,7 @@ reliable server function skipGuideLine()
 event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 {	
 	local SneaktoSlimAIPawn HitActor;
-	local SneaktoSlimAINavMeshController HitController;
+	local SneakToSlimAIController HitController;
 	local SneaktoSlimPawn victim;
 
 	super.Bump(Other, OtherComp, HitNormal);
@@ -216,7 +216,7 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 					//THE FOLLOWING SECTION OF CODE SEEMS BADLY PLACED. ASK WHOEVER AND CHECK IT WHEN POSSIBLE --ANDY
 					foreach CollidingActors( class'SneakToSlimAIPawn', HitActor, 200,)
 					{
-						HitController = SneakToSlimAINavMeshController(HitActor.Controller);
+						HitController = SneakToSlimAIController(HitActor.Controller);
 						HitController.investigateLocation(HitActor.Location);
 					}
 			}

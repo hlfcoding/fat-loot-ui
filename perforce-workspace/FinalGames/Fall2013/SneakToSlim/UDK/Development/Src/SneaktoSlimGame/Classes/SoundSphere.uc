@@ -16,14 +16,14 @@ event PostBeginPlay()
 function setOriginNode(PathNode node)
 {
 	local SneakToSlimAIPawn HitActor;
-	local SneakToSlimAINavMeshController controller;
+	local SneakToSlimAIController controller;
 
 	origin = node;
 
 	foreach CollidingActors( class'SneakToSlimAIPawn', HitActor, soundRadius, origin.Location)
 	{
 		`log("soundsphere found actor " $ HitActor.Name);
-		controller = SneakToSlimAINavMeshController(HitActor.Controller);
+		controller = SneakToSlimAIController(HitActor.Controller);
 		if(controller.investigateLocation(origin.Location))
 		{
 			break; //get out of loop if an AI guard went to investigate

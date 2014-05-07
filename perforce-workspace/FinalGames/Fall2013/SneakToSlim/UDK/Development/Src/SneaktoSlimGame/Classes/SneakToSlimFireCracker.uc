@@ -53,14 +53,14 @@ reliable server function StunPlayers(vector loc)
 reliable server function NotifyGuards(vector loc)
 {
 	local SneakToSlimAIPawn aiPawn;
-	local SneakToSlimAINavMeshController con;
+	local SneakToSlimAIController con;
 
 	//DrawDebugSphere(loc,10,20,255,255,255,true);
 	ServerCreateExplosion(loc);
 
 	foreach OverlappingActors(class'SneakToSlimAIPawn', aiPawn, EXPLOSION_DETECT_RADIUS, loc)
 	{
-		con = SneakToSlimAINavMeshController(aiPawn.Controller);
+		con = SneakToSlimAIController(aiPawn.Controller);
 		if(con != None && con.investigateLocation(loc))
 		{
 			`log(self.Name $ " called " $ aiPawn.Name $ " to investigate " $ loc, true, 'Ravi');			
@@ -73,9 +73,9 @@ reliable server function NotifyGuards(vector loc)
 DefaultProperties
 {
 	Begin Object Class=StaticMeshComponent   Name=FireCrackerMesh
-		StaticMesh=StaticMesh'FLInteractiveObject.treasure.Tresure'		
+		StaticMesh=StaticMesh'FLCharacter.Shorty.Bomb'
 		CastShadow=true
-		Scale=0.3
+		Scale=1.5
 	End Object	
 
 	Components.Add(FireCrackerMesh)

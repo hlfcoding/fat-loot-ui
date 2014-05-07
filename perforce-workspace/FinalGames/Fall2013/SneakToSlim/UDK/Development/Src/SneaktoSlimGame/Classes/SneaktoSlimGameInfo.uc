@@ -31,7 +31,7 @@ event PreBeginPlay()
 {
 	endMatchAtEndTime = true;
 	//Added one second to time because GameOver function activates when time is at 1
-	timePerMatch = 301;
+	timePerMatch = 501;
 	uniqueMatchDate = TimeStamp();
 	uniqueMatchDate = Repl(uniqueMatchDate, ":", ";");    //.txt format doesn't allow colons in filenames
 	uniqueMatchDate = Repl(uniqueMatchDate, "/", ",");    //.txt format doesn't allow slashs in filenames
@@ -98,7 +98,7 @@ function updateStatsFile()
 {
 	local FileWriter f;
 	local int count;
-	local SneakToSlimAINavMeshController AIController;
+	local SneakToSlimAIController AIController;
 	local SneaktoSlimPawn pawn;
 
 	//Opens file
@@ -112,7 +112,7 @@ function updateStatsFile()
 	f.Logf("Total AI Guard Catches: ");
 	count = 1;
 
-	foreach self.WorldInfo.AllControllers(class 'SneakToSlimAINavMeshController', AIController)
+	foreach self.WorldInfo.AllControllers(class 'SneakToSlimAIController', AIController)
 	{
 		f.Logf("   Guard " $ count $ " = " $ AIController.totalCatches);
 		count++;
@@ -138,9 +138,9 @@ function updateStatsFile()
 event Tick(float deltaTime)
 {
 	local int currentTime; //, count;
-	local SneaktoSlimPawn pawn;
+	local Pawn pawn;
 	local string time;
-	//local SneakToSlimAINavMeshController AIController;
+	//local SneakToSlimAIController AIController;
 	//local string AICatchText;
 
 	super.Tick(deltaTime);
@@ -159,10 +159,14 @@ event Tick(float deltaTime)
 		{
 			time = (timePerMatch - currentTime) / 60 $ ":" $ (timePerMatch - currentTime) % 60;
 		}
-		foreach WorldInfo.AllPawns(class'SneaktoSlimPawn', pawn)
+		foreach WorldInfo.AllPawns(class'Pawn', pawn)
 		{
 			//pawn.showDemoTime(time);
-			pawn.updateTimeUI(timePerMatch - currentTime - 1);
+			if(SneaktoSlimPawn(pawn) != NONE)
+				SneaktoSlimPawn(pawn).updateTimeUI(timePerMatch - currentTime - 1);
+			else if (SneaktoSlimPawn_Spectator(pawn) != NONE)
+				SneaktoSlimPawn_Spectator(pawn).updateTimeUI(timePerMatch - currentTime - 1);
+
 		}
 	}
 	else
@@ -569,7 +573,7 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	{
 		NewPlayer = Spawn(class 'SneaktoSlimPlayerController_Spectator',,, StartSpot.Location, SpawnRotation);
 		NewPlayer.Pawn = Spawn(class 'SneaktoSlimPawn_Spectator',,,StartSpot.Location,SpawnRotation);
-		HUDType=class'Engine.HUD'; //disable sneakstoslim HUD
+		HUDType=class'SneaktoSlimGame.SneakToSlimHUD_Spectator';
 	}
 	else if (InCharacter == "Menu")
 	{

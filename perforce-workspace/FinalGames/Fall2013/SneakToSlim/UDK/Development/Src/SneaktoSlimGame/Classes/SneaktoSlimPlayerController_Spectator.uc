@@ -3,24 +3,31 @@ class SneaktoSlimPlayerController_Spectator extends PlayerController
 
 var SneaktoSlimPawn playerSpectatingAs;
 var float yawOfPlayerSpectatingAs;
-var float playerInputATurnOfPlayerSpectatingAs;
 var float zOfPlayerSpectatingAs;
 var int rotationsSetNum; //while this var is less than ROTATIONS_TO_BE_SET, spectator's yaw is set to player's yaw
 var int ROTATIONS_TO_BE_SET;
 var float LOCATION_UPDATE_FREQUENCY;
 var float correctiveYaw;
 var float YAW_ERROR_THRESHOLD;
+var vector targetDestination; // the location spectator should go to. we will lerp to here
+
+var MiniMap myMap;
+var bool uiOn, pauseMenuOn;
 
 replication
 {
 	if(bNetDirty && Role == ROLE_Authority)
-		yawOfPlayerSpectatingAs, zOfPlayerSpectatingAs, playerInputATurnOfPlayerSpectatingAs;
+		yawOfPlayerSpectatingAs, zOfPlayerSpectatingAs; //, playerInputATurnOfPlayerSpectatingAs;
 }
 
 simulated event PostBeginPlay()
 {
     super.PostBeginPlay();
 	SetTimer(0.05, false, 'doPostProcessing');
+
+	myMap = Spawn(class'SneaktoSlimGame.MiniMap',,,self.Location,,,);
+	uiOn = true;
+	pauseMenuOn = false;
 }
 
 reliable server function ServerGotoState(name state)
@@ -65,8 +72,8 @@ simulated state FollowPlayer
 
 	simulated function PlayerMove( float DeltaTime )
 	{				
-		if(rotationsSetNum >= ROTATIONS_TO_BE_SET)
-			UpdateRotationUsingOtherInput(DeltaTime);		
+		//if(rotationsSetNum >= ROTATIONS_TO_BE_SET)
+		//	UpdateRotationUsingOtherInput(DeltaTime);		
 	}
 
 	exec function OnPressSecondSkill()
@@ -95,20 +102,14 @@ Begin:
 	`log(Name $ " In FollowPlayer state", true, 'Ravi');
 	changePlayerSpectatingAs(0);
 
-	SetTimer(LOCATION_UPDATE_FREQUENCY, true, 'updateLocationAndRotation');	
-}
-
-simulated function setRotationFlag()
-{
-	rotationsSetNum = 0;
+	SetTimer(LOCATION_UPDATE_FREQUENCY, true, 'updateLocationAndRotation');		
 }
 
 simulated function changePlayerSpectatingAs(int teamNumToSpectateAs)
 {
 	local SneaktoSlimPawn playerPawn;	
 
-	rotationsSetNum = 0;
-	correctiveYaw = 0;
+	rotationsSetNum = 0;	
 	foreach WorldInfo.AllActors(class'SneaktoSlimPawn', playerPawn)
 	{		
 		if( playerPawn.GetTeamNum() == teamNumToSpectateAs) 
@@ -122,88 +123,29 @@ simulated function changePlayerSpectatingAs(int teamNumToSpectateAs)
 
 simulated function updateLocationAndRotation()
 {
-	local Rotator playerRotation;	
-	local int deltaMultiplier;
-	local float targetMinusCurrentYaw;
-	//local Vector behindPlayer;
-	local Vector playerServerLoc;	
-
-	if(playerSpectatingAs != none)
+	local Rotator playerRotation;		
+	local Vector behindPlayer;
+	local Vector playerServerLoc;
+	
+	if(playerSpectatingAs != none && rotationsSetNum < ROTATIONS_TO_BE_SET)
 	{
 		playerServerLoc = playerSpectatingAs.Location;
 		if(Role == ROLE_Authority)
 		{
-			yawOfPlayerSpectatingAs = SneakToSlimPlayerController(playerSpectatingAs.Controller).Rotation.Yaw;
-			playerInputATurnOfPlayerSpectatingAs = SneakToSlimPlayerController(playerSpectatingAs.Controller).playerInputATurn;
+			yawOfPlayerSpectatingAs = SneakToSlimPlayerController(playerSpectatingAs.Controller).Rotation.Yaw;			
 			zOfPlayerSpectatingAs = playerSpectatingAs.Location.Z;			
 		}
 		else
 		{
 			playerServerLoc.Z = zOfPlayerSpectatingAs;
-			playerRotation.Yaw = normalizeYaw(yawOfPlayerSpectatingAs); 
-			if(rotationsSetNum < ROTATIONS_TO_BE_SET)
-			{
-				self.SetRotation(playerRotation);				
-				rotationsSetNum++;
-			}
-			targetMinusCurrentYaw = playerRotation.Yaw - self.Rotation.Yaw;
-
-			if( abs(targetMinusCurrentYaw) < YAW_ERROR_THRESHOLD )
-				deltaMultiplier = 0;
-			else				
-			{
-				targetMinusCurrentYaw = normalizeYaw(targetMinusCurrentYaw);
-				if(targetMinusCurrentYaw <= 65536/2)
-					deltaMultiplier = 1;
-				else
-					deltaMultiplier = -1;
-			}
-			correctiveYaw = deltaMultiplier * YAW_ERROR_THRESHOLD;
+			playerRotation.Yaw = yawOfPlayerSpectatingAs; 
+			behindPlayer = playerServerLoc - vector(playerRotation) * 120;
+			behindPlayer.Z -= 35;
+			self.SetRotation(playerRotation);
+			Pawn.SetLocation(behindPlayer);				
 		}
-		//behindPlayer = playerSpectatingAs.Location - distance;//vector(playerRotation) * 120;
-		//behindPlayer.Z -= 30;		
-		Pawn.SetLocation(playerServerLoc);
+		rotationsSetNum++; // set location and rotation for each player limited number of times
 	}
-}
-
-simulated function UpdateRotationUsingOtherInput( float DeltaTime )
-{
-	local Rotator	DeltaRot, newRotation, ViewRotation;
-
-	ViewRotation = Rotation;
-	if (Pawn!=none)
-	{
-		Pawn.SetDesiredRotation(ViewRotation);
-	}
-	
-	if( (playerInputATurnOfPlayerSpectatingAs > 0 && correctiveYaw > 0) ||
-		(playerInputATurnOfPlayerSpectatingAs < 0 && correctiveYaw < 0) )	
-		DeltaRot.Yaw = playerInputATurnOfPlayerSpectatingAs  + correctiveYaw;
-	else
-		DeltaRot.Yaw = playerInputATurnOfPlayerSpectatingAs;
-	
-	ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );	
-	ViewRotation.Yaw = normalizeYaw(ViewRotation.Yaw);
-	SetRotation(ViewRotation);
-
-	ViewShake( deltaTime );
-
-	NewRotation = ViewRotation;
-	NewRotation.Roll = Rotation.Roll;
-
-	if ( Pawn != None )
-		Pawn.FaceRotation(NewRotation, deltatime);
-}
-
-simulated function float normalizeYaw(float yaw)
-{
-	if(yaw < 0)
-		yaw = 65536 + yaw;
-
-	if(yaw > 65536)
-		yaw = yaw - 65536;
-
-	return yaw;
 }
 
 reliable server function serverChangePlayerSpectatingAs(int teamNumToSpectateAs)
@@ -228,10 +170,61 @@ function doPostProcessing()
 	} 
 }
 
+//When player clicks 'M' their minimap is turned on/off
+exec function toggleMap()
+{
+	//Checks if map exists and pause menu isn't on
+	if(myMap != NONE && !pauseMenuOn)
+	{
+		myMap.toggleMap();
+		if(myMap.isOn)
+		{
+			SneaktoSlimPawn_Spectator(self.Pawn).disablePlayerMovement();
+			self.IgnoreLookInput(true);
+		}
+		else
+		{
+			SneaktoSlimPawn_Spectator(self.Pawn).enablePlayerMovement();
+			self.IgnoreLookInput(false);
+		}
+	}	
+}
+
+exec function ToggleUIHUD()
+{
+	uiOn = !uiOn;
+}
+
+//When press 'ESC' key the pause menu field is active and disables/enables player movement
+//Other classes like STSHUD and STSGFxPauseMenu check this field during their ticks
+exec function togglePauseMenu()
+{
+	//Checks if map is not used
+	if(myMap != NONE)
+	{
+		if(!myMap.isOn)
+		{
+			//`log("Pause Menu activated");
+			pauseMenuOn = !pauseMenuOn;
+
+			if(pauseMenuOn)
+			{
+				SneaktoSlimPawn_Spectator(self.Pawn).disablePlayerMovement();
+				IgnoreLookInput(true);
+			}
+			else
+			{
+				SneaktoSlimPawn_Spectator(self.Pawn).enablePlayerMovement();
+				IgnoreLookInput(false);
+			}
+		}
+	}
+}
+
 DefaultProperties
 {
 	YAW_ERROR_THRESHOLD = 250
 	LOCATION_UPDATE_FREQUENCY = 0.04
-	ROTATIONS_TO_BE_SET = 2
+	ROTATIONS_TO_BE_SET = 3
 	Physics=PHYS_None	
 }

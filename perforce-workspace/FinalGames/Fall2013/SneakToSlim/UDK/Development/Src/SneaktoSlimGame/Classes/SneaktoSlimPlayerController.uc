@@ -35,7 +35,7 @@ var int timeHoldingTreasure, timesHoldingTreasureAboveAverage, timesHoldingTreas
 var int totalLocationIndex, totalLocationIndex2;
 var int numberOfTimesHitWithBellyBump;
 var string tempString;
-var float playerInputATurn; //used in spectator mode, to sent player input to spectator controller
+//var float playerInputATurn; //used in spectator mode, to sent player input to spectator controller
 
 simulated event PostBeginPlay()
 {
@@ -611,15 +611,11 @@ simulated state CustomizedPlayerWalking
 	simulated function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
 	{
 		local Rotator CameraRotationYawOnly;
-		//local Vector ZeroVector;
-		//ZeroVector = vect(0.0, 0.0, 0.0);
-
-
+		
 		if( Pawn == None )
 		{
 			return;
 		}
-
 		if (Role == ROLE_Authority)
 		{
 			// Update ViewPitch for remote clients
@@ -629,11 +625,8 @@ simulated state CustomizedPlayerWalking
 		//get the controller yaw to transform our movement-accelerations by
 		CameraRotationYawOnly.Yaw = Rotation.Yaw; 
 		NewAccel = NewAccel>>CameraRotationYawOnly; //transform the input by the camera World orientation so that it's in World frame
-
-		Pawn.Acceleration = vect(0.0, 0.0, 0.0);
-   
+		Pawn.Acceleration = vect(0.0, 0.0, 0.0);   
 		Pawn.FaceRotation(Rotation,DeltaTime); //notify pawn of rotation
-
 		CheckJumpOrDuck();
 	}
 
@@ -680,7 +673,7 @@ simulated state CustomizedPlayerWalking
 		pauseSprintTimer();
 		ServerSpeedDown();
 		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+			SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
 		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
 		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
 		{
@@ -1172,80 +1165,7 @@ simulated state PlayerWalking
 				}
 			}
 		}
-	}
-	
-	//function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
-	//{
-	//	if( Pawn == None )
-	//	{
-	//		return;
-	//	}
-
-	//	if (Role == ROLE_Authority)
-	//	{
-	//		// Update ViewPitch for remote clients
-	//		Pawn.SetRemoteViewPitch( Rotation.Pitch );
-	//	}
-
-	//	Pawn.Acceleration = NewAccel;
-
-	//	CheckJumpOrDuck();
-	//}
-
-	//function PlayerMove( float DeltaTime )
-	//{
-	//	local vector			X,Y,Z, NewAccel;
-	//	local eDoubleClickDir	DoubleClickMove;
-	//	local rotator			OldRotation;
-	//	local bool				bSaveJump;
-
-	//	if( Pawn == None )
-	//	{
-	//		GotoState('Dead');
-	//	}
-	//	else
-	//	{
-	//		GetAxes(Pawn.Rotation,X,Y,Z);
-
-	//		// Update acceleration.
-	//		NewAccel = PlayerInput.aForward*X + PlayerInput.aStrafe*Y;
-	//		NewAccel.Z	= 0;
-	//		NewAccel = Pawn.AccelRate * Normal(NewAccel);
-
-	//		if (IsLocalPlayerController())
-	//		{
-	//			AdjustPlayerWalkingMoveAccel(NewAccel);
-	//		}
-
-	//		DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
-
-	//		// Update rotation.
-	//		OldRotation = Rotation;
-	//		UpdateRotation( DeltaTime );
-	//		bDoubleJump = false;
-
-	//		if( bPressedJump && Pawn.CannotJumpNow() )
-	//		{
-	//			bSaveJump = true;
-	//			bPressedJump = false;
-	//		}
-	//		else
-	//		{
-	//			bSaveJump = false;
-	//		}
-
-	//		if( Role < ROLE_Authority ) // then save this move and replicate it
-	//		{
-	//			ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
-	//		}
-	//		else
-	//		{
-	//			ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
-	//		}
-	//		bPressedJump = bSaveJump;
-	//	}
-	//}
-	
+	}	
 	
 	//Update player rotation when walking
 	simulated function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
@@ -1296,12 +1216,6 @@ simulated state PlayerWalking
 			NewAccel.X = sneaktoslimpawn(self.Pawn).beerNum * PlayerInput.aForward * DeltaTime * 100 * PlayerInput.MoveForwardSpeed; 
 			NewAccel.Z = 0; //no vertical movement for now, may be needed by ladders later
 
-			//`log("Camera rotation" $ SneaktoslimPlayerCamera(PlayerCamera).Rotation);
-			//`log("Pawn rotation" $ Pawn.Rotation);
-			//`log("NewAccel" $ NewAccel);
-			//`log("aForward" $ PlayerInput.aForward);
-			//`log("aStrafe" $ PlayerInput.aStrafe);
-
 			if (IsLocalPlayerController())
 			{
 				AdjustPlayerWalkingMoveAccel(NewAccel);
@@ -1312,8 +1226,8 @@ simulated state PlayerWalking
 			// Update rotation.
 			OldRotation = Rotation;
 			UpdateRotation( DeltaTime );			
-			playerInputATurn = PlayerInput.aTurn;
-			sendInputToServer(playerInputATurn);
+			//playerInputATurn = PlayerInput.aTurn;
+			//sendInputToServer(playerInputATurn);
 
 			if( Role < ROLE_Authority ) // then save this move and replicate it
 			{
@@ -1339,9 +1253,7 @@ simulated state PlayerWalking
 	}
 
 	simulated function HoldTreasure()
-	{
-		//
-		//
+	{		
 	}
 
 Begin:
@@ -1349,10 +1261,10 @@ Begin:
 }
 
 //used to send player turn input to spectator
-server reliable function sendInputToServer(float inputPlayerInputATurn)
-{
-	self.playerInputATurn = inputPlayerInputATurn;	
-}
+//server reliable function sendInputToServer(float inputPlayerInputATurn)
+//{
+//	self.playerInputATurn = inputPlayerInputATurn;	
+//}
 
 simulated function changeAnimTreeToTreasure()
 {
@@ -1986,20 +1898,17 @@ Begin:
 
 simulated state caughtByAI extends CustomizedPlayerWalking
 {
-
 	event EndState (Name NextStateName)
 	{
 		sneaktoslimpawn(self.Pawn).v_energy = 100;
 		sneaktoslimpawn(self.Pawn).beerNum = 1;
 		sneaktoslimpawn(self.Pawn).BuffedTimer = 20;  //to clear the countdown
+		sneaktoslimpawn(self.Pawn).hideCurtain();
 		//Removed animation statement from here because Vanish animation is already played once.
 	}
 
 	event BeginState (Name LastStateName)
 	{
-
-		//stopAllTheLoopAnimation();
-
 		if(LastStateName == 'Sprinting' || LastStateName == 'HoldingTreasureSprinting')
 		{
 			sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint', 'Sprint', 1.f, false);
@@ -2014,18 +1923,17 @@ simulated state caughtByAI extends CustomizedPlayerWalking
 		sneaktoslimpawn(self.Pawn).hideSpottedIcon();
 	}
 
-	simulated function movehar()
+	simulated function movePlayerToBase()
 	{
 		local SneaktoSlimTreasureSpawnPoint treasureChest;  
 
 		`log(sneaktoslimpawn(self.Pawn).Name $ ": Moving " $ sneaktoslimpawn(self.Pawn).name $ " to location " $ playerBase.Name , true, 'Ravi');
-		sneaktoslimpawn(self.Pawn).flashCurtain(false);
 		sneaktoslimpawn(self.Pawn).SetLocation(playerBase.Location);
 
 		foreach allactors(class 'SneaktoSlimTreasureSpawnPoint', treasureChest)
 		{
 			SneaktoSlimPawn(self.Pawn).SetRotation(rotator(treasureChest.Location - playerBase.Location));
-			self.SetRotation(rotator(treasureChest.Location - playerBase.Location)); //Camera's orientation
+			self.SetRotation(rotator(treasureChest.Location - playerBase.Location)); //Camera's orientation			
 		}
 
 		//guard can catch u when u r in vase ?
@@ -2039,7 +1947,7 @@ simulated state caughtByAI extends CustomizedPlayerWalking
 	simulated function endCatchByAI()
 	{
 		if(Role == Role_Authority)//only server command this
-			gotoState('PlayerWalking');
+			GotoState('PlayerWalking');
 	}
 
 	simulated exec function OnPressSecondSkill()
@@ -2063,23 +1971,14 @@ Begin:
 
 	sneaktoslimpawn(self.Pawn).stopAllTheLoopAnimation();
 	sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customVanish', 'Vanish', 1.f, true, 0.1f, 0.1f, false, true);
-	sneaktoslimpawn(self.Pawn).SetTimer(0.5, false, 'fadeOutCurtain');
+	sleep(0.8);
+	sneaktoslimpawn(self.Pawn).showCurtain();
 	
-	foreach WorldInfo.AllNavigationPoints (class'PlayerStart', playerBase)
-	{
-		if (playerBase.TeamIndex == SneaktoSlimPawn(self.Pawn).GetTeamNum())
-		{
-			break;
-		}
-	}
-
-	sleep(HoldTime);
+	getBase();
+	sleep(0.8);
 	hideStateSpottedIcon();
-	movehar();
+	movePlayerToBase();
 	endCatchByAI();
-	//setTimer(HoldTime, false, 'hideStateSpottedIcon');
-	//setTimer(HoldTime, false, 'movehar');
-	//setTimer(HoldTime, false, 'endCatchByAI');
 }
 
 simulated state DisguisedWalking extends PlayerWalking
@@ -2522,7 +2421,7 @@ simulated state BeingBellyBumped extends CustomizedPlayerWalking
 {
 	//local Vector knockBackVector;
 	//local SneaktoSlimAIPawn HitActor;
-	//local SneaktoSlimAINavMeshController HitController;
+	//local SneakToSlimAIController HitController;
 	//local SneaktoSlimPawn victim;
 	//local vector dropLocation;
 
