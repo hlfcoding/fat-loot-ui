@@ -58,9 +58,7 @@ package  {
             dividers.forEach(function(divider:TableItemDivider, index:int, vector:Vector.<TableItemDivider>):void {
                 var textField:TextField = extraTextFields[index];
                 divider.x = textField.x - 14;
-                if (data != null) {
-                    divider.visible = data.hasDividers;
-                }
+                divider.visible = (data != null) ? data.hasDividers : false;
             }, this);
         }
 
