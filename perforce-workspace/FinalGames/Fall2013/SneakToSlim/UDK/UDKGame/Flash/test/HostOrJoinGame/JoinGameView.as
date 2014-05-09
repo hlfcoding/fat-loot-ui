@@ -37,13 +37,19 @@ package  {
 
         public function addEventListeners():void {
             characterSelectView.addEventListeners();
-            inputDebouncer.addEventListeners();
-            testGameLocationInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            if (MainMenuView.USE_DEBOUNCE) {
+                inputDebouncer.addEventListeners();
+            }
+            testGameLocationInput.addEventListener(Event.CHANGE, MainMenuView.USE_DEBOUNCE ?
+                inputDebouncer.debouncedFunction : onGameLocationChange);
         }
         public function removeEventListeners():void {
             characterSelectView.removeEventListeners();
-            inputDebouncer.removeEventListeners();
-            testGameLocationInput.removeEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            if (MainMenuView.USE_DEBOUNCE) {
+                inputDebouncer.removeEventListeners();
+            }
+            testGameLocationInput.removeEventListener(Event.CHANGE, MainMenuView.USE_DEBOUNCE ?
+                inputDebouncer.debouncedFunction : onGameLocationChange);
         }
 
         public function get navigationBackButton():Button {

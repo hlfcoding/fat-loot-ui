@@ -43,20 +43,28 @@ package  {
         }
 
         public function addEventListeners():void {
-            inputDebouncer.addEventListeners();
-            gameNameInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
-            playerLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
-            scoreLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
-            timeLimitInput.addEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            if (MainMenuView.USE_DEBOUNCE) {
+                inputDebouncer.addEventListeners();
+            }
+            var changeHandler:Function = MainMenuView.USE_DEBOUNCE ?
+                inputDebouncer.debouncedFunction : onGameSettingChange;
+            gameNameInput.addEventListener(Event.CHANGE, changeHandler);
+            playerLimitInput.addEventListener(Event.CHANGE, changeHandler);
+            scoreLimitInput.addEventListener(Event.CHANGE, changeHandler);
+            timeLimitInput.addEventListener(Event.CHANGE, changeHandler);
             levelSelectView.addEventListeners();
             levelSelectView.addEventListener(LevelSelectView.SELECT, onLevelSelect);
         }
         public function removeEventListeners():void {
-            inputDebouncer.removeEventListeners();
-            gameNameInput.removeEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
-            playerLimitInput.removeEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
-            scoreLimitInput.removeEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
-            timeLimitInput.removeEventListener(Event.CHANGE, inputDebouncer.debouncedFunction);
+            if (MainMenuView.USE_DEBOUNCE) {
+                inputDebouncer.removeEventListeners();
+            }
+            var changeHandler:Function = MainMenuView.USE_DEBOUNCE ?
+                inputDebouncer.debouncedFunction : onGameSettingChange;
+            gameNameInput.removeEventListener(Event.CHANGE, changeHandler);
+            playerLimitInput.removeEventListener(Event.CHANGE, changeHandler);
+            scoreLimitInput.removeEventListener(Event.CHANGE, changeHandler);
+            timeLimitInput.removeEventListener(Event.CHANGE, changeHandler);
             levelSelectView.removeEventListeners();
             levelSelectView.removeEventListener(LevelSelectView.SELECT, onLevelSelect);
         }
@@ -67,11 +75,11 @@ package  {
         public function get navigationButtons():Vector.<Button> {
             return new <Button>[hostButton];
         }
-        public function get currentInput():UIComponent {
-            return inputDebouncer.currentInput;
-        }
 
         public function onGameSettingChange(event:Event):void {
+            var currentInput:UIComponent = MainMenuView.USE_DEBOUNCE ?
+                inputDebouncer.currentInput : event.target as UIComponent;
+            if (currentInput == null) { return; }
             var settingName:String = gameSettingName(currentInput);
             var systemName:String = gameSettingSystemName(settingName);
             var value:String;
