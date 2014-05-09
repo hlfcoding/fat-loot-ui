@@ -139,9 +139,11 @@ package  {
 
         protected function isValid(input:UIComponent, value:String):Boolean {
             var validators:Array = getValidators(input);
-            for each (var validator:RegExp in validators) {
-                if (!validator.test(value)) {
-                    return false;
+            if (MainMenuView.USE_REGEXP_TEST) {
+                for each (var validator:RegExp in validators) {
+                    if (!validator.test(value)) {
+                        return false;
+                    }
                 }
             }
             return true;

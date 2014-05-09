@@ -17,6 +17,7 @@
         public static const SEND_COMMANDS:Boolean = true; // Disable for preview or debugger builds.
         public static const VERSION:String = '0.27.1';
         public static const USE_DEBOUNCE:Boolean = false; // FIXME: UDK has problems with this.
+        public static const USE_REGEXP_TEST:Boolean = false; // FIXME: UDK has problems with this.
 
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
