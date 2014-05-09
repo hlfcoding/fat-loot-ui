@@ -12,12 +12,12 @@
 
     public class MainMenuView extends NavigableView {
 
-        public static const DEBUG:Boolean = true; // Disable in general for production builds.
+        public static const DEBUG:Boolean = false; // Disable in general for production builds.
         public static const USE_FIXTURES:Boolean = true;
         public static const SEND_COMMANDS:Boolean = true; // Disable for preview or debugger builds.
-        public static const VERSION:String = '0.27.1';
         public static const USE_DEBOUNCE:Boolean = false; // FIXME: UDK has problems with this.
         public static const USE_REGEXP_TEST:Boolean = false; // FIXME: UDK has problems with this.
+        public static const VERSION:String = '0.28.0';
 
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
