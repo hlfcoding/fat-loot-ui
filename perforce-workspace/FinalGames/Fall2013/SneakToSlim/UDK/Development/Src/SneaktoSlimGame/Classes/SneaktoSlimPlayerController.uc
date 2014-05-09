@@ -1270,6 +1270,7 @@ simulated function changeAnimTreeToTreasure()
 {
 	local AnimTree animTreeToChangeTo;
 	local SneaktoSlimPawn onePawn;
+	local SneaktoSlimPawn_Spectator oneSpectator;
 
 	if(self.Class == class 'SneaktoSlimPlayerController_FatLady')
 		animTreeToChangeTo = animTree'FLCharacter.lady.lady_AnimTree_treasure';
@@ -1288,6 +1289,10 @@ simulated function changeAnimTreeToTreasure()
 		{
 			onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTreeToChangeTo);
 		}
+		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn_Spectator', oneSpectator)
+		{
+			oneSpectator.changeAnimTree(SneaktoSlimPawn(self.Pawn), animTreeToChangeTo);
+		}
 	}
 }
 
@@ -1297,6 +1302,7 @@ simulated function changeAnimTreeToNormal()
 {
 	local AnimTree animTreeToChangeTo;
 	local SneaktoSlimPawn onePawn;
+	local SneaktoSlimPawn_Spectator oneSpectator;
 
 	if(self.Class == class 'SneaktoSlimPlayerController_FatLady')
 		animTreeToChangeTo = animTree'FLCharacter.lady.lady_AnimTree_copy';
@@ -1314,6 +1320,10 @@ simulated function changeAnimTreeToNormal()
 		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
 		{
 			onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTreeToChangeTo);
+		}
+		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn_Spectator', oneSpectator)
+		{
+			oneSpectator.changeAnimTree(SneaktoSlimPawn(self.Pawn), animTreeToChangeTo);
 		}
 	}
 }
@@ -1902,13 +1912,14 @@ simulated state caughtByAI extends CustomizedPlayerWalking
 	{
 		sneaktoslimpawn(self.Pawn).v_energy = 100;
 		sneaktoslimpawn(self.Pawn).beerNum = 1;
-		sneaktoslimpawn(self.Pawn).BuffedTimer = 20;  //to clear the countdown
+		sneaktoslimpawn(self.Pawn).BuffedTimer = 0;  //to clear the countdown
 		sneaktoslimpawn(self.Pawn).hideCurtain();
 		//Removed animation statement from here because Vanish animation is already played once.
 	}
 
 	event BeginState (Name LastStateName)
 	{
+		sneaktoslimpawn(self.Pawn).BuffedTimer = 20;  //to clear the countdown
 		if(LastStateName == 'Sprinting' || LastStateName == 'HoldingTreasureSprinting')
 		{
 			sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint', 'Sprint', 1.f, false);
@@ -2053,6 +2064,8 @@ simulated state DisguisedWalking extends PlayerWalking
 	event EndState(Name NextStateName)
 	{
 		ApplyWalkingSpeed();
+		ClearTimer('removeEnergyWithTime');
+		SetTimer(2, false, 'StartEnergyRegen');
 	}
 
 Begin:
@@ -2125,6 +2138,13 @@ simulated state DisguisedExhausted extends DisguisedWalking
 	//{
 	//	pauseSprintTimer();
 	//}
+	simulated exec function OnPressSecondSkill()
+	{
+	}
+
+	simulated exec function OnReleaseSecondSkill()
+	{
+	}
 
 	event EndState(Name NextStateName)
 	{
@@ -2781,7 +2801,8 @@ server reliable function newServerPlayerRestart()
 		currentPawn.bUsingBuffed[0] = 0;
 		currentPawn.bUsingBuffed[1] = 0;
 		currentPawn.bUsingBuffed[2] = 0;
-		currentPawn.bUsingBuffed[6] = 0;
+		//currentPawn.bUsingBuffed[6] = 0;
+		currentpawn.bAffectedByCurse = false;
 
 		currentPawn.BuffedTimerDefault[0] = 10.0; // buff invis period
 		currentPawn.BuffedTimerDefault[1] = 20.0; // buff disguise period

@@ -249,7 +249,8 @@ event DrawHUD()
 	{
 		if(!setTextOnce)
 		{
-			if(PlayerOwner.PlayerInput.bUsingGamepad)
+			`log("Using Gamepad: (STSHUD_Results drawHUD)" $ SneaktoSlimPawn(SneaktoSlimPlayerController(PlayerOwner).Pawn).getIsUsingXboxController());
+			if(SneaktoSlimPawn(SneaktoSlimPlayerController(PlayerOwner).Pawn).getIsUsingXboxController())
 				FlashResults.continueText.GetObject("continueText").SetText("Press 'A' to continue");
 			else
 				FlashResults.continueText.GetObject("continueText").SetText("Press 'space' to continue");

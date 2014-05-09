@@ -10,9 +10,9 @@ event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hit
 	super.Touch(other, otherComp, hitLoc, hitNormal);
 
 	if(SneaktoSlimPawn(other)!= None){
-		`log(SneaktoSlimPlayerController(SneaktoSlimPawn(other).Controller).PlayerInput.bUsingGamepad);
+		`log("Using Gamepad (ITrigger touch): " $ SneaktoSlimPawn(other).getIsUsingXboxController());
 		InRangePawnNumber=SneaktoSlimPawn(other).GetTeamNum();
-		if(SneaktoSlimPlayerController(SneaktoSlimPawn(other).Controller).PlayerInput.bUsingGamepad)
+		if(SneaktoSlimPawn(other).getIsUsingXboxController())
 			SneaktoSlimPawn(other).showPromptUI(PromtTextXbox);
 		else
 			SneaktoSlimPawn(other).showPromptUI(PromtText);

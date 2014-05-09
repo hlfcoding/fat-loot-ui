@@ -21,7 +21,7 @@ function Init(optional LocalPlayer player)
 
 	minimapText = GetVariableObject("_root.Minimap_text");
 	minimapText.SetBool("visible", false);
-	if(SneaktoSlimPlayerController(GetPC()).PlayerInput.bUsingGamepad)
+	if(SneaktoSlimPawn_Spectator(SneaktoSlimPlayerController_Spectator(GetPC()).Pawn).getIsUsingXboxController())
 		minimapText.SetText("Press 'B'");
 	else
 		minimapText.SetText("Click 'm'");

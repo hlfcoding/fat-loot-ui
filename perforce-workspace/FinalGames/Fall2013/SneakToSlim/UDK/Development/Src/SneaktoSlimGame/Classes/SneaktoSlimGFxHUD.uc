@@ -21,7 +21,8 @@ function Init(optional LocalPlayer player)
 	HealthBar = GetVariableObject("_root.stamina_bar");
 	TutorialText = GetVariableObject("_root.TutorialText");
 	TutorialText.GetObject("TutorialText").SetText("");
-	if(SneaktoSlimPlayerController(GetPC()).PlayerInput.bUsingGamepad)
+	`log("Using Gamepad: (STSGFxHUD init) " $ SneaktoSlimPawn(SneaktoSlimPlayerController(GetPC()).Pawn).getIsUsingXboxController());
+	if(SneaktoSlimPawn(SneaktoSlimPlayerController(GetPC()).Pawn).getIsUsingXboxController())
 		TutorialText.GetObject("SkipLineText").SetText("Press 'B' to skip");
 	else
 		TutorialText.GetObject("SkipLineText").SetText("Press 'space' to skip");

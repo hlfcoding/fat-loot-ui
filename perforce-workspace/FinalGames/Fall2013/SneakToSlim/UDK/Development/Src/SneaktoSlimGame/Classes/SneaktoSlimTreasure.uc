@@ -3,23 +3,22 @@ class SneaktoSlimTreasure extends Trigger;
 var SneaktoSlimPawn tempUser;
 var vector beginPosition;
 var StaticMeshComponent myMesh;
-
 var repNotify float myX;
 var repNotify float myY;
 var repNotify float myZ;
-var repNotify bool TreasureLanded;
+var repNotify bool TreasureOut;
 var DynamicLightEnvironmentComponent LightEnvironment;
 var Array<Vector> SpawnPoints;
 var Array<SneaktoSlimTreasureSpawnPoint> SpawnPointsReference;
 var int CurrentSpawnPointIndex;
-
 var float treasureVelocity;
 var bool TreasureIsMoving;
 var Vector treasureTargetLocation;
+var float TreasureResetTime;
 
 replication {
 	if (bNetDirty)
-		myX,myY,myZ, CurrentSpawnPointIndex,TreasureLanded;
+		myX,myY,myZ, CurrentSpawnPointIndex,TreasureOut;
 }
 
 simulated event ReplicatedEvent(name VarName) 
@@ -31,7 +30,44 @@ simulated event ReplicatedEvent(name VarName)
 	    newLocation.Z = myZ;
 	    self.SetLocation(newLocation);
 	}
-	if(VarName == 'TreasureLanded'){
+	if(VarName == 'TreasureOut'){
+		if(!TreasureOut){
+            ResetTreasure();
+		}
+	}
+}
+
+simulated function StartResetTreasure(){
+	setTimer(TreasureResetTime,false,'ResetTreasure');
+}
+
+simulated function StopResetTreasure(){
+	clearTimer('ResetTreasure');
+}
+
+simulated function ResetTreasure(){
+	local int index;
+	local SneakToSlimTreasureSpawnPoint TSP;
+	local int TSPnum;
+
+	if(self.bHidden ==true){
+		return;
+	}
+	foreach AllActors(class'SneakToSlimTreasureSpawnPoint',TSP)
+	{
+		TSPnum++;
+	}
+	index = Rand(TSPnum);
+	foreach AllActors(class'SneakToSlimTreasureSpawnPoint',TSP)
+	{
+		if(TSP.BoxIndex == index){
+            TSP.MyTreasure = self;
+			self.CurrentSpawnPointIndex = index;
+			TSP.isHaveTreasure = true;
+			self.SetLocation(TSP.Location);
+			self.TreasureOut = false;
+			self.ShutDown();
+		}
 	}
 }
 
@@ -147,6 +183,8 @@ simulated function movetoDropLocation(Vector TargetLocation)
 	`log("treasure is moving" @TreasureIsMoving);
 }
 
+
+
 //simulated function treasureMoving()
 //{
 //	local Vector vdirection;
@@ -249,6 +287,7 @@ DefaultProperties
 	RemoteRole=ROLE_AutonomousProxy
 	bAlwaysRelevant=true
 	CurrentSpawnPointIndex = 255;
-    TreasureLanded = false;
+    TreasureOut = false;
 	treasureVelocity = 500.0
+	TreasureResetTime = 15;
 }

@@ -25,34 +25,22 @@ simulated function StartSpawnBuffItem(){
 	Local int randNum;
 	//if(Role == ROLE_Authority){
         randNum = Rand(100);
-		//if(randNum < (1*100/powerupNum)){
-  //          BuffType = 1;
-		//}
-		//else if(randNum < (2*100/powerupNum)){
-		//	BuffType = 2;
-		//}
-		//else if(randNum < (3*100/powerupNum)){
-		//	BuffType = 3;
-		//}
-		//else if(randNum < (4*100/powerupNum)){
-		//	BuffType = 4;
-		//}
-		//else if(randNum < (5*100/powerupNum)){
-		//	BuffType = 5;
-		//}
-		//else{
-		//	BuffType = 6;
-		//}
 		if(randNum < (1*100/powerupNum)){
-            BuffType = 3;
+            BuffType = 1;
 		}
 		else if(randNum < (2*100/powerupNum)){
-			BuffType = 4;
+			BuffType = 2;
 		}
 		else if(randNum < (3*100/powerupNum)){
+			BuffType = 3;
+		}
+		else if(randNum < (4*100/powerupNum)){
+			BuffType = 4;
+		}
+		else if(randNum < (5*100/powerupNum)){
 			BuffType = 5;
 		}
-		else {
+		else{
 			BuffType = 6;
 		}
     //}
@@ -152,7 +140,7 @@ DefaultProperties
 	PromtText = "Press 'E' to Check the shelf"
 	PromtTextXbox = "Press 'A' to Check the shelf"
 	eqGottenText = ""
-	powerupNum = 4
+	powerupNum = 6
 
 	Begin Object Class=ParticleSystemComponent Name=TeapotEffectComponent
         Template=ParticleSystem'flparticlesystem.Steam'

@@ -18,6 +18,9 @@ simulated event Landed( vector HitNormal, actor FloorActor )
 	newlocation.Z = newlocation.Z-16;
 	MyPawn.myTreasure.SetLocation(newlocation);
 	MyPawn.myTreasure.turnOn();
+	if(Role == Role_Authority){
+		MyPawn.myTreasure.StartResetTreasure();
+	}
 	MyPawn.myTreasure = none;
 	if(Role == Role_Authority){
 		foreach allActors(class 'sneaktoslimpawn', current)

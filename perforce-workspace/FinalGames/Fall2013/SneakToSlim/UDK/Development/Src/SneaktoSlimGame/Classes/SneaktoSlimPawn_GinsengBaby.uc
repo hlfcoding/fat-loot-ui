@@ -225,9 +225,15 @@ simulated function float calculateBurstRadius(float chargeTime)
 reliable server function meshTranslation(bool downOrUp, int teamNum)
 {
 	local sneaktoslimpawn CurrentPawn;
+	local SneaktoSlimPawn_Spectator spectator;
+
 	ForEach AllActors(class 'sneaktoslimpawn', CurrentPawn)
 	{
 		CurrentPawn.clientMeshTranslation(downOrUp, teamNum);
+	}
+	ForEach AllActors(class 'SneaktoSlimPawn_Spectator', spectator)
+	{
+		spectator.clientMeshTranslation(downOrUp, teamNum);
 	}
 }
 

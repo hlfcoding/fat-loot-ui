@@ -85,33 +85,29 @@ simulated event PostBeginPlay()
 	GuardsDialoguePC.AddItem("TALK to me once your ready to continue.");
 	GuardsDialogueXbox = GuardsDialoguePC;
 
-	//"Okay, now let me tell you this. Your not alone."
-	//"There are other thieves to look out for."
-	//"You’re going to have to fight them for the palace’s treasure!"
-	//“Every character has their own special abilities."
-	//"These draw on your internal ENERGY. Use them too much, and you’ll get EXHAUSTED.”
-	//"In this case, your character Lady Qianxin can ..."
-	//"SPRINT by holding RIGHT CLICK on the mouse and ..."
-	//"BELLY BUMP by clicking the LEFT MOUSE button."
-	//"Look, one of your fellow students has ‘volunteered’ to help you practice your BUMPING skills"
-	//"Once you feel you have mastered the arts of Moving, Stealing, Sneaking and Fighting. Get out there and start thieving!"
-	//"When your done, press 'ESC' and quit to return to the main menu."
-	AbilitiesDialoguePC.AddItem("You can activate different abilities by clicking on the mouse.");
-	AbilitiesDialoguePC.AddItem("Each character has different abilities, but for now ...");
-	AbilitiesDialoguePC.AddItem("As the fat lady, you can run by holding the right mouse button and ...");
-	AbilitiesDialoguePC.AddItem("clicking the left mouse button will perform a belly bump.");
-	AbilitiesDialoguePC.AddItem("Attacking others will stun them and knock off any treasure their holding.");
-	AbilitiesDialoguePC.AddItem("Try it on the other player in the room or ...");
-	AbilitiesDialoguePC.AddItem("explore the area to see how different interactable objects work.");
+	AbilitiesDialoguePC.AddItem("Okay, now let me tell you this. Your not alone.");
+	AbilitiesDialoguePC.AddItem("There are other thieves to look out for.");
+	AbilitiesDialoguePC.AddItem("You’re going to have to fight them for the palace’s treasure!");
+	AbilitiesDialoguePC.AddItem("Every character has their own special abilities.");
+	AbilitiesDialoguePC.AddItem("These draw on your internal ENERGY. Use them too much, and you’ll get EXHAUSTED.");
+	AbilitiesDialoguePC.AddItem("In this case, your character Lady Qianxin can ...");
+	AbilitiesDialoguePC.AddItem("SPRINT by holding RIGHT CLICK on the mouse and ...");
+	AbilitiesDialoguePC.AddItem("BELLY BUMP by clicking the LEFT MOUSE button.");
+	AbilitiesDialoguePC.AddItem("Look, one of your fellow students has ‘volunteered’ to help you practice your BUMPING skills");
+	AbilitiesDialoguePC.AddItem("Once you feel you have mastered the arts of Moving, Stealing, Sneaking and Fighting. Get out there and start thieving!");
 	AbilitiesDialoguePC.AddItem("When your done, press 'ESC' and quit to return to the main menu.");
-	AbilitiesDialogueXbox.AddItem("You can activate different abilities by pressing left or right trigger buttons");
-	AbilitiesDialogueXbox.AddItem("Each character has different abilities, but for now ...");
-	AbilitiesDialogueXbox.AddItem("As the fat lady, you can run by holding the LT button and ...");
-	AbilitiesDialogueXbox.AddItem("pressing the RT button will perform a belly bump.");
-	AbilitiesDialogueXbox.AddItem("Attacking others will stun them and knock off any treasure their holding.");
-	AbilitiesDialogueXbox.AddItem("Try it on the other player in the room or ...");
-	AbilitiesDialogueXbox.AddItem("explore the area to see how different interactable objects work.");
-	AbilitiesDialogueXbox.AddItem("When your done, press 'Start' and quit to return to the main menu.");
+	//Xbox dialogue
+	AbilitiesDialogueXbox.AddItem("Okay, now let me tell you this. Your not alone.");
+	AbilitiesDialogueXbox.AddItem("There are other thieves to look out for.");
+	AbilitiesDialogueXbox.AddItem("You’re going to have to fight them for the palace’s treasure!");
+	AbilitiesDialogueXbox.AddItem("Every character has their own special abilities.");
+	AbilitiesDialogueXbox.AddItem("These draw on your internal ENERGY. Use them too much, and you’ll get EXHAUSTED.");
+	AbilitiesDialogueXbox.AddItem("In this case, your character Lady Qianxin can ...");
+	AbilitiesDialogueXbox.AddItem("SPRINT by holding LEFT TRIGGER on the mouse and ...");
+	AbilitiesDialogueXbox.AddItem("BELLY BUMP by clicking RIGHT TRIGGER button.");
+	AbilitiesDialogueXbox.AddItem("Look, one of your fellow students has ‘volunteered’ to help you practice your BUMPING skills");
+	AbilitiesDialogueXbox.AddItem("Once you feel you have mastered the arts of Moving, Stealing, Sneaking and Fighting. Get out there and start thieving!");
+	AbilitiesDialogueXbox.AddItem("When your done, press 'START' and quit to return to the main menu.");
 	
 	//State isn't used but set to keep things from accidently activating 
 	changeToTutorialState('WaitOnFirstLoad');
@@ -188,7 +184,7 @@ simulated function readNextDialogueEntry()
 		if(string(guideTrigger.Tag) == "ExplainGuards")
 			guideTrigger.Tag = 'ExplainAbilities';
 	}
-	if(currentState == "ExplainAbilities" && currentDialogue.Length == 8)
+	if(currentState == "ExplainAbilities" && currentDialogue.Length == 3)
 	{
 		foreach WorldInfo.AllActors(class'PathNode', node)
 		{
@@ -276,7 +272,8 @@ simulated function changeToTutorialState(name stateName)
 		case "HowToMove":
 			SneaktoSlimPlayerController(talkingTo.Controller).IgnoreLookInput(true);
 			SneaktoSlimPlayerController(talkingTo.Controller).IgnoreMoveInput(true);
-			self.isUsingXboxController = SneaktoSlimPlayerController(talkingTo.Controller).PlayerInput.bUsingGamepad;       //Will return false since controller isn't set immediately when in debug mode
+			`log("Using gamepad: (STSGuidePawn changeTutorialState[HowToMove]): " $ talkingTo.getIsUsingXboxController());
+			self.isUsingXboxController = talkingTo.getIsUsingXboxController();       //Will return false since controller isn't set immediately when in debug mode
 			if(isUsingXboxController)
 				currentDialogue = HowToMoveDialogueXbox;
 			else
@@ -284,7 +281,8 @@ simulated function changeToTutorialState(name stateName)
 			activateGuide();
 			break;
 		case "ExplainTreasure":
-			self.isUsingXboxController = SneaktoSlimPlayerController(talkingTo.Controller).PlayerInput.bUsingGamepad;       //Double check, not needed.
+			`log("Using gamepad: (STSGuidePawn changeTutorialState[ExplainTreasure]): " $ talkingTo.getIsUsingXboxController());
+			self.isUsingXboxController = talkingTo.getIsUsingXboxController();       //Double check, not needed.
 			if(isUsingXboxController)
 				currentDialogue = TreasureDialogueXbox;
 			else
@@ -292,6 +290,8 @@ simulated function changeToTutorialState(name stateName)
 			activateGuide();
 			break;
 		case "ExplainAbilities":
+			`log("Using gamepad: (STSGuidePawn changeTutorialState[ExplainAbility]): " $ talkingTo.getIsUsingXboxController());
+			self.isUsingXboxController = talkingTo.getIsUsingXboxController();       //Double check, not needed.
 			if(isUsingXboxController)
 				currentDialogue = AbilitiesDialogueXbox;
 			else
@@ -299,6 +299,8 @@ simulated function changeToTutorialState(name stateName)
 			activateGuide();
 			break;
 		case "ExplainGuards":
+			`log("Using gamepad: (STSGuidePawn changeTutorialState[ExplainGuards]): " $ talkingTo.getIsUsingXboxController());
+			self.isUsingXboxController = talkingTo.getIsUsingXboxController();       //Double check, not needed.
 			if(isUsingXboxController)
 				currentDialogue = GuardsDialogueXbox;
 			else

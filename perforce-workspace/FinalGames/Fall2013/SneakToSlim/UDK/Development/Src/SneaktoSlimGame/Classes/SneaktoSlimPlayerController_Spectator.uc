@@ -4,20 +4,14 @@ class SneaktoSlimPlayerController_Spectator extends PlayerController
 var SneaktoSlimPawn playerSpectatingAs;
 var float yawOfPlayerSpectatingAs;
 var float zOfPlayerSpectatingAs;
-var int rotationsSetNum; //while this var is less than ROTATIONS_TO_BE_SET, spectator's yaw is set to player's yaw
-var int ROTATIONS_TO_BE_SET;
 var float LOCATION_UPDATE_FREQUENCY;
-var float correctiveYaw;
-var float YAW_ERROR_THRESHOLD;
-var vector targetDestination; // the location spectator should go to. we will lerp to here
-
 var MiniMap myMap;
 var bool uiOn, pauseMenuOn;
 
 replication
 {
 	if(bNetDirty && Role == ROLE_Authority)
-		yawOfPlayerSpectatingAs, zOfPlayerSpectatingAs; //, playerInputATurnOfPlayerSpectatingAs;
+		yawOfPlayerSpectatingAs, zOfPlayerSpectatingAs;
 }
 
 simulated event PostBeginPlay()
@@ -59,8 +53,6 @@ simulated state FollowPlayer
 {
 	simulated event BeginState(Name prevState)
 	{
-		correctiveYaw = 0;
-		rotationsSetNum = 0;
 		Pawn.GroundSpeed = 0;		
 	}
 
@@ -72,8 +64,35 @@ simulated state FollowPlayer
 
 	simulated function PlayerMove( float DeltaTime )
 	{				
-		//if(rotationsSetNum >= ROTATIONS_TO_BE_SET)
-		//	UpdateRotationUsingOtherInput(DeltaTime);		
+		//UpdateRotation(DeltaTime);
+	}
+
+	exec function SpecatorSwitchToPlayer1()
+	{
+		`log(Name $ " switching to player 1", true, 'Ravi');
+		serverChangePlayerSpectatingAs(0);
+		changePlayerSpectatingAs(0);
+	}
+
+	exec function SpecatorSwitchToPlayer2()
+	{
+		`log(Name $ " switching to player 2", true, 'Ravi');
+		serverChangePlayerSpectatingAs(1);
+		changePlayerSpectatingAs(1);
+	}
+
+	exec function SpecatorSwitchToPlayer3()
+	{
+		`log(Name $ " switching to player 3", true, 'Ravi');
+		serverChangePlayerSpectatingAs(2);
+		changePlayerSpectatingAs(2);
+	}
+
+	exec function SpecatorSwitchToPlayer4()
+	{
+		`log(Name $ " switching to player 4", true, 'Ravi');
+		serverChangePlayerSpectatingAs(3);
+		changePlayerSpectatingAs(3);
 	}
 
 	exec function OnPressSecondSkill()
@@ -109,7 +128,6 @@ simulated function changePlayerSpectatingAs(int teamNumToSpectateAs)
 {
 	local SneaktoSlimPawn playerPawn;	
 
-	rotationsSetNum = 0;	
 	foreach WorldInfo.AllActors(class'SneaktoSlimPawn', playerPawn)
 	{		
 		if( playerPawn.GetTeamNum() == teamNumToSpectateAs) 
@@ -118,7 +136,7 @@ simulated function changePlayerSpectatingAs(int teamNumToSpectateAs)
 			playerSpectatingAs = playerPawn;				
 			break;
 		}
-	}	
+	}
 }
 
 simulated function updateLocationAndRotation()
@@ -127,7 +145,7 @@ simulated function updateLocationAndRotation()
 	local Vector behindPlayer;
 	local Vector playerServerLoc;
 	
-	if(playerSpectatingAs != none && rotationsSetNum < ROTATIONS_TO_BE_SET)
+	if(playerSpectatingAs != none)
 	{
 		playerServerLoc = playerSpectatingAs.Location;
 		if(Role == ROLE_Authority)
@@ -135,16 +153,12 @@ simulated function updateLocationAndRotation()
 			yawOfPlayerSpectatingAs = SneakToSlimPlayerController(playerSpectatingAs.Controller).Rotation.Yaw;			
 			zOfPlayerSpectatingAs = playerSpectatingAs.Location.Z;			
 		}
-		else
-		{
-			playerServerLoc.Z = zOfPlayerSpectatingAs;
-			playerRotation.Yaw = yawOfPlayerSpectatingAs; 
-			behindPlayer = playerServerLoc - vector(playerRotation) * 120;
-			behindPlayer.Z -= 35;
-			self.SetRotation(playerRotation);
-			Pawn.SetLocation(behindPlayer);				
-		}
-		rotationsSetNum++; // set location and rotation for each player limited number of times
+		playerServerLoc.Z = zOfPlayerSpectatingAs;
+		playerRotation.Yaw = yawOfPlayerSpectatingAs; 
+		behindPlayer = playerServerLoc - vector(playerRotation) * 150;
+		behindPlayer.Z -= 35;
+		self.SetRotation(playerRotation);
+		Pawn.SetLocation(behindPlayer);		
 	}
 }
 
@@ -203,8 +217,7 @@ exec function togglePauseMenu()
 	if(myMap != NONE)
 	{
 		if(!myMap.isOn)
-		{
-			//`log("Pause Menu activated");
+		{			
 			pauseMenuOn = !pauseMenuOn;
 
 			if(pauseMenuOn)
@@ -223,8 +236,6 @@ exec function togglePauseMenu()
 
 DefaultProperties
 {
-	YAW_ERROR_THRESHOLD = 250
-	LOCATION_UPDATE_FREQUENCY = 0.04
-	ROTATIONS_TO_BE_SET = 3
+	LOCATION_UPDATE_FREQUENCY = 0.004
 	Physics=PHYS_None	
 }

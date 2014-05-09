@@ -59,6 +59,9 @@ simulated state Burrow extends PlayerWalking
 {
 	simulated exec function OnPressSecondSkill()   //reveal
 	{
+		if(sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslationOffset.Z > -90)
+			return;
+
 		pauseSprintTimer();
 
 		//TO-DO		//whether under wall or objects	
@@ -71,6 +74,9 @@ simulated state Burrow extends PlayerWalking
 	simulated exec function OnPressFirstSkill()
 	{
 		//Player can't Burst if pause menu is on 
+		if(sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslationOffset.Z > -90)
+			return;
+
 		if(pauseMenuOn)
 			return;
 
@@ -105,6 +111,9 @@ simulated state Burrow extends PlayerWalking
 
 	simulated exec function OnReleaseFirstSkill()
 	{
+		if(sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslationOffset.Z > -90)
+			return;
+
 		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
 
 		burstChargeTime = WorldInfo.TimeSeconds - burstChargeTime;
@@ -181,6 +190,7 @@ Begin:
 simulated state HoldingTreasureBurrow extends Burrow
 {	
 	local SneaktoSlimPawn onePawn;
+	local SneaktoSlimPawn_Spectator oneSpectator;
 
 	simulated exec function use()
 	{
@@ -224,6 +234,10 @@ simulated state HoldingTreasureBurrow extends Burrow
 				{
 					onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree_treasure');
 				}
+				ForEach WorldInfo.AllActors(class'SneaktoSlimPawn_Spectator', oneSpectator)
+				{
+					oneSpectator.changeAnimTree(SneaktoSlimPawn(self.Pawn), animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree_treasure');
+				}
 			}
 		}
 		else
@@ -234,6 +248,10 @@ simulated state HoldingTreasureBurrow extends Burrow
 				ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
 				{
 					onePawn.changeAnimTreeOnAllClients(SneaktoSlimPawn(self.Pawn), animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree');
+				}
+				ForEach WorldInfo.AllActors(class'SneaktoSlimPawn_Spectator', oneSpectator)
+				{
+					oneSpectator.changeAnimTree(SneaktoSlimPawn(self.Pawn), animTree'FLCharacter.GinsengBaby.GinsengBaby_anim_tree');
 				}
 			}
 		}

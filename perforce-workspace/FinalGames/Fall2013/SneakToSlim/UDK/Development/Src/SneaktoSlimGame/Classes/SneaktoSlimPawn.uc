@@ -60,7 +60,8 @@ enum enumBuff {
 var bool bInvisibletoAI; //if true, AIPawn cannot detect this pawn. used in SneakToSlim.setVisibleSneaktoSlimPawns
 
 var int bBuffed;
-var byte bUsingBuffed[7];//should not be used anymore
+var byte bUsingBuffed[6];//should not be used anymore
+var bool bAffectedByCurse;
 var float BuffedTimer;
 var float BuffedTimerDefault[7];// record the countdonw of buffs
 
@@ -159,7 +160,8 @@ replication {   //ARRANGE THESE ALPHABETICALLY
 		endinvisibleNum,
 		mistNum,
 		beerNum,
-		isUsingBeer;
+		isUsingBeer,
+		bAffectedByCurse;
 }
 
 simulated event PostBeginPlay()
@@ -759,6 +761,19 @@ simulated event Destroyed()
   //sprintNode = None;
 }
 
+reliable client function bool getIsUsingXboxController()
+{
+	if(self.Controller != none)
+		return SneaktoSlimPlayerController(self.Controller).PlayerInput.bUsingGamepad;
+	else
+		return false;
+}
+
+reliable client function SneaktoSlimPawn getClientSelf()
+{
+	return self;
+}
+
 simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 {
 	//ready to retire theses line
@@ -1146,8 +1161,10 @@ simulated event ReplicatedEvent(name VarName)
 							SneaktoSlimPlayerController(CurrentPawn.Controller).attemptToChangeState('PlayerWalking');
 							SneaktoSlimPlayerController(CurrentPawn.Controller).GotoState('PlayerWalking');
 						}
-						CurrentPawn.bUsingBuffed[6] = 1;
-						WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.lightningEffect',CurrentPawn.Location);
+						//CurrentPawn.bUsingBuffed[6] = 1;
+						CurrentPawn.bAffectedByCurse = true;
+						//WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.lightningEffect',CurrentPawn.Location);
+						CurrentPawn.hideAffectedByCurseIcon();
 						CurrentPawn.showAffectedByCurseIcon();
 					}
 				}
@@ -1365,9 +1382,15 @@ unreliable client function SetSprintParticle(bool flag,byte teamNum)
 simulated function CallToggleDustParticle(bool flag, byte teamNum)
 {
 	local SneakToSlimPawn current;
+	local SneakToSlimPawn_Spectator spectator;
+
 	foreach worldinfo.allactors(class 'SneakToSlimPawn', current)
 	{
 		current.setDustParticle(flag, teamNum);
+	}
+	foreach worldinfo.allactors(class 'SneakToSlimPawn_Spectator', spectator)
+	{
+		spectator.setDustParticle(flag, teamNum);
 	}
 }
 
@@ -1442,6 +1465,8 @@ reliable server function getTreasure(SneaktoSlimTreasure wildTreasure, SneaktoSl
 
 	treasureEffect.particleStartMoving(self.Location);
 	self.myTreasure = wildTreasure;
+	self.myTreasure.TreasureOut = true;
+	self.myTreasure.StopResetTreasure();
 	wildTreasure.ShutDown();	
 	clientGetTreasure(wildTreasure, treasureChest);
 
@@ -1812,6 +1837,7 @@ reliable client function hideCountdownTimer()
 reliable client function showAffectedByCurseIcon()
 {
 	local SneaktoSlimGFxHUD myFlashHUD;
+	local GFxObject ring;
 	local float tempX, tempY;
 
 	haveBeerCurse = true;
@@ -1819,6 +1845,9 @@ reliable client function showAffectedByCurseIcon()
 	if(SneaktoSlimPlayerController(self.Controller).uiOn)
 	{
 		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
+
+		if(myFlashHUD.CurseIcon.GetBool("isOn"))
+			return;
 
 		//Swaps icon locations
 		tempX = myFlashHUD.CurseIcon.GetFloat("x");
@@ -1829,6 +1858,11 @@ reliable client function showAffectedByCurseIcon()
 		myFlashHUD.SpottedIcon.SetFloat("y", tempY);
 
 		myFlashHUD.CurseIcon.SetBool("isOn", true);
+		ring = myFlashHUD.CurseIcon.GetObject("Ring");
+		ring.SetInt("rate", int(SneaktoSlimPlayerController(self.Controller).myHUD.SizeY / ring.GetInt("height"))*10);
+		ring.SetInt("width", ring.GetInt("width")*int(SneaktoSlimPlayerController(self.Controller).myHUD.SizeY / ring.GetInt("height")));
+		ring.SetInt("height", ring.GetInt("height")*int(SneaktoSlimPlayerController(self.Controller).myHUD.SizeY / ring.GetInt("height")));
+		ring.SetBool("isOn", true);
 		myFlashHUD.SpottedIcon.SetBool("isOn", false);
 		myFlashHUD.PowerupBackdrop.SetBool("isOn", false);
 		myFlashHUD.PowerupTimerBackdrop.SetBool("isOn", true);
@@ -1846,6 +1880,9 @@ reliable client function hideAffectedByCurseIcon()
 	{
 		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
 
+		if(!myFlashHUD.CurseIcon.GetBool("isOn"))
+			return;
+
 		//Swaps icon locations
 		tempX = myFlashHUD.CurseIcon.GetFloat("x");
 		tempY = myFlashHUD.CurseIcon.GetFloat("y");
@@ -1855,6 +1892,7 @@ reliable client function hideAffectedByCurseIcon()
 		myFlashHUD.SpottedIcon.SetFloat("y", tempY);
 
 		myFlashHUD.CurseIcon.SetBool("isOn", false);
+		myFlashHUD.CurseIcon.GetObject("Ring").SetBool("isOn", false);
 		myFlashHUD.PowerupTimerBackdrop.SetBool("isOn", false);
 		myFlashHUD.PowerupBackdrop.SetBool("isOn", true);
 	}
@@ -1867,8 +1905,9 @@ reliable client function showSpottedIcon()
 
 	if(SneaktoSlimPlayerController(self.Controller).uiOn)
 	{
-	myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
-	myFlashHUD.SpottedIcon.SetBool("isOn", true);
+		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
+		if(!myFlashHUD.CurseIcon.GetBool("isOn"))
+			myFlashHUD.SpottedIcon.SetBool("isOn", true);
 	}
 }
 
@@ -1924,7 +1963,7 @@ event Tick(float DeltaTime)
 	//if(self.Controller.IsInState('InvisibleSprinting') || self.Controller.IsInState('InvisibleExhausted')  || self.Controller.IsInState('InvisibleWalking') )//for test purpose
 	{
 		//using buff
-		if(bUsingBuffed[6] == 1)
+		if(bAffectedByCurse)//bUsingBuffed[6] == 1)
 			BuffedTimer = BuffedTimerDefault[0];
 		
 		BuffedTimer += DeltaTime;
@@ -1949,7 +1988,7 @@ event Tick(float DeltaTime)
 	//if(self.Controller.IsInState('DisguisedSprinting') || self.Controller.IsInState('DisguisedExhausted')  || self.Controller.IsInState('DisguisedWalking') )//for test purpose
 	else if(bUsingBuffed[1] == 1)
 	{
-		if(bUsingBuffed[6] == 1)
+		if(bAffectedByCurse)//bUsingBuffed[6] == 1)
 			BuffedTimer = BuffedTimerDefault[1];
 
 		 BuffedTimer += DeltaTime;
@@ -1989,7 +2028,12 @@ event Tick(float DeltaTime)
 		self.hideCountdownTimer();
 		BuffedTimer = 0;
 	}
-	else if(bUsingBuffed[6] == 1)
+	else
+	{
+		//self.hideCountdownTimer();
+		//BuffedTimer = 0;
+	}
+	if(bAffectedByCurse)//bUsingBuffed[6] == 1)
 	{
 		 BuffedTimer += DeltaTime;
 		 self.showCountdownTimer(int(BuffedTimerDefault[6]-BuffedTimer));
@@ -2006,13 +2050,9 @@ event Tick(float DeltaTime)
 			//beInvisable(false, false, false);  
 			//self.beerNum = 1;
 			self.serverSetBeerNum(false);
-			bUsingBuffed[6] = 0;
+			//bUsingBuffed[6] = 0;
+			bAffectedByCurse = false;
 		}
-	}
-	else
-	{
-		//self.hideCountdownTimer();
-		//BuffedTimer = 0;
 	}
 }
 
@@ -2741,6 +2781,7 @@ reliable client function saveGameResults(int score1, string character1, optional
 
 	sgs.scoreBoard = scores;
 	sgs.characterType = names;
+	sgs.playerIndex = self.GetTeamNum();
 
 	for(count = 0; names.Length > count; count++)
 	{
@@ -2808,10 +2849,11 @@ defaultproperties
 {
 	bJumpCapable = false;
 
-	bBuffed = 5;
+	bBuffed = 6;
 	bUsingBuffed[0] = 0;
 	bUsingBuffed[1] = 0;
-	bUsingBuffed[6] = 0;
+	//bUsingBuffed[6] = 0;
+	bAffectedByCurse = false;
 
 	BuffedTimerDefault[0] = 10.0; // buff invis period
 	BuffedTimerDefault[1] = 10.0; // buff disguise period

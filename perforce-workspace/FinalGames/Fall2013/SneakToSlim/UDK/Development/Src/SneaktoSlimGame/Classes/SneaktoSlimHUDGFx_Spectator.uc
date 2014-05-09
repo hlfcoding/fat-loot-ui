@@ -22,7 +22,7 @@ function Init(optional LocalPlayer player)
 	HealthBar.SetBool("visible", false);
 	TutorialText = GetVariableObject("_root.TutorialText");
 	TutorialText.GetObject("TutorialText").SetText("");
-	if(SneaktoSlimPlayerController(GetPC()).PlayerInput.bUsingGamepad)
+	if(SneaktoSlimPawn(SneaktoSlimPlayerController(GetPC()).Pawn).getIsUsingXboxController())
 		TutorialText.GetObject("SkipLineText").SetText("Press 'B' to skip");
 	else
 		TutorialText.GetObject("SkipLineText").SetText("Press 'space' to skip");

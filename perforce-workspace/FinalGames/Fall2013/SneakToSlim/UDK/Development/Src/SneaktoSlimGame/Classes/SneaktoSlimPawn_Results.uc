@@ -3,6 +3,7 @@ class SneaktoSlimPawn_Results extends GamePawn;
 
 var DynamicLightEnvironmentComponent LightEnvironment;
 var bool disableControlsOnce;
+var int playerIndex;
 
 //dllimport final function killTheServer(out string s);
 
@@ -25,6 +26,8 @@ event PostBeginPlay()
 	sgs = new class 'SaveGameState';
 
 	class'Engine'.static.BasicLoadObject(sgs, "GameResults.bin", true, 1);
+
+	playerIndex = sgs.playerIndex;
 
 	//Gets highest score
 	for(count = 0; count < sgs.scoreBoard.Length; count++)
@@ -70,6 +73,7 @@ event PostBeginPlay()
 			dir = dir * -1;
 			dummy.SetLocation(dummy.Location + (dir * (4 - ranks[0]) * (200/Cos(rotationOffset)) / 3));
 
+			`log("Player " $ (playerIndex+1) $ " has score " $ sgs.scoreBoard[0] $ "/" $ highestScore);
 			if(sgs.scoreBoard[0] == highestScore)
 				dummy.hasWon = true;
 			else
@@ -94,6 +98,7 @@ event PostBeginPlay()
 			dir = dir * -1;
 			dummy.SetLocation(dummy.Location + (dir * (4 - ranks[1]) * (200/Cos(rotationOffset)) / 3));
 
+			`log("Player " $ (playerIndex+1) $ " has score " $ sgs.scoreBoard[0] $ "/" $ highestScore);
 			if(sgs.scoreBoard[1] == highestScore)
 				dummy.hasWon = true;
 			else
@@ -217,7 +222,26 @@ function showContinueText()
 
 function showAllScores()
 {
+	local ResultsDummyPawn dummyPawn;
+
 	SneaktoSlimHUD_ResultsScreen(SneaktoSlimPlayerController_Results(self.Controller).myHUD).showAllScores();
+
+	foreach WorldInfo.AllPawns(class 'ResultsDummyPawn', dummyPawn)
+	{
+		if(dummyPawn.playerColorIndex == playerIndex)
+		{
+			if(dummyPawn.hasWon)
+			{
+				`log("Player " $ (playerIndex+1) $ " was WON");
+				PlaySound(SoundCue'flsfx.Mega_Steal');
+			}
+			else
+			{
+				`log("Player " $ (playerIndex+1) $ " was LOST");
+				PlaySound(SoundCue'flsfx.Ultimate_Heist');
+			}
+		}
+	}
 }
 
 function updateAllAnimations()

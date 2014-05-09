@@ -47,6 +47,7 @@ event PreBeginPlay()
 reliable server function GameOver()
 {
 	local SneaktoSlimPawn pawn;
+	local SneaktoSlimPawn_Spectator spectatorPawn, tempPawn;
 	local array<int> scoreBoard;
 	local array<string> characterType;
 
@@ -54,6 +55,11 @@ reliable server function GameOver()
 
 	if(!self.endMatchAtEndTime)
 		return;
+
+	foreach WorldInfo.AllPawns(class'SneaktoSlimPawn_Spectator', tempPawn)
+	{
+		spectatorPawn = tempPawn;
+	}
 
 	//Gets all players type and score
 	foreach WorldInfo.AllPawns(class'SneaktoSlimPawn', pawn)
@@ -71,15 +77,39 @@ reliable server function GameOver()
 		{
 			case 1: 
 				pawn.saveGameResults(scoreBoard[0], characterType[0]);
+				if(spectatorPawn != none)
+				{
+					spectatorPawn.saveGameResults(scoreBoard[0], characterType[0]);
+					spectatorPawn.GoToResultsScreen();
+					spectatorPawn = none;
+				}
 				break;
 			case 2: 
 				pawn.saveGameResults(scoreBoard[0], characterType[0], scoreBoard[1], characterType[1]);
+				if(spectatorPawn != none)
+				{
+					spectatorPawn.saveGameResults(scoreBoard[0], characterType[0], scoreBoard[1], characterType[1]);
+					spectatorPawn.GoToResultsScreen();
+					spectatorPawn = none;
+				}
 				break;
 			case 3: 
 				pawn.saveGameResults(scoreBoard[0], characterType[0], scoreBoard[1], characterType[1], scoreBoard[2], characterType[2]);
+				if(spectatorPawn != none)
+				{
+					spectatorPawn.saveGameResults(scoreBoard[0], characterType[0], scoreBoard[1], characterType[1], scoreBoard[2], characterType[2]);
+					spectatorPawn.GoToResultsScreen();
+					spectatorPawn = none;
+				}
 				break;
 			case 4: 
 				pawn.saveGameResults(scoreBoard[0], characterType[0], scoreBoard[1], characterType[1], scoreBoard[2], characterType[2], scoreBoard[3], characterType[3]);
+				if(spectatorPawn != none)
+				{
+					spectatorPawn.saveGameResults(scoreBoard[0], characterType[0], scoreBoard[1], characterType[1], scoreBoard[2], characterType[2], scoreBoard[3], characterType[3]);
+					spectatorPawn.GoToResultsScreen();
+					spectatorPawn = none;
+				}
 				break;
 		}
 		pawn.GoToResultsScreen();
@@ -579,7 +609,7 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	{
 		NewPlayer = Spawn(class 'SneaktoSlimGame.SneaktoSlimPlayerController_Menu',,, StartSpot.Location, SpawnRotation);
 		NewPlayer.Pawn = Spawn(class 'SneaktoSlimGame.SneaktoSlimPawn_Menu',,,StartSpot.Location,SpawnRotation);
-		HUDType=class'Engine.HUD'; //disable in-game HUD
+		HUDType=class'SneaktoSlimGame.SneakToSlimHUD_MainMenu'; //disable in-game HUD
 	}
 	else if (InCharacter == "Results")
 	{

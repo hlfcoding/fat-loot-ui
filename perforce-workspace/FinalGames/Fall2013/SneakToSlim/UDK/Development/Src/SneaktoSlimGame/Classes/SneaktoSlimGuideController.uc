@@ -291,7 +291,8 @@ function changeToTutorialState(name stateName)
 			timeBetweenLines = 1;
 			SneaktoSlimPlayerController(talkingTo.Controller).IgnoreLookInput(true);
 			SneaktoSlimPlayerController(talkingTo.Controller).IgnoreMoveInput(true);
-			self.isUsingXboxController = SneaktoSlimPlayerController(talkingTo.Controller).PlayerInput.bUsingGamepad;       //Will return false since controller isn't set immediately when in debug mode
+			`log("Using gamepad: (STSGuideController changeTutorialState[HowtoMove]): " $ talkingTo.getIsUsingXboxController());
+			self.isUsingXboxController = talkingTo.getIsUsingXboxController();       //Will return false since controller isn't set immediately when in debug mode
 			if(isUsingXboxController)
 				currentDialogue = HowToMoveDialogueXbox;
 			else
@@ -299,7 +300,8 @@ function changeToTutorialState(name stateName)
 			activateGuide();
 			break;
 		case "ExplainTreasure":
-			self.isUsingXboxController = SneaktoSlimPlayerController(talkingTo.Controller).PlayerInput.bUsingGamepad;       //Double check, not needed.
+			`log("Using gamepad: (STSGuideController changeTutorialState[ExplainTreasure]): " $ talkingTo.getIsUsingXboxController());
+			self.isUsingXboxController = talkingTo.getIsUsingXboxController();       //Double check, not needed.
 			if(isUsingXboxController)
 				currentDialogue = TreasureDialogueXbox;
 			else
@@ -307,6 +309,8 @@ function changeToTutorialState(name stateName)
 			activateGuide();
 			break;
 		case "ExplainAbilities":
+			`log("Using gamepad: (STSGuideController changeTutorialState[ExplainAbility]): " $ talkingTo.getIsUsingXboxController());
+			self.isUsingXboxController = talkingTo.getIsUsingXboxController();       //Double check, not needed.
 			if(isUsingXboxController)
 				currentDialogue = AbilitiesDialogueXbox;
 			else
@@ -314,6 +318,8 @@ function changeToTutorialState(name stateName)
 			activateGuide();
 			break;
 		case "ExplainGuards":
+			`log("Using gamepad: (STSGuideController changeTutorialState[ExplainGuards]): " $ talkingTo.getIsUsingXboxController());
+			self.isUsingXboxController = talkingTo.getIsUsingXboxController();       //Double check, not needed.
 			if(isUsingXboxController)
 				currentDialogue = GuardsDialogueXbox;
 			else

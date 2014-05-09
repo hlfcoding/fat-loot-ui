@@ -45,11 +45,12 @@ event UnTouch(Actor other)
 
 simulated function bool UsedBy(Pawn User)
 {
+	local bool used;
 	//Spawn(class 'soundSphere',,,self.Location);
 	PlaySound(SoundCue'flsfx.teleport_fx_Cue');
-    super.UsedBy(User);
+    used = super.UsedBy(User);
 	if(InRangePawnNumber!=SneaktoSlimPawn(User).GetTeamNum()){
-	    return false;
+	    return used;
     }  
 	if(destination == NONE)
 	{
@@ -59,13 +60,14 @@ simulated function bool UsedBy(Pawn User)
 	if(!destination.checkIfOccupied())
 	{
 		User.SetRotation(destination.Rotation);
+		User.SetLocation(destination.Location);
 		`log("Trigger " $ Name $ " used by" $ User.Name);
 		return super.UsedBy(User);
 	}
 	else
 	{
 		`log("Can't use teleporter");
-		return false;
+		return used;
 	}
 }
 

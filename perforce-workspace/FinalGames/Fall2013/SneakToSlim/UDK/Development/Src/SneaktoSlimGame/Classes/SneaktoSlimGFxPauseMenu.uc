@@ -10,7 +10,8 @@ function Init(optional LocalPlayer player)
 	Start();
 	Advance(0.0f);
 
-	if(SneaktoSlimPlayerController(GetPC()).PlayerInput.bUsingGamepad)
+	`log("Using Gamepad: (STSGFxPause init) " $ SneaktoSlimPawn(SneaktoSlimPlayerController(GetPC()).Pawn).getIsUsingXboxController());
+	if(SneaktoSlimPawn(SneaktoSlimPlayerController(GetPC()).Pawn).getIsUsingXboxController())
 	{
 		GetVariableObject("_root.mouse").SetBool("visible", false);
 	}

@@ -49,6 +49,68 @@ reliable client function clientPlayerPlayCustomAnim
     }
 }
 
+reliable client function changeAnimTree(SneaktoSlimPawn pawnToChangeAnimTree, AnimTree animTreeToChangeTo)
+{
+	local SneaktoSlimPawn pawnToChangeOn;
+
+	ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', pawnToChangeOn)
+    {
+		if(pawnToChangeOn == pawnToChangeAnimTree)
+		{
+			pawnToChangeOn.Mesh.SetAnimTreeTemplate(animTreeToChangeTo);
+		}
+	}
+}
+
+reliable client function clientMeshTranslation(bool downOrUp, int teamNum)
+{
+	local sneaktoslimpawn CurrentPawn;
+
+	if(downOrUp)
+	{
+		ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+		{
+			if(CurrentPawn.Class == class 'sneaktoslimpawn_ginsengbaby' && CurrentPawn.GetTeamNum() == teamNum)
+			{
+				CurrentPawn.meshTranslationOffset.Z = -90;
+				sneaktoslimpawn_ginsengbaby(CurrentPawn).Mesh.SetTranslation(CurrentPawn.meshTranslationOffset);
+			}
+		}
+	}
+	else
+	{
+		ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+		{
+			if(CurrentPawn.Class == class 'sneaktoslimpawn_ginsengbaby' && CurrentPawn.GetTeamNum() == teamNum)
+			{
+				CurrentPawn.meshTranslationOffset.Z = -48;
+				sneaktoslimpawn_ginsengbaby(CurrentPawn).Mesh.SetTranslation(CurrentPawn.meshTranslationOffset);
+			}
+		}
+	}
+}
+
+unreliable client function setDustParticle(bool flag, byte teamNum)
+{
+	local SneakToSlimPawn current;
+	foreach worldinfo.allactors(class 'SneakToSlimPawn', current)
+	{
+		if (current.GetTeamNum() == teamNum)
+		{
+			SneakToSlimPawn_GinsengBaby(current).toggleDustParticle(flag);
+		}
+	}
+}
+
+reliable client function bool getIsUsingXboxController()
+{
+	if(self.Controller != none)
+		return SneaktoSlimPlayerController_Spectator(self.Controller).PlayerInput.bUsingGamepad;
+	else
+		return false;
+}
+
+
 unreliable client function updateTimeUI(int currentTime)
 {
 	local SneaktoSlimHUDGFX_Spectator myFlashHUD;
@@ -69,6 +131,53 @@ unreliable client function updateTimeUI(int currentTime)
 			PlayerController(self.Controller).IgnoreMoveInput(true);
 		}
 	}
+}
+
+reliable client function GoToResultsScreen()
+{
+	ConsoleCommand("disconnect");
+	ConsoleCommand("open results?Character=Results");
+}
+
+reliable client function saveGameResults(int score1, string character1, optional int score2 = -1, optional string character2, optional int score3 = -1, optional string character3, optional int score4 = -1, optional string character4)
+{
+	local array<int> scores;
+	local array<string> names;
+	local SaveGameState sgs;
+	local int count;
+
+	sgs = new class 'SaveGameState';
+
+	//Values are entered in reverse order since GameInfo loop reads AllPawns in reverse order of being created
+	//So: Pawn 1 - FatLady          Pawn 1 - Shorty
+	//    Pawn 2 - Rabbit       ->  Pawn 2 - Rabbit
+	//    Pawn 3 - Shorty           Pawn 3 - FatLady
+	if(score4 != -1)
+	{
+		scores.AddItem(score4);
+		names.AddItem(character4);
+	}
+
+	if(score3 != -1)
+	{
+		scores.AddItem(score3);
+		names.AddItem(character3);
+	}
+
+	if(score2 != -1)
+	{
+		scores.AddItem(score2);
+		names.AddItem(character2);
+	}
+
+	scores.AddItem(score1);
+	names.AddItem(character1);
+
+	sgs.scoreBoard = scores;
+	sgs.characterType = names;
+	sgs.playerIndex = -1;
+
+	class'Engine'.static.BasicSaveObject(sgs, "GameResults.bin", true, 1);
 }
 
 reliable client function disablePlayerMovement()

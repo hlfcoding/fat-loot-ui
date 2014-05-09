@@ -14,6 +14,8 @@ var int timeLimit;
 var int scoreLimit;
 var int playerNumLimit;
 
+var bool disableLoopCalling;
+
 var string IPAddress;
 
 var array<clientInfo> clientInfoList;
@@ -31,21 +33,35 @@ dllimport final function string readline();
 //		mapName = inputString;
 //}
 
+simulated event PostBeginPlay()
+{
+	`log("Menu_controller");
+
+	setTimer(1,true,'killZeroPlayerServer');
+	setTimer(1,true,'updateClientArray');
+
+	IgnoreLookInput(true);
+	IgnoreMoveInput(true);
+
+	disableLoopCalling = false;
+}
+
 exec function joinGameScreen(int index)
 {
 	//`log("join fucking game");
-	sendMyMessage("query","null");
-	getClientInfo();
+	//sendMyMessage("query","null");
+	//getClientInfo();
 
-	if(clientInfoList.Length == 0 || index >=  clientInfoList.Length)
-	{
-		`log("No client info");
-	}
-	else
-	{
-		ConsoleCommand("open "$clientInfoList[index].IPAddress$"?Character="$characterName$"?Time="$timeLimit);
-	}
+	//if(clientInfoList.Length == 0 || index >=  clientInfoList.Length)
+	//{
+	//	`log("No client info");
+	//}
+	//else
+	//{
+	//	ConsoleCommand("open "$clientInfoList[index].IPAddress$"?Character="$characterName$"?Time="$timeLimit);
+	//}
 }
+
 
 exec function getClientInfo()
 {
@@ -65,12 +81,12 @@ exec function getClientInfo()
 
 		if(newClientInfo.IPAddress == "")
 		{
-			`log("quit reading ClientInfo Loop");
+			//`log("quit reading ClientInfo Loop");
 			break;
 		}
 
-		`log(newClientInfo.IPAddress);
-		`log(newClientInfo.mapName);
+		//`log(newClientInfo.IPAddress);
+		//`log(newClientInfo.mapName);
 		clientInfoList.AddItem(newClientInfo);
 	}
 	
@@ -82,17 +98,54 @@ exec function sendMyMessage(string inputCommand, string inputMapName)
 	sendClientMessage(inputCommand,inputMapName);
 }
 
-simulated event PostBeginPlay()
+function updateClientArray()
 {
-	`log("Menu_controller");
-
-	setTimer(1,true,'killZeroPlayerServer');
-
 	sendMyMessage("query","null");
-
-	IgnoreLookInput(true);
-	IgnoreMoveInput(true);
+	getClientInfo();
 }
+
+function resetDisable()
+{
+	disableLoopCalling = false;
+}
+
+exec function requestGamesInUdk()
+{
+	if(disableLoopCalling == false)
+	{
+		sneaktoslimHUD_MainMenu(self.myHUD).refreshGameList(clientInfoList);
+		disableLoopCalling = true;
+		settimer(1,false,'resetDisable');
+	}
+	//getClientInfo();
+	//sneaktoslimHUD_MainMenu(self.myHUD).refreshGameList(clientInfoList);
+}
+
+exec function selectGameInUDK(string inIPAddress)
+{
+	IPAddress = inIPAddress;
+}
+
+exec function selectGameMapInUDK(string inMapName)
+{
+	`log(inMapName);
+
+	if(inMapName == "Vault")
+		mapName = "FLMist";
+	else if(inMapName == "Temple")
+		mapName = "FLTempleMapTopPlatform";
+	else
+		mapName = "FLMist";
+
+}
+
+exec function selectCharacterInUdk(string inCharacterName)
+{
+	`log("selectCharacterInUdk "$inCharacterName);
+	characterName = inCharacterName;
+	//change character's model
+}
+
 
 //kill 0 player server
 exec function killZeroPlayerServer()
@@ -126,15 +179,6 @@ exec function quitGameInUdk()
 	ConsoleCommand("quit");
 }
 
-//Menu Two
-//get room's IP. This function can be used for refresh
-exec function getIPList()
-{
-	`log("getIPList");
-	//need to get IP address from others
-
-}
-
 //join a room
 exec function joinRoom()
 {
@@ -142,25 +186,19 @@ exec function joinRoom()
 	//ConsoleCommand("open "$targetIPAddress$"?"$"Character="$characterName);
 }
 
+//exec function printFlash()
+//{
+//	foreach WorldInfo.AllNavigationPoints (class'PlayerStart', playerBase)
+//	{					
+//		if (playerBase.TeamIndex == SneaktoSlimPawn(self.Pawn).GetTeamNum())
+//		{
+//			break;
+//		}
+//	}
+//}
+
 //Menu Three
-exec function selectGameMapInUDK(string inMapName)
-{
-	`log("selectMap");
 
-	gameMode = "Server";
-
-	if(inMapName == "Mansion")
-		mapName = "DemoDay";
-	else if(inMapName == "Mist")
-		mapName = "FLMist";
-	else if(inMapName == "Temple")
-		mapName = "FLTempleMap";
-	else if(inMapName == "Pit")
-		mapName = "DemoDay";
-	else
-		mapName = inMapName;
-
-}
 
 exec function selectTimeLimit(int inTimeLimit)
 {
@@ -195,24 +233,6 @@ exec function createRoom()
 	sendMyMessage("add",mapName);
 }
 
-//menu 4
-exec function selectCharacterInUdk(string inCharacterName)
-{
-	`log("selectCharacterInUdk "$inCharacterName);
-	characterName = inCharacterName;
-	//change character's model
-}
-
-exec function playTutorialInUdk()
-{
-	ConsoleCommand("open TutorialSmall?Character=FatLady");
-}
-
-exec function setIPAddress(string inIpAddress)
-{
-	targetIPAddress = inIpAddress;
-}
-
 exec function joinGameInUdk_Host()
 {
 	createRoom();
@@ -221,19 +241,22 @@ exec function joinGameInUdk_Host()
 
 exec function joinGameInUdk_NonHost()
 {
-	local int tempIndex;
-	tempIndex = 0;
-	//`log("join fucking game");
-	getClientInfo();
+	`log("open "$IPAddress$"?Character="$characterName);
 
-	if(clientInfoList.Length == 0 || tempIndex >=  clientInfoList.Length)
-	{
-		`log("No client info");
-	}
-	else
-	{
-		ConsoleCommand("open "$clientInfoList[tempIndex].IPAddress$"?Character="$characterName$"?Time="$timeLimit);
-	}
+	ConsoleCommand("open "$IPAddress$"?Character="$characterName);
+
+}
+
+//menu 4
+
+exec function playTutorialInUdk()
+{
+	ConsoleCommand("open TutorialSmall?Character=Tutor");
+}
+
+exec function setIPAddress(string inIpAddress)
+{
+	targetIPAddress = inIpAddress;
 }
 
 exec function joinGameInUdk(string inIpAddress)
@@ -245,17 +268,22 @@ exec function joinGameInUdk(string inIpAddress)
 	//public self ip address, player number, map
 	//ConsoleCommand("open "$"map"$"?"$"Character="$characterName);
 
-	`log("open 127.0.0.1"$"?Character="$characterName$" -log");
+	//`log("open 127.0.0.1"$"?Character="$characterName$" -log");
 
-	ConsoleCommand("open 127.0.0.1"$"?Character="$characterName$"?Time="$timeLimit);
+	//ConsoleCommand("open 127.0.0.1"$"?Character="$characterName$"?Time="$timeLimit);
 	
 }
 
-exec function readyButton()
-{
-	`log("readyButton");
-	//boardcast ready status
-}
+
+//exec function saySometing()
+//{
+//	sneaktoslimHUD_MainMenu(self.myHUD).saySomething();
+//}
+
+//exec function outputArray()
+//{
+//	sneaktoslimHUD_MainMenu(self.myHUD).outputArray();
+//}
 
 DefaultProperties
 {
