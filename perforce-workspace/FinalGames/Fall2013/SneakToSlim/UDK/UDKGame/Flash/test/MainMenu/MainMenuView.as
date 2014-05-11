@@ -25,6 +25,7 @@
         public var hostGameView:HostGameView;
         public var joinGameView:JoinGameView;
         public var versionLabel:Label;
+        public var sharedLogo:MovieClip;
 
         protected static var _sharedApplication:MainMenuView;
 

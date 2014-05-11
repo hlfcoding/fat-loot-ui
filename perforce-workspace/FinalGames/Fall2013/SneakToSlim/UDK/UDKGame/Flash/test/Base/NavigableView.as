@@ -81,7 +81,7 @@ package {
         public function handleNavigationRequest(sender:Object):void {}
 
         public function navigate(toView:MovieClip, fromView:MovieClip=null, transition:String=null):Boolean {
-            if (fromView == null && currentView != rootView) {
+            if (fromView == null) {
                 fromView = currentView;
             }
             if (transition == null) {

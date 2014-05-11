@@ -24,10 +24,14 @@
             return new <Button>[networkedGameButton, tutorialButton, creditButton, quitButton];
         }
 
-        public function viewWillAppear():void {}
+        public function viewWillAppear():void {
+            MainMenuView.sharedApplication.sharedLogo.visible = false;
+        }
         public function viewDidAppear():void {}
         public function viewWillDisappear():void {}
-        public function viewDidDisappear():void {}
+        public function viewDidDisappear():void {
+            MainMenuView.sharedApplication.sharedLogo.visible = true;
+        }
 
     }
 
