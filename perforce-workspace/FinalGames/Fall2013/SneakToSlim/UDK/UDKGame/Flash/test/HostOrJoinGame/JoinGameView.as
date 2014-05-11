@@ -33,6 +33,8 @@ package  {
 
         public function init():void {
             characterSelectView.init();
+            // Toggle as needed.
+            testGameLocationInput.visible = false;
         }
 
         public function addEventListeners():void {
