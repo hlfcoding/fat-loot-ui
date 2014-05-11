@@ -4,6 +4,7 @@ class SneaktoSlimPlayerController_Spectator extends PlayerController
 var SneaktoSlimPawn playerSpectatingAs;
 var float yawOfPlayerSpectatingAs;
 var float zOfPlayerSpectatingAs;
+var float SERVER_AUTHORITATIVE_LOCATION_FREQUENCY;
 var float LOCATION_UPDATE_FREQUENCY;
 var MiniMap myMap;
 var bool uiOn, pauseMenuOn;
@@ -121,6 +122,7 @@ Begin:
 	`log(Name $ " In FollowPlayer state", true, 'Ravi');
 	changePlayerSpectatingAs(0);
 
+	//SetTimer(SERVER_AUTHORITATIVE_LOCATION_FREQUENCY, true, 'getLocationAndRotation');
 	SetTimer(LOCATION_UPDATE_FREQUENCY, true, 'updateLocationAndRotation');		
 }
 
@@ -136,6 +138,15 @@ simulated function changePlayerSpectatingAs(int teamNumToSpectateAs)
 			playerSpectatingAs = playerPawn;				
 			break;
 		}
+	}
+}
+
+function getLocationAndRotation()
+{
+	if(Role == ROLE_Authority)
+	{
+		yawOfPlayerSpectatingAs = SneakToSlimPlayerController(playerSpectatingAs.Controller).Rotation.Yaw;			
+		zOfPlayerSpectatingAs = playerSpectatingAs.Location.Z;			
 	}
 }
 
@@ -155,8 +166,8 @@ simulated function updateLocationAndRotation()
 		}
 		playerServerLoc.Z = zOfPlayerSpectatingAs;
 		playerRotation.Yaw = yawOfPlayerSpectatingAs; 
-		behindPlayer = playerServerLoc - vector(playerRotation) * 150;
-		behindPlayer.Z -= 35;
+		behindPlayer = playerServerLoc - vector(playerRotation) * 180;
+		//behindPlayer.Z -= 35;
 		self.SetRotation(playerRotation);
 		Pawn.SetLocation(behindPlayer);		
 	}
@@ -201,7 +212,7 @@ exec function toggleMap()
 			SneaktoSlimPawn_Spectator(self.Pawn).enablePlayerMovement();
 			self.IgnoreLookInput(false);
 		}
-	}	
+	}
 }
 
 exec function ToggleUIHUD()
@@ -236,6 +247,8 @@ exec function togglePauseMenu()
 
 DefaultProperties
 {
-	LOCATION_UPDATE_FREQUENCY = 0.004
-	Physics=PHYS_None	
+	LandMovementState=FreeMove
+	LOCATION_UPDATE_FREQUENCY = 0.03
+	SERVER_AUTHORITATIVE_LOCATION_FREQUENCY = 0.1
+	Physics=PHYS_Flying
 }

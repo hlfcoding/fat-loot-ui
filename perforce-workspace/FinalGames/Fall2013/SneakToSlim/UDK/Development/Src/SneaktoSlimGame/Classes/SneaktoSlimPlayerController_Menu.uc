@@ -44,6 +44,9 @@ simulated event PostBeginPlay()
 	IgnoreMoveInput(true);
 
 	disableLoopCalling = false;
+
+	//fixing text create problem
+	sendMyMessage("query","null");
 }
 
 exec function joinGameScreen(int index)
@@ -79,7 +82,11 @@ exec function getClientInfo()
 		newClientInfo.IPAddress = readline();
 		newClientInfo.mapName = readline();
 
-		if(newClientInfo.IPAddress == "")
+		//`log("IPaddress: "$newClientInfo.IPAddress);
+		//`log("Map:" $ newClientInfo.mapName);
+
+		if(newClientInfo.IPAddress == "end" || newClientInfo.mapName == "end"
+			||newClientInfo.IPAddress == "" || newClientInfo.mapName == "")
 		{
 			//`log("quit reading ClientInfo Loop");
 			break;
@@ -91,6 +98,10 @@ exec function getClientInfo()
 	}
 	
 	closeClientInfoFile();
+
+	//fix can't get first option problem.
+	//if(clientInfoList.Length == 1)
+	//	IPAddress = clientInfoList[1].IPAddress;
 }
 
 exec function sendMyMessage(string inputCommand, string inputMapName)
@@ -119,6 +130,10 @@ exec function requestGamesInUdk()
 	}
 	//getClientInfo();
 	//sneaktoslimHUD_MainMenu(self.myHUD).refreshGameList(clientInfoList);
+
+	//fix can't get first option problem.
+	if(clientInfoList.Length > 0)
+		IPAddress = clientInfoList[0].IPAddress;
 }
 
 exec function selectGameInUDK(string inIPAddress)
@@ -131,12 +146,11 @@ exec function selectGameMapInUDK(string inMapName)
 	`log(inMapName);
 
 	if(inMapName == "Vault")
-		mapName = "FLMist";
+		mapName = "flmist";
 	else if(inMapName == "Temple")
-		mapName = "FLTempleMapTopPlatform";
+		mapName = "fltemplemaptopplatform";
 	else
 		mapName = "FLMist";
-
 }
 
 exec function selectCharacterInUdk(string inCharacterName)
@@ -157,6 +171,9 @@ exec function killZeroPlayerServer()
 	killTheServer(outputString);
 
 	outputString = ": DemoDay (0 players)";
+	killTheServer(outputString);
+
+	outputString = ": FLTempleMapTopPlatform (0 players)";
 	killTheServer(outputString);
 }
 

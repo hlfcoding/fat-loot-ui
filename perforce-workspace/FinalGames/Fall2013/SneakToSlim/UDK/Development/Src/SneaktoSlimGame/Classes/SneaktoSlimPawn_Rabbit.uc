@@ -193,5 +193,35 @@ DefaultProperties
 	TELEPORT_ACCELERATION = 10000;
 	TELEPORT_SPEED = 5000;
 
+	Begin Object Class=PointLightComponent Name=MyPointlightBack
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Normal ;
+	  Radius=15.000000
+	  Brightness=.3
+	  LightColor=(R=235,G=235,B=110)
+	  Translation=(X=-5, Z=-25)
+	End Object
+	Components.Add(MyPointlightBack)
+
+	Begin Object Class=PointLightComponent Name=MyPointlightFront
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Normal ;
+	  Radius=15.000000
+	  Brightness=.3
+	  LightColor=(R=235,G=235,B=110)
+	  Translation=(X=5, Z=-25)
+	End Object
+	Components.Add(MyPointlightFront)
+
 	characterName = "Rabbit";
 }

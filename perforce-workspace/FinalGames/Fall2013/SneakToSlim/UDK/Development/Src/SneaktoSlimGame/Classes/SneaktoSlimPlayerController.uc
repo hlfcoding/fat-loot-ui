@@ -1689,6 +1689,8 @@ simulated state EndInvisible
 		sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;
 		sneaktoslimpawn(self.Pawn).bUsingBuffed[0] = 0;
 
+		WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.stateChange',SneaktoSlimPawn(self.Pawn).Location - vect(0.f,0.f,40.0f));
+
 		
 
 
@@ -2064,6 +2066,7 @@ simulated state DisguisedWalking extends PlayerWalking
 	event EndState(Name NextStateName)
 	{
 		ApplyWalkingSpeed();
+		WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.stateChange',SneaktoSlimPawn(self.Pawn).Location - vect(0.f,0.f,40.0f));
 		ClearTimer('removeEnergyWithTime');
 		SetTimer(2, false, 'StartEnergyRegen');
 	}

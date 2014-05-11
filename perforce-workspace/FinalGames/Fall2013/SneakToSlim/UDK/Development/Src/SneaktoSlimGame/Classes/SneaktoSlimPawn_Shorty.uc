@@ -221,6 +221,36 @@ DefaultProperties
     //End Object
 	//CylinderComponent=CollisionCylinder
 
+	Begin Object Class=PointLightComponent Name=MyPointlightBack
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Normal ;
+	  Radius=15.000000
+	  Brightness=.3
+	  LightColor=(R=235,G=235,B=110)
+	  Translation=(X=-5, Z=-20)
+	End Object
+	Components.Add(MyPointlightBack)
+
+	Begin Object Class=PointLightComponent Name=MyPointlightFront
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Normal ;
+	  Radius=15.000000
+	  Brightness=.3
+	  LightColor=(R=235,G=235,B=110)
+	  Translation=(X=5, Z=-20)
+	End Object
+	Components.Add(MyPointlightFront)
+
 	NORMAL_ACCELERATION = 500;
 	DASH_ACCELERATION = 4000;
 	SHORTY_DASH_SPEED = 800;

@@ -237,10 +237,27 @@ reliable server function meshTranslation(bool downOrUp, int teamNum)
 	}
 }
 
-simulated function toggleDustParticle(bool flag)
+simulated function toggleDustParticle(bool flag, float radius)
 {
 	dustEffect.SetActive(flag);
-	WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.dig',self.Location + vect(0.0, 0.0 ,-60.0));
+	//local ParticleSystemComponent dust;
+	if (flag)
+	{
+		WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.dig',self.Location + vect(0.0, 0.0 ,-60.0));
+	}
+	else
+	{
+		playBurstParticle(radius);	
+	}
+	
+}
+
+simulated function playBurstParticle(float radius)
+{
+	local ParticleSystemComponent dust;
+	dust = WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.burst',self.Location + vect(0.0, 0.0 ,-60.0));
+	dust.SetFloatParameter('smokeRadius',radius);
+	dust.SetFloatParameter('dustRadius',radius);
 }
 
 DefaultProperties
@@ -290,6 +307,36 @@ DefaultProperties
 	CastShadow=false
 	Scale=0.0f	
 	End Object
+
+	Begin Object Class=PointLightComponent Name=MyPointlightBack
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Normal ;
+	  Radius=15.000000
+	  Brightness=.3
+	  LightColor=(R=235,G=235,B=110)
+	  Translation=(X=-5, Z=-10)
+	End Object
+	Components.Add(MyPointlightBack)
+
+	Begin Object Class=PointLightComponent Name=MyPointlightFront
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Normal ;
+	  Radius=15.000000
+	  Brightness=.3
+	  LightColor=(R=235,G=235,B=110)
+	  Translation=(X=5, Z=-10)
+	End Object
+	Components.Add(MyPointlightFront)
 
 	babyPlateMesh = BabyPlateMesh
 }

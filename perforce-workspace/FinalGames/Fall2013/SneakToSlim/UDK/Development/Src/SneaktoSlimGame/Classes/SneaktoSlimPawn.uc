@@ -4,6 +4,15 @@
 class SneaktoSlimPawn extends GamePawn
 	config(Game) placeable;
 
+var float LOCATION_SEND_FREQUENCY;
+var float LOCATION_SET_FREQUENCY;
+var int NUM_INTERPOLATION_UPDATES;
+var Rotator customRotation;
+var Vector customLocation;
+var Vector currentDestination;
+var Vector customVelocity;
+var int interpolationCounter;
+
 var DynamicLightEnvironmentComponent LightEnvironment;
 var MaterialInstanceConstant Mat;   //-----------------------------------------------------------------//
 var bool bInvulnerable;
@@ -68,11 +77,6 @@ var float BuffedTimerDefault[7];// record the countdonw of buffs
 var() float v_energy;         // ANDY: naming v_xyz for variables (health, energy, speed, etc), and s_xyz for states (weak, high, drunk, etc)
 var int s_energized;
 var repnotify bool isGotTreasure;
-//var float CamOffsetDistance; //distance to offset the camera from the player in unreal units
-//var float CamMinDistance, CamMaxDistance;
-//var float CamZoomTick; //how far to zoom in/out per command
-//var float CamHeight; //how high cam is relative to pawn
-//var float CamZoomHeightTick; //just another variable i need for new zooming mechanic
 var int playerScore;
 
 var() float FLWalkingSpeed;
@@ -134,25 +138,25 @@ var int lastPlayerScore;
 var StaticMeshComponent treasureComponent;
 var PointLightComponent treasureLightComponent;
 
+var ParticleSystemComponent curseEffect;
 
-replication {   //ARRANGE THESE ALPHABETICALLY
+
+replication
+{   
+	//ARRANGE THESE ALPHABETICALLY
 	if (bNetDirty || bNetOwner)
-		bBuffed, // only keep copy in server
-		//bIsDashing, //shoule not use this anymore when using states
-		bUsingBuffed, // only keep copy in server //shoule not use this anymore when using states
-		//myTreasure,
+		bBuffed, // only keep copy in server		
+		bUsingBuffed, // only keep copy in server //shoule not use this anymore when using states		
 		colorIndex,       //Updates energy reading for each pawn's own respective value
 		CSpeed,
 		invincible,         //Makes player invincible for short time after being caught by guard
 		isChangeMesh,
 		isGotTreasure, //shoule not use this anymore when using states
-        isSetSPcolor,
-		//isStunned,    //shoule not use this anymore when using states
+        isSetSPcolor,		
 		playerScore,    //Enable scores to update change on each client's screen
 		replicateAnimName,
 		s_energized,
-		stunTime,
-		//v_energy,
+		stunTime,		
 		transparentNum,
 		disguiseNum,
 		endDisguiseNum,
@@ -162,6 +166,337 @@ replication {   //ARRANGE THESE ALPHABETICALLY
 		beerNum,
 		isUsingBeer,
 		bAffectedByCurse;
+
+	if(bNetDirty && Role == ROLE_Authority && RemoteRole == ROLE_SimulatedProxy) //send from server to non-owning clients
+		customLocation, customRotation, customVelocity;
+}
+
+function sendCustomLocation()
+{
+	if(Role == ROLE_Authority)
+	{
+		customLocation = self.Location;
+		customRotation = self.Rotation;		
+		customVelocity = self.Velocity;
+	}
+}
+
+simulated function interpolateLocation()
+{
+	local Vector moveStep;
+
+	if(Role == ROLE_SimulatedProxy)
+	{
+		self.SetRotation(customRotation);
+		self.Velocity = customVelocity;
+
+		if( interpolationCounter == 0)
+			currentDestination = customLocation;
+				
+		if( VSize(customLocation - self.Location) > 10 ) //don't move very short distances
+		{
+			moveStep = (currentDestination - self.Location) / (NUM_INTERPOLATION_UPDATES - interpolationCounter);
+			self.SetLocation(self.Location + moveStep);
+		}
+		interpolationCounter += 1;	
+		if(interpolationCounter >= NUM_INTERPOLATION_UPDATES)
+			interpolationCounter = 0;		
+	}
+}
+
+simulated event ReplicatedEvent(name VarName)
+{
+	Local SneaktoSlimSpawnPoint Current;
+	Local SneaktoSlimpawn CurrentPawn;
+
+	`log("enter ReplicatedEvent " $ self.GetTeamNum());
+	if ( VarName == 'replicateAnimName')
+	{
+		ClientPlayAnim(replicateAnimName);
+	}
+
+	if(VarName == 'invincible')
+	{
+		if(invincible == true)
+		{
+			disablePlayerMovement();
+			self.canMoveAfterBeingReturnedToSpawnPoint = true;
+			`log("press 'i' to resume play");
+		}
+	}
+	
+	if( VarName == 'isSetSPcolor')	
+	{
+        ForEach class'WorldInfo'.static.GetWorldInfo().AllActors(class 'SneaktoSlimSpawnPoint', Current)
+        {
+            `log("client:function current"@current.Name,true,'David');
+    	    Current.SetColor();
+        }
+	}
+	if(VarName == 'colorIndex')
+	{
+		self.changeCharacterMaterial(self,self.colorIndex,"Character");
+	}
+	if(VarName == 'transparentNum')
+	{
+		if(transparentNum >= 0)
+		{
+			transparentNum = -1;
+
+			foreach AllActors(class 'sneaktoslimpawn', CurrentPawn)
+			{
+				if(CurrentPawn.GetTeamNum() == transparentNum)
+				{
+					//transparent
+				}
+			}
+		}
+	}
+	if(VarName == 'disguiseNum')
+	{
+		if(disguiseNum >= 0 && self.mistNum == 0)
+		{	
+			ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+			{
+				if(CurrentPawn.GetTeamNum() == disguiseNum)
+				{
+					CurrentPawn.DetachComponent(CurrentPawn.Mesh);
+					CurrentPawn.ReattachComponent(CurrentPawn.AISkelComp);				
+					AIFlashLight.SetEnabled(true);
+				}
+			}
+			serverResetDisguiseNum();
+		}
+	}
+	if(VarName == 'endDisguiseNum')
+	{
+		`log("endDisguiselog");
+		if(endDisguiseNum >= 0)
+		{	
+			ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+			{
+				if(CurrentPawn.GetTeamNum() == endDisguiseNum)
+				{
+					CurrentPawn.DetachComponent(CurrentPawn.AISkelComp);
+					CurrentPawn.ReattachComponent(CurrentPawn.Mesh);		
+					AIFlashLight.SetEnabled(false);
+				}
+			}
+			serverResetEndDisguiseNum();
+		}
+	}
+	if(VarName == 'invisibleNum')
+	{
+		if(invisibleNum >= 0 && self.mistNum == 0)
+		{	
+			ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+			{
+				if(CurrentPawn.GetTeamNum() == invisibleNum)
+				{
+					if(CurrentPawn.Role == ROLE_AutonomousProxy)
+					{
+						CurrentPawn.changeCharacterMaterial(currentPawn,currentPawn.GetTeamNum(),"Invisible");						
+					}
+					else if (CurrentPawn.Role == ROLE_SimulatedProxy)
+					{						
+						CurrentPawn.SetHidden(true);						
+					}
+				}
+			}
+			
+		}
+		serverResetInvisibleNum();
+	}
+	if(VarName == 'endinvisibleNum')
+	{
+		//`log("fuck you all");
+		if(endinvisibleNum >= 0)
+		{	
+			ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+			{
+				if(CurrentPawn.GetTeamNum() == endinvisibleNum)
+				{
+					if(CurrentPawn.Role == ROLE_AutonomousProxy)
+					{		
+						CurrentPawn.changeCharacterMaterial(currentPawn,currentPawn.GetTeamNum(),"Character");						
+					}
+					else if (CurrentPawn.Role == ROLE_SimulatedProxy)
+					{
+						CurrentPawn.SetHidden(false);
+					}
+				}
+			}
+			
+		}
+		
+		if (self.mistNum != 0)
+			self.changeCharacterMaterial(self,self.GetTeamNum(),"Invisible");
+
+		serverResetEndInvisibleNum();
+	}
+
+	if(VarName == 'mistNum')
+	{		
+		//enter mist
+		if(self.mistNum != 0)
+		{
+			if (SneaktoSlimPlayerController(Self.Controller).IsInState('InvisibleExhausted') || SneaktoSlimPlayerController(Self.Controller).IsInState('InvisibleWalking'))
+			{
+				SneaktoSlimPlayerController(Self.Controller).attemptToChangeState('EndInvisible');
+				SneaktoSlimPlayerController(Self.Controller).GotoState('EndInvisible');
+			}
+			else if (SneaktoSlimPlayerController(Self.Controller).IsInState('DisguisedExhausted') || SneaktoSlimPlayerController(Self.Controller).IsInState('DisguisedWalking'))
+			{
+				SneaktoSlimPlayerController(Self.Controller).attemptToChangeState('EndDisguised');
+				SneaktoSlimPlayerController(Self.Controller).GotoState('EndDisguised');
+			}
+
+
+			//If I am the client owner, I will check all the other players' status
+			if(self.Role == ROLE_AutonomousProxy)
+			{
+				ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+				{
+
+					if(CurrentPawn.mistNum == self.mistNum)
+					{
+						CurrentPawn.Mesh.SetHidden(false);						
+						changeCharacterMaterial(CurrentPawn,CurrentPawn.GetTeamNum(),"Invisible");
+						if(CurrentPawn.isGotTreasure == true)
+						{
+							CurrentPawn.treasureComponent.SetHidden(false);
+							CurrentPawn.SetTreasureParticleEffectActive(true);							
+						}
+					}
+					else if(CurrentPawn.mistNum != 0 && CurrentPawn.mistNum != self.mistNum)
+					{
+						CurrentPawn.Mesh.SetHidden(true);
+						if(CurrentPawn.isGotTreasure == true)
+						{
+							CurrentPawn.treasureComponent.SetHidden(true);
+							CurrentPawn.SetTreasureParticleEffectActive(false);
+						}
+					}
+					else if(CurrentPawn.mistNum == 0)
+					{
+						CurrentPawn.Mesh.SetHidden(false);
+						if(CurrentPawn.isGotTreasure == true)
+						{
+							CurrentPawn.treasureComponent.SetHidden(false);
+							CurrentPawn.SetTreasureParticleEffectActive(true);
+						}
+					}
+				}
+			}
+			//If I am the simulated guest, I will find the client owner, compare to him and decide whether I should hide or transparent
+			else if(self.Role == ROLE_SimulatedProxy)
+			{
+				ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+				{
+					//find the client owner
+					if(CurrentPawn.Role == ROLE_AutonomousProxy)
+					{
+						if(CurrentPawn.mistNum == self.mistNum)
+						{
+							self.Mesh.SetHidden(false);							
+							self.changeCharacterMaterial(self,self.GetTeamNum(),"Invisible");
+							if(self.isGotTreasure == true)
+							{
+								self.treasureComponent.SetHidden(false);
+								self.SetTreasureParticleEffectActive(true);								
+							}
+						}
+						else
+						{
+							self.Mesh.SetHidden(true);
+							if(self.isGotTreasure == true)
+							{
+								self.treasureComponent.SetHidden(true);
+								self.SetTreasureParticleEffectActive(false);
+							}
+						}
+					}
+				}
+			}
+		}
+		//quit mist
+		else if(self.mistNum == 0)
+		{
+			//If I am the client owner, I will check all the other players' status
+			if(self.Role == ROLE_AutonomousProxy)
+			{
+				ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
+				{
+					if(CurrentPawn.mistNum == self.mistNum)
+					{
+						CurrentPawn.Mesh.SetHidden(false);
+						changeCharacterMaterial(CurrentPawn,CurrentPawn.GetTeamNum(),"Character");
+						if(CurrentPawn.isGotTreasure == true)
+						{
+							CurrentPawn.treasureComponent.SetHidden(false);
+							CurrentPawn.SetTreasureParticleEffectActive(true);							
+						}						
+					}
+					else if(CurrentPawn.mistNum != 0)
+					{
+						CurrentPawn.Mesh.SetHidden(true);
+						if(CurrentPawn.isGotTreasure == true)
+						{
+							CurrentPawn.treasureComponent.SetHidden(true);
+							CurrentPawn.SetTreasureParticleEffectActive(false);
+						}
+					}
+				}
+			}
+			//I am the simulated guest
+			else if(self.Role == ROLE_SimulatedProxy)
+			{
+				self.Mesh.SetHidden(false);
+				self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
+				if(self.isGotTreasure == true)
+				{
+					self.treasureComponent.SetHidden(false);
+					self.SetTreasureParticleEffectActive(true);
+				}
+
+			}
+		}
+	}
+
+	if ( VarName == 'isUsingBeer')
+	{
+		if(self.isUsingBeer == true)
+		{
+			serverResetIsUsingBeer();
+			if(self.Role == ROLE_SimulatedProxy)
+			{
+				foreach allactors(class 'sneaktoslimpawn', CurrentPawn)
+				{
+					if(CurrentPawn.Role == ROLE_AutonomousProxy)
+					{
+						//CurrentPawn.beerNum = -1;
+						CurrentPawn.serverSetBeerNum(true);
+						//CurrentPawn.SetUsingBuff(true);
+						CurrentPawn.hidePowerupUI(CurrentPawn.bBuffed);
+						CurrentPawn.serverResetBBuffed();
+						if(CurrentPawn.Controller.IsInState('UsingSuperSprint'))
+						{
+							SneaktoSlimPlayerController(CurrentPawn.Controller).attemptToChangeState('PlayerWalking');
+							SneaktoSlimPlayerController(CurrentPawn.Controller).GotoState('PlayerWalking');
+						}
+						//CurrentPawn.bUsingBuffed[6] = 1;
+						CurrentPawn.bAffectedByCurse = true;
+						//WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.lightningEffect',CurrentPawn.Location);
+						CurrentPawn.hideAffectedByCurseIcon();
+						CurrentPawn.toggleCursedEffect(true);
+						CurrentPawn.showAffectedByCurseIcon();
+					}
+				}
+			}
+		}
+	}
+
+	Super.ReplicatedEvent(VarName);
 }
 
 simulated event PostBeginPlay()
@@ -176,27 +511,35 @@ simulated event PostBeginPlay()
     SetSpawnPointColor();
 	setTimer(0.3,false,'ServerRemindTreasureLocation');
 	setTimer(0.3,false,'ServerInitLight');
+
+	NUM_INTERPOLATION_UPDATES = LOCATION_SEND_FREQUENCY / LOCATION_SET_FREQUENCY;
+	if(Role == ROLE_Authority && RemoteRole == ROLE_SimulatedProxy)
+	{
+		setTimer(LOCATION_SEND_FREQUENCY, true, 'sendCustomLocation');
+	}
+	if(Role == ROLE_SimulatedProxy)
+	{
+		setTimer(LOCATION_SET_FREQUENCY, true, 'interpolateLocation');
+	}
+
 	AIFlashLight.SetEnabled(false);
 	AISkelComp.AttachComponentToSocket(AILantern,'lantern');
 }
 
 simulated exec function EnterMist(){
 	`log("Enter Mist!!!!!!!!!!!!!!");
-	removePowerUp();
-	//self.bInvisibletoAI = true;
+	removePowerUp();	
 	self.mistNum = 1;//need to be set to mistTrigger num
 }
 
 simulated exec function ExitMist(){
-	`log("Exit Mist!!!!!!!!!!!!!!");
-	//self.endinvisibleNum = self.GetTeamNum();
-	//self.bInvisibletoAI = false;
+	`log("Exit Mist!!!!!!!!!!!!!!");	
 	self.mistNum = 0;
 }
 
 reliable client function removePowerUp()
 {
-	`log("remove PowerUPUPUPUPUPUPUPUPUPUPUPUP");
+	`log("remove PowerUP");
 	if(self.beerNum == -1)
 	{
 	}
@@ -362,17 +705,7 @@ reliable client function hideTimeUI()
 }
 
 unreliable client function showDemoTime(String text)
-{
-	//Not used anymore, now use updateTimeUI(int);
-	/*local SneaktoSlimGFxHUD myFlashHUD;
-
-	if(SneaktoSlimPlayerController(self.Controller).uiOn)
-	{
-		text = "Time - " $ text;
-		myFlashHUD = SneaktoSlimHUD(SneaktoSlimPlayerController(self.Controller).myHUD).FlashHUD;
-		myFlashHUD.TimerText.SetBool("isOn", true);
-		myFlashHUD.TimerText.GetObject("time_text").SetText(text);
-	}*/
+{	
 }
 
 reliable client function showWinnerText()
@@ -682,8 +1015,7 @@ function freeVaseFromPawn()
 
 exec function SetSpawnPointColor()
 {
-	Local SneaktoSlimSpawnPoint Current; 
-	//`log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",true,'David');
+	Local SneaktoSlimSpawnPoint Current; 	
     
 	if (Role < ROLE_Authority)
 	{	
@@ -775,44 +1107,8 @@ reliable client function SneaktoSlimPawn getClientSelf()
 }
 
 simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
-{
-	//ready to retire theses line
-	//sprintNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customSprint'));
-	//bellyBumpNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customBumping'));
-	//bumpingNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customBumping'));
-	//bumpReadyNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customBumpReady'));
-	//bumpLandNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customLand'));
-	//vanishNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customVanish'));
-	//tiredNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customTired'));
-	//stunNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customStun'));
-	//hitNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customHit'));
-	//treasureWalkNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customTreasureWalk'));
-	//searchNode = AnimNodePlayCustomAnim(SkelComp.FindAnimNode('customSearch'));
-	//	
+{	
 }
-
-//simulated function toggleTiredAnimation(bool animMustPlay)
-//{
-//	if (tiredNode == None)
-//	{
-//		return;
-//	}
-
-//	if (animMustPlay == true)
-//	{
-//		if (!tiredNode.bIsPlayingCustomAnim)
-//		{
-//  			tiredNode.PlayCustomAnim('Tired', 1.f, 0.1f, 0.1f, true, true);
-//		}
-//	}
-//	else
-//	{
-//		if (tiredNode.bIsPlayingCustomAnim)
-//		{
-//				tiredNode.StopCustomAnim(0.1f);
-//		}
-//	}
-//}
 
 //Player will now move but still be invincible until time out
 exec function makePlayerMoveAfterClickingKey()
@@ -844,337 +1140,6 @@ event OnAnimEnd(AnimNodeSequence SeqNode, float PlayedTime, float ExcessTime)
 {
 	super.OnAnimEnd(SeqNode, PlayedTime, ExcessTime);	
 }
-
-simulated event ReplicatedEvent(name VarName)
-{
-	Local SneaktoSlimSpawnPoint Current;
-	Local SneaktoSlimpawn CurrentPawn;
-
-	`log("enter replicated event" $ self.GetTeamNum());
-	if ( VarName == 'replicateAnimName')
-	{
-		ClientPlayAnim(replicateAnimName);
-	}
-
-	if(VarName == 'invincible')
-	{
-		if(invincible == true)
-		{
-			disablePlayerMovement();
-			self.canMoveAfterBeingReturnedToSpawnPoint = true;
-			`log("press 'i' to resume play");
-		}
-	}
-
-	
-	if( VarName == 'isSetSPcolor')	
-	{
-        ForEach class'WorldInfo'.static.GetWorldInfo().AllActors(class 'SneaktoSlimSpawnPoint', Current)
-        {
-            `log("client:function current"@current.Name,true,'David');
-    	    Current.SetColor();
-        }
-	}
-	if(VarName == 'colorIndex')
-	{
-		self.changeCharacterMaterial(self,self.colorIndex,"Character");
-	}
-	if(VarName == 'transparentNum')
-	{
-		if(transparentNum >= 0)
-		{
-			transparentNum = -1;
-
-			foreach AllActors(class 'sneaktoslimpawn', CurrentPawn)
-			{
-				if(CurrentPawn.GetTeamNum() == transparentNum)
-				{
-					//transparent
-				}
-			}
-		}
-	}
-	if(VarName == 'disguiseNum')
-	{
-		if(disguiseNum >= 0 && self.mistNum == 0)
-		{	
-			ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
-			{
-				if(CurrentPawn.GetTeamNum() == disguiseNum)
-				{
-					CurrentPawn.DetachComponent(CurrentPawn.Mesh);
-					CurrentPawn.ReattachComponent(CurrentPawn.AISkelComp);
-				//	CurrentPawn.AISkelComp.AttachComponentToSocket(AILantern,'lantern');
-					AIFlashLight.SetEnabled(true);
-				}
-			}
-			serverResetDisguiseNum();
-		}
-	}
-	if(VarName == 'endDisguiseNum')
-	{
-		`log("endDisguiselog");
-		if(endDisguiseNum >= 0)
-		{	
-			ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
-			{
-				if(CurrentPawn.GetTeamNum() == endDisguiseNum)
-				{
-					CurrentPawn.DetachComponent(CurrentPawn.AISkelComp);
-					CurrentPawn.ReattachComponent(CurrentPawn.Mesh);		
-					AIFlashLight.SetEnabled(false);
-				}
-			}
-			serverResetEndDisguiseNum();
-		}
-	}
-	if(VarName == 'invisibleNum')
-	{
-		if(invisibleNum >= 0 && self.mistNum == 0)
-		{	
-			ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
-			{
-				if(CurrentPawn.GetTeamNum() == invisibleNum)
-				{
-					if(CurrentPawn.Role == ROLE_AutonomousProxy)
-					{
-						CurrentPawn.changeCharacterMaterial(currentPawn,currentPawn.GetTeamNum(),"Invisible");
-						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
-						//CurrentPawn.Mesh.SetMaterial(1, Material'FLCharacter.Character.invisibleMaterial');
-					}
-					else if (CurrentPawn.Role == ROLE_SimulatedProxy)
-					{
-						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
-						//CurrentPawn.Mesh.SetMaterial(1, Material'FLCharacter.Character.invisibleMaterial');
-						//CurrentPawn.changeCharacterMaterial(currentPawn,currentPawn.GetTeamNum(),"Invisible");
-						CurrentPawn.SetHidden(true);
-						//CurrentPawn.Mesh.SetOnlyOwnerSee(true);
-					}
-				}
-			}
-			
-		}
-		serverResetInvisibleNum();
-	}
-	if(VarName == 'endinvisibleNum')
-	{
-		//`log("fuck you all");
-		if(endinvisibleNum >= 0)
-		{	
-			ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
-			{
-				if(CurrentPawn.GetTeamNum() == endinvisibleNum)
-				{
-					if(CurrentPawn.Role == ROLE_AutonomousProxy)
-					{
-						
-						 //MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum(), class'MaterialInstanceConstant'));
-						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
-						//CurrentPawn.Mesh.SetMaterial(1,  MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum(), class'MaterialInstanceConstant')));
-						//CurrentPawn.Mesh.SetMaterial(1,teamMaterial[currentPawn.GetTeamNum()]);
-
-						CurrentPawn.changeCharacterMaterial(currentPawn,currentPawn.GetTeamNum(),"Character");
-						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
-						//CurrentPawn.Mesh.SetMaterial(1,teamMaterial[currentPawn.GetTeamNum()]);
-
-
-					}
-					else if (CurrentPawn.Role == ROLE_SimulatedProxy)
-					{
-						CurrentPawn.SetHidden(false);
-					}
-				}
-			}
-			
-		}
-		
-		if (self.mistNum != 0)
-			self.changeCharacterMaterial(self,self.GetTeamNum(),"Invisible");
-
-		serverResetEndInvisibleNum();
-	}
-
-	if(VarName == 'mistNum')
-	{
-		//`log("Replicated Event: Enter Mist");
-		//enter mist
-		if(self.mistNum != 0)
-		{
-			if (SneaktoSlimPlayerController(Self.Controller).IsInState('InvisibleExhausted') || SneaktoSlimPlayerController(Self.Controller).IsInState('InvisibleWalking'))
-			{
-				SneaktoSlimPlayerController(Self.Controller).attemptToChangeState('EndInvisible');
-				SneaktoSlimPlayerController(Self.Controller).GotoState('EndInvisible');
-			}
-			else if (SneaktoSlimPlayerController(Self.Controller).IsInState('DisguisedExhausted') || SneaktoSlimPlayerController(Self.Controller).IsInState('DisguisedWalking'))
-			{
-				SneaktoSlimPlayerController(Self.Controller).attemptToChangeState('EndDisguised');
-				SneaktoSlimPlayerController(Self.Controller).GotoState('EndDisguised');
-			}
-
-
-			//If I am the client owner, I will check all the other players' status
-			if(self.Role == ROLE_AutonomousProxy)
-			{
-				ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
-				{
-
-					if(CurrentPawn.mistNum == self.mistNum)
-					{
-						CurrentPawn.Mesh.SetHidden(false);
-						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
-						//CurrentPawn.Mesh.SetMaterial(1, Material'FLCharacter.Character.invisibleMaterial');
-						changeCharacterMaterial(CurrentPawn,CurrentPawn.GetTeamNum(),"Invisible");
-						if(CurrentPawn.isGotTreasure == true)
-						{
-							CurrentPawn.treasureComponent.SetHidden(false);
-							CurrentPawn.SetTreasureParticleEffectActive(true);
-							//CurrentPawn.treasureComponent.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
-						}
-					}
-					else if(CurrentPawn.mistNum != 0 && CurrentPawn.mistNum != self.mistNum)
-					{
-						CurrentPawn.Mesh.SetHidden(true);
-						if(CurrentPawn.isGotTreasure == true)
-						{
-							CurrentPawn.treasureComponent.SetHidden(true);
-							CurrentPawn.SetTreasureParticleEffectActive(false);
-						}
-					}
-					else if(CurrentPawn.mistNum == 0)
-					{
-						CurrentPawn.Mesh.SetHidden(false);
-						if(CurrentPawn.isGotTreasure == true)
-						{
-							CurrentPawn.treasureComponent.SetHidden(false);
-							CurrentPawn.SetTreasureParticleEffectActive(true);
-						}
-					}
-				}
-			}
-			//If I am the simulated guest, I will find the client owner, compare to him and decide whether I should hide or transparent
-			else if(self.Role == ROLE_SimulatedProxy)
-			{
-				ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
-				{
-					//find the client owner
-					if(CurrentPawn.Role == ROLE_AutonomousProxy)
-					{
-						if(CurrentPawn.mistNum == self.mistNum)
-						{
-							self.Mesh.SetHidden(false);
-							//self.Mesh.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
-							//self.Mesh.SetMaterial(1, Material'FLCharacter.Character.invisibleMaterial');
-							self.changeCharacterMaterial(self,self.GetTeamNum(),"Invisible");
-							if(self.isGotTreasure == true)
-							{
-								self.treasureComponent.SetHidden(false);
-								self.SetTreasureParticleEffectActive(true);
-								//self.treasureComponent.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
-							}
-						}
-						else
-						{
-							self.Mesh.SetHidden(true);
-							if(self.isGotTreasure == true)
-							{
-								self.treasureComponent.SetHidden(true);
-								self.SetTreasureParticleEffectActive(false);
-							}
-						}
-					}
-				}
-			}
-		}
-		//quit mist
-		else if(self.mistNum == 0)
-		{
-			//If I am the client owner, I will check all the other players' status
-			if(self.Role == ROLE_AutonomousProxy)
-			{
-				ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
-				{
-					if(CurrentPawn.mistNum == self.mistNum)
-					{
-						CurrentPawn.Mesh.SetHidden(false);
-						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.GinsengBaby.GinsengBaby_material_0');
-
-						changeCharacterMaterial(CurrentPawn,CurrentPawn.GetTeamNum(),"Character");
-						if(CurrentPawn.isGotTreasure == true)
-						{
-							CurrentPawn.treasureComponent.SetHidden(false);
-							CurrentPawn.SetTreasureParticleEffectActive(true);
-							//CurrentPawn.treasureComponent.SetMaterial(0, Material'FLCharacter.Character.invisibleMaterial');
-						}
-						//`log('FLCharacter.lady.lady_material_' $ '1');
-						//CurrentPawn.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
-						//CurrentPawn.Mesh.SetMaterial(1,  MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum(), class'MaterialInstanceConstant')));
-						//CurrentPawn.Mesh.SetMaterial(1,  Material  ("FLCharacter.lady.lady_material_" $ currentPawn.GetTeamNum()));
-						
-					}
-					else if(CurrentPawn.mistNum != 0)
-					{
-						CurrentPawn.Mesh.SetHidden(true);
-						if(CurrentPawn.isGotTreasure == true)
-						{
-							CurrentPawn.treasureComponent.SetHidden(true);
-							CurrentPawn.SetTreasureParticleEffectActive(false);
-						}
-					}
-				}
-			}
-			//I am the simulated guest
-			else if(self.Role == ROLE_SimulatedProxy)
-			{
-				self.Mesh.SetHidden(false);
-
-				//self.Mesh.SetMaterial(0, Material'FLCharacter.lady.EyeMaterial');
-				//self.Mesh.SetMaterial(1,  MaterialInstanceConstant(DynamicLoadObject("FLCharacter.lady.lady_material_" $ self.GetTeamNum(), class'MaterialInstanceConstant')));
-				self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
-				if(self.isGotTreasure == true)
-				{
-					self.treasureComponent.SetHidden(false);
-					self.SetTreasureParticleEffectActive(true);
-				}
-
-			}
-		}
-	}
-
-	if ( VarName == 'isUsingBeer')
-	{
-		if(self.isUsingBeer == true)
-		{
-			serverResetIsUsingBeer();
-			if(self.Role == ROLE_SimulatedProxy)
-			{
-				foreach allactors(class 'sneaktoslimpawn', CurrentPawn)
-				{
-					if(CurrentPawn.Role == ROLE_AutonomousProxy)
-					{
-						//CurrentPawn.beerNum = -1;
-						CurrentPawn.serverSetBeerNum(true);
-						//CurrentPawn.SetUsingBuff(true);
-						CurrentPawn.hidePowerupUI(CurrentPawn.bBuffed);
-						CurrentPawn.serverResetBBuffed();
-						if(CurrentPawn.Controller.IsInState('UsingSuperSprint'))
-						{
-							SneaktoSlimPlayerController(CurrentPawn.Controller).attemptToChangeState('PlayerWalking');
-							SneaktoSlimPlayerController(CurrentPawn.Controller).GotoState('PlayerWalking');
-						}
-						//CurrentPawn.bUsingBuffed[6] = 1;
-						CurrentPawn.bAffectedByCurse = true;
-						//WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.lightningEffect',CurrentPawn.Location);
-						CurrentPawn.hideAffectedByCurseIcon();
-						CurrentPawn.showAffectedByCurseIcon();
-					}
-				}
-			}
-		}
-	}
-
-	Super.ReplicatedEvent(VarName);
-}
-
 
 reliable server function serverResetInvisibleNum()
 {
@@ -1379,29 +1344,31 @@ unreliable client function SetSprintParticle(bool flag,byte teamNum)
 	}
 }
 
-simulated function CallToggleDustParticle(bool flag, byte teamNum)
+simulated function CallToggleDustParticle(bool flag, byte teamNum, float radius)
 {
 	local SneakToSlimPawn current;
 	local SneakToSlimPawn_Spectator spectator;
 
+	`log("MQ: babyBurstRadius"@radius);
+
 	foreach worldinfo.allactors(class 'SneakToSlimPawn', current)
 	{
-		current.setDustParticle(flag, teamNum);
+		current.setDustParticle(flag, teamNum, radius);
 	}
 	foreach worldinfo.allactors(class 'SneakToSlimPawn_Spectator', spectator)
 	{
-		spectator.setDustParticle(flag, teamNum);
+		spectator.setDustParticle(flag, teamNum, radius);
 	}
 }
 
-unreliable client function setDustParticle(bool flag, byte teamNum)
+unreliable client function setDustParticle(bool flag, byte teamNum, float radius)
 {
 	local SneakToSlimPawn current;
 	foreach worldinfo.allactors(class 'SneakToSlimPawn', current)
 	{
 		if (current.GetTeamNum() == teamNum)
 		{
-			SneakToSlimPawn_GinsengBaby(current).toggleDustParticle(flag);
+			SneakToSlimPawn_GinsengBaby(current).toggleDustParticle(flag, radius);
 		}
 	}
 }
@@ -1834,6 +1801,11 @@ reliable client function hideCountdownTimer()
 	}
 }
 
+unreliable client function toggleCursedEffect(bool flag)
+{
+	`log("MQ:toggle curse"@flag);
+	curseEffect.SetActive(flag);
+}
 reliable client function showAffectedByCurseIcon()
 {
 	local SneaktoSlimGFxHUD myFlashHUD;
@@ -1937,25 +1909,9 @@ reliable client function hideSpottedIcon()
 
 event Tick(float DeltaTime)
 {	
-	//local sneaktoslimpawn currentpawn;
-	//foreach allactors(class 'sneaktoslimpawn', currentpawn)
-	//{
-	//	if(currentpawn.GetTeamNum() == 0)
-	//		`log("Location: " $ currentpawn.Location);
-	//}
-	//`log("Buffed Timer" $ BuffedTimer);
-	//`log("dis num" $ self.disguiseNum $ "end dis num" $ self.endDisguiseNum $ "bbuffed" $ self.bBuffed);
-	//Nick: updates map's location to match player's location (if on)
-	//`log(beerNum);
-	//serverCheckBBuffed();
-
-	//`log(self.bBuffed);
-	//`log(sneaktoslimgamereplicationinfo(worldinfo.GRI).ServerGameTime);
-	//`log(sneaktoslimgamereplicationinfo(worldinfo.GRI).wuliya);
 	if(SneaktoSlimPlayerController(self.Controller).myMap != NONE)
 	{
-		//if(SneaktoSlimPlayerController(self.Controller).myMap.isOn)
-			SneaktoSlimPlayerController(self.Controller).myMap.playerLocation = Location;
+		SneaktoSlimPlayerController(self.Controller).myMap.playerLocation = Location;
 	}
 	
 	/// check when usr having buff
@@ -1980,9 +1936,6 @@ event Tick(float DeltaTime)
 			//beInvisable(false, false, false);  
 			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('EndInvisible');
 			SneaktoSlimPlayerController(self.Controller).GoToState('EndInvisible');
-
-			//bUsingBuffed[0] = 0;
-			//inputStringToHUD("end invis");
 		}
 	}
 	//if(self.Controller.IsInState('DisguisedSprinting') || self.Controller.IsInState('DisguisedExhausted')  || self.Controller.IsInState('DisguisedWalking') )//for test purpose
@@ -1991,21 +1944,16 @@ event Tick(float DeltaTime)
 		if(bAffectedByCurse)//bUsingBuffed[6] == 1)
 			BuffedTimer = BuffedTimerDefault[1];
 
-		 BuffedTimer += DeltaTime;
-		 self.showCountdownTimer(int(BuffedTimerDefault[1]-BuffedTimer));
-
-		//inputStringToCenterHUD(BuffedTimerDefault[1] - BuffedTimer);
-
+		BuffedTimer += DeltaTime;
+		self.showCountdownTimer(int(BuffedTimerDefault[1]-BuffedTimer));
 		if(BuffedTimer >= BuffedTimerDefault[1])
 		{
 			self.hideCountdownTimer();
 			BuffedTimer = 0;
 			inputStringToCenterHUD(0);
-			`log("buff end ");
-			//beInvisable(false, false, false);  
+			`log("buff end ");			
 			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('EndDisguised');
-			SneaktoSlimPlayerController(self.Controller).GoToState('EndDisguised');
-			//bUsingBuffed[1] = 0;
+			SneaktoSlimPlayerController(self.Controller).GoToState('EndDisguised');			
 		}
 	}
 	else if(bUsingBuffed[2] == 1)
@@ -2035,22 +1983,17 @@ event Tick(float DeltaTime)
 	}
 	if(bAffectedByCurse)//bUsingBuffed[6] == 1)
 	{
-		 BuffedTimer += DeltaTime;
-		 self.showCountdownTimer(int(BuffedTimerDefault[6]-BuffedTimer));
-
-		//inputStringToCenterHUD(BuffedTimerDefault[1] - BuffedTimer);
-
+		BuffedTimer += DeltaTime;
+		self.showCountdownTimer(int(BuffedTimerDefault[6]-BuffedTimer));
 		if(BuffedTimer >= BuffedTimerDefault[6])
 		{
 			self.hideCountdownTimer();
 			self.hideAffectedByCurseIcon();
+			self.ToggleCursedEffect(false);
 			BuffedTimer = 0;
 			inputStringToCenterHUD(0);
-			`log("buff end ");
-			//beInvisable(false, false, false);  
-			//self.beerNum = 1;
-			self.serverSetBeerNum(false);
-			//bUsingBuffed[6] = 0;
+			`log("buff end ");			
+			self.serverSetBeerNum(false);			
 			bAffectedByCurse = false;
 		}
 	}
@@ -2822,19 +2765,11 @@ reliable server function HostQuitGame()
 	ConsoleCommand("exit");
 }
 
-//exec function saysometing()
-//{
-//	//`log("fuck you fuck me");
-//	if(bBuffed==5)
-//		bBuffed = 2;
-//	else
-//		bBuffed = 5;
-//}
-
 reliable server function SetUsingBeer(bool inputUsingBeer)
 {
 	`log("I am fucked");
 	self.isUsingBeer = inputUsingBeer;
+	
 }
 
 reliable server function SetUsingBuff(bool inputUsingBuff)
@@ -2845,10 +2780,29 @@ reliable server function SetUsingBuff(bool inputUsingBuff)
 		self.bUsingBuffed[6] = 0;
 }
 
+exec function stopSimulating()
+{
+	local SneaktoSlimPawn current;
+
+	foreach AllActors(class'SneaktoSlimPawn',current)
+    {
+       
+	   if(current.Role == ROLE_SimulatedProxy)
+	   {
+		`log(current.Name);
+	   }
+    }
+}
+
+
 defaultproperties
 {
+	LOCATION_SEND_FREQUENCY = 0.075
+	LOCATION_SET_FREQUENCY = 0.015
+	interpolationCounter = 0
 	bJumpCapable = false;
-
+	bUpdateSimulatedPosition=false;
+	
 	bBuffed = 6;
 	bUsingBuffed[0] = 0;
 	bUsingBuffed[1] = 0;
@@ -2884,13 +2838,6 @@ defaultproperties
 	timePlayerHit[3] = 0.0;
 	countGlobalAnnounScore = 0;
 	lastPlayerScore = -1;
-
-	//CamHeight = 42.0
-	//CamMinDistance = 40.0
-	//CamMaxDistance = 350.0
-	//CamOffsetDistance=200.0
-	//CamZoomTick=8.0
-	//CamZoomHeightTick = 1.6
 	InvulnerableTimer = 0.2 //One second
 
 	isHost = false;
@@ -3002,6 +2949,15 @@ defaultproperties
 	End Object
 	treasureMovingEffectComp = particle_1
 	Components.Add(particle_1)
+
+	Begin Object Class=ParticleSystemComponent Name=curse
+		Template=ParticleSystem'flparticlesystem.reverse_effect'
+		bAutoActivate=false
+	End Object
+
+	curseEffect = curse
+	Components.Add(curse)
+
 	
 	Begin Object Class=StaticMeshComponent   Name=SneakToSlimPawnTreasureMesh
 		StaticMesh=StaticMesh'FLInteractiveObject.treasure.Tresure'
@@ -3019,7 +2975,7 @@ defaultproperties
 	  CastStaticShadows = false;
 	  CastDynamicShadows = True;
 	  LightShadowMode = LightShadow_Normal
-	  Radius=32.000000
+	  Radius=35.000000
 	  Brightness=5.0000	 
 	  LightColor=(R=255,G=255,B=0)
       bRenderLightShafts = true
@@ -3044,21 +3000,6 @@ defaultproperties
 	End Object
 	Components.Add(MyFlashlight);
 	AIFlashLight = MyFlashlight;
-	
-	Begin Object Class=PointLightComponent Name=MyPointlight
-	  bEnabled=true
-	  bCastCompositeShadow = true;
-	  bAffectCompositeShadowDirection =true;
-	  CastShadows = true;
-	  CastStaticShadows = true;
-	  CastDynamicShadows = true;
-	  LightShadowMode = LightShadow_Normal ;
-	  Radius=15.000000
-	  Brightness=.7
-	  LightColor=(R=235,G=235,B=110)
-	  Translation=(Z=-15)
-	End Object
-	Components.Add(MyPointlight)
 
 	teamAnnouncement[0] = SoundCue'flsfx.globalAnnouncement.Red_Player_Fire_Cue'
 	teamAnnouncement[1] = SoundCue'flsfx.globalAnnouncement.Green_Player_Fire_Cue'

@@ -1,67 +1,59 @@
-class SneaktoSlimGameReplicationInfo extends GameReplicationInfo;
+class SneaktoSlimGameReplicationInfo extends GameReplicationInfo
+	DLLBind(FatLootDllBinding);
 
-// The time passed in the game, to be replicated to clients
-var repnotify float ServerGameTime;
-// Whether or not ServerGameTime is changing - if true, ServerGameTime is replicated
-var bool bGameTimeChanging;
-
-var float GoalTime;
-
-var repnotify bool IsMatchEnd;
-
-// Replication block
-replication
-{
-	if (bNetDirty && Role==ROLE_Authority)
-		ServerGameTime,
-		IsMatchEnd;
-}
-
-simulated function increaseServerGameTime(name VarName)
-{
-	ServerGameTime +=1;
-	
-	if(ServerGameTime >= GoalTime)
-	{
-		IsMatchEnd = true;
-	}
-}
+dllimport final function runWindowsCommand(out string s);
+dllimport final function killTheServer(out string s);
+dllimport final function string sendClientMessage(out string inputCommand, out string inputMapName);
+dllimport final function openClientInfoFile();
+dllimport final function closeClientInfoFile();
+dllimport final function string readline();
 
 simulated event PostBeginPlay()
 {
 	super.PostBeginPlay();
-	
-	if(Role==ROLE_Authority)
-		settimer(1.0,true,'increaseServerGameTime');
+
+	if(worldInfo.NetMode == NM_DedicatedServer)
+	{
+		settimer(2.0,true,'sendGameInfo');
+	}
+
+	worldInfo.GetMapName();
+	//setTimer(2.0,true,'killZeroPlayerServer');
 }
 
-reliable server function cleanServerGameTime()
+function sendMyMessage(string inputCommand, string inputMapName)
 {
-	ServerGameTime = 0;
+	sendClientMessage(inputCommand,inputMapName);
 }
 
-
-simulated event ReplicatedEvent(name VarName)
+function sendGameInfo(name VarName)
 {
-	//if( sneaktoslimPawn(self.GetALocalPlayerController().pawn) != None)
-	//{
-	//	sneaktoslimPawn(self.GetALocalPlayerController().pawn).saysometing();		
-	//	if( VarName == 'IsMatchEnd')
-	//	{
-	//		`log("Match has ended");
-	//		sneaktoslimPawn(self.GetALocalPlayerController().pawn).saysometing();			
-	//	}
-	//}
-	super.ReplicatedEvent(VarName);
-
-	//if ( VarName == 'ServerGameTime')
-	//{
-	//	`log("fuck you");
-	//}
+	//`log("increaseServerGameTime");
+	//`log(worldInfo.NetMode);
+	sendMyMessage("add",worldInfo.GetMapName());
+	//`log(worldInfo.GetMapName());
 }
+
+
+function killZeroPlayerServer()
+{
+	local string outputString;
+
+	//find and kill
+	outputString = ": FLMist (0 players)";
+	killTheServer(outputString);
+
+	outputString = ": DemoDay (0 players)";
+	killTheServer(outputString);
+
+	outputString = ": FLTempleMapTopPlatform (0 players)";
+	killTheServer(outputString);
+}
+
+
+
 
 DefaultProperties
 {
-	IsMatchEnd = false;
-	GoalTime = 12;
+
 }

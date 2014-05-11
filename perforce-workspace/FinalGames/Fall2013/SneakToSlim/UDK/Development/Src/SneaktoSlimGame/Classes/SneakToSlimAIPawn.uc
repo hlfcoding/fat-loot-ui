@@ -25,19 +25,73 @@ var () float MinInvestigationDistance;
 var SpotLightComponent Flashlight;
 var StaticMeshComponent lantern;
 
+var float LOCATION_SEND_FREQUENCY;
+var float LOCATION_SET_FREQUENCY;
+var int NUM_INTERPOLATION_UPDATES;
+var Rotator customRotation;
+var Vector customLocation;
+var Vector currentDestination;
+var Vector customVelocity;
+var int interpolationCounter;
+
 simulated event PostBeginPlay()
 {
-   SetPhysics(PHYS_Walking);
-   GroundSpeed = PatrolSpeed;   
-   lightRadius = 250;  
-   Super.PostBeginPlay();
-   self.aiSkelComp.AttachComponentToSocket(lantern,'lantern');
+    SetPhysics(PHYS_Walking);
+    GroundSpeed = PatrolSpeed;   
+    lightRadius = 250;  
+    Super.PostBeginPlay();
+    self.aiSkelComp.AttachComponentToSocket(lantern,'lantern');
+
+	NUM_INTERPOLATION_UPDATES = LOCATION_SEND_FREQUENCY / LOCATION_SET_FREQUENCY;
+    if(Role == ROLE_Authority)
+	{
+		setTimer(LOCATION_SEND_FREQUENCY, true, 'sendCustomLocation');
+	}
+	if(Role == ROLE_SimulatedProxy)
+	{
+		setTimer(LOCATION_SET_FREQUENCY, true, 'interpolateLocation');
+	}
 }
 
 replication {
 	if(bNetDirty) aiState;
+
+	if(bNetDirty && Role == ROLE_Authority) //send from server to other clients
+		customLocation, customRotation, customVelocity;
 }
 
+function sendCustomLocation()
+{
+	if(Role == ROLE_Authority)
+	{
+		customLocation = self.Location;
+		customRotation = self.Rotation;		
+		customVelocity = self.Velocity;
+	}
+}
+
+simulated function interpolateLocation()
+{
+	local Vector moveStep;
+
+	if(Role == ROLE_SimulatedProxy)
+	{
+		self.SetRotation(customRotation);
+		self.Velocity = customVelocity;
+
+		if( interpolationCounter == 0)
+			currentDestination = customLocation;
+				
+		if( VSize(customLocation - self.Location) > 10 ) //don't move very short distances
+		{
+			moveStep = (currentDestination - self.Location) / (NUM_INTERPOLATION_UPDATES - interpolationCounter);
+			self.SetLocation(self.Location + moveStep);
+		}
+		interpolationCounter += 1;	
+		if(interpolationCounter >= NUM_INTERPOLATION_UPDATES)
+			interpolationCounter = 0;		
+	}
+}
 
 function AddLatern()
 {
@@ -188,6 +242,11 @@ DefaultProperties
 	MaxChaseStamina = 100
 	ChaseStaminaConsumptionRate = 30
 	ChaseStaminaRegenerationRate = 10
+
+	LOCATION_SEND_FREQUENCY = 0.075
+	LOCATION_SET_FREQUENCY = 0.015
+	bUpdateSimulatedPosition = false
+	interpolationCounter = 0
 
 	bCanStepUpOn = false
 

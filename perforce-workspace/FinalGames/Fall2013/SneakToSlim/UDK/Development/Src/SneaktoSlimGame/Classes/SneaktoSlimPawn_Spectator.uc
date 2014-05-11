@@ -90,14 +90,14 @@ reliable client function clientMeshTranslation(bool downOrUp, int teamNum)
 	}
 }
 
-unreliable client function setDustParticle(bool flag, byte teamNum)
+unreliable client function setDustParticle(bool flag, byte teamNum, float radius)
 {
 	local SneakToSlimPawn current;
 	foreach worldinfo.allactors(class 'SneakToSlimPawn', current)
 	{
 		if (current.GetTeamNum() == teamNum)
 		{
-			SneakToSlimPawn_GinsengBaby(current).toggleDustParticle(flag);
+			SneakToSlimPawn_GinsengBaby(current).toggleDustParticle(flag, radius);
 		}
 	}
 }
@@ -196,19 +196,15 @@ exec function QuitCurrentGame()
 	ConsoleCommand("open sneaktoslimmenu_landingpage?Character=Menu");
 }
 
-//simulated function name GetDefaultCameraMode( PlayerController RequestedBy )
-//{
-//	return 'ThirdPerson';
-//}
-
 DefaultProperties
 {
-	//ControllerClass=class'SneaktoSlimPlayerController_Spectator'
 	bJumpCapable = false
-	bCollideWorld = true
+	bCollideWorld = false
 	bCollideActors = false
-	SpectatorWalkingSpeed=400.0
+	SpectatorWalkingSpeed=300.0
 	MaxStepHeight = 25
+	bForceFloorCheck = false
+	WalkingPhysics=PHYS_Flying
 	
 	Begin Object Name=CollisionCylinder
 		CollisionRadius=10.000000

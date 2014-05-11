@@ -5,6 +5,7 @@ var float ENERGY_UPDATE_FREQUENCY;
 var float burstChargeTime;
 var float energyConsumptionFactor; //To know if player is Bursting while Burrowed
 var bool burstComplete;
+var float burstRadius;
 
 exec function showFatLootClassName()
 {
@@ -101,7 +102,6 @@ simulated state Burrow extends PlayerWalking
 
 	simulated function drawBurstAOE()
 	{
-		local float burstRadius;
 		burstRadius = SneaktoSlimPawn_GinsengBaby(Pawn).calculateBurstRadius(WorldInfo.TimeSeconds - burstChargeTime);
 		if(burstRadius > 0)
 		{			
@@ -151,7 +151,7 @@ simulated state Burrow extends PlayerWalking
 		SetTimer(ENERGY_UPDATE_FREQUENCY, true, 'UpdateEnergy');
 		if (role == role_authority && prevState != 'InvisibleWalking')
 		{
-			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(true, self.GetTeamNum());
+			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(true, self.GetTeamNum(),0);
 		}
 	}
 
@@ -168,7 +168,8 @@ simulated state Burrow extends PlayerWalking
 
 		if (role == role_authority)
 		{
-			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(false, self.GetTeamNum());
+			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(false, self.GetTeamNum(),0);
+			burstRadius = 0;
 		}		
 		ClearTimer('UpdateEnergy');
 		SetTimer(2, false, 'StartEnergyRegen');
@@ -219,7 +220,8 @@ simulated state HoldingTreasureBurrow extends Burrow
 		sneaktoslimpawn(self.Pawn).bInvisibletoAI = false;	
 		if (role == role_authority)
 		{
-			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(false, self.GetTeamNum());
+			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(false, self.GetTeamNum(), 0);
+			burstRadius = 0;
 		}
 		`log("Restarting energy regen", true, 'Ravi');
 		ClearTimer('UpdateEnergy');
@@ -353,6 +355,8 @@ simulated function BurstTheBaby(float chargeTime)
 	if(!burstComplete)
 	{
 		SneaktoSlimPawn_GinsengBaby(Pawn).BabyBurst(chargeTime);
+		sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(false, self.GetTeamNum(), SneaktoSlimPawn_GinsengBaby(Pawn).calculateBurstRadius(chargeTime));
+		burstRadius = 0;
 		burstComplete = true;
 	}
 }

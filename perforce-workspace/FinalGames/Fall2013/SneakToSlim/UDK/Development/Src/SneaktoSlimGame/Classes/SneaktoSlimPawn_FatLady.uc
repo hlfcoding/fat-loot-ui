@@ -94,13 +94,13 @@ event Tick(float DeltaTime)
 	if(self.Controller != none && !isGuideReady)
 	{
 		activateGuideOnce();
+		isGuideReady = true;
 	}
 }
 
 reliable server function activateGuideOnce()
 {
-	local SneakToSlimGuidePawn pc;
-
+	local SneakToSlimGuidePawn pc;	
 	if(self.Controller != none && !isGuideReady)
 	{
 		foreach WorldInfo.AllPawns(class 'SneakToSlimGuidePawn', pc)
@@ -121,7 +121,7 @@ reliable client function playGuidePoofAnimation()
 {
 	local AnimNodePlayCustomAnim customNode;
 	local SneaktoSlimGuidePawn guidePawn;
-
+	
 	foreach WorldInfo.AllPawns(class 'SneaktoSlimGuidePawn', guidePawn)
 	{
 		customNode = AnimNodePlayCustomAnim(guidePawn.Mesh.FindAnimNode('customVanish'));
@@ -138,7 +138,7 @@ exec function skipLine()
 reliable server function skipGuideLine()
 {
 	local SneakToSlimGuidePawn pc;
-
+	
 	foreach WorldInfo.AllPawns(class 'SneakToSlimGuidePawn', pc)
 	{
 		if(pc.isActive)
@@ -256,6 +256,36 @@ DefaultProperties
 {
 	characterName = "FatLady";
 	isGuideReady = false;
+
+	Begin Object Class=PointLightComponent Name=MyPointlightBack
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Normal ;
+	  Radius=15.000000
+	  Brightness=.5
+	  LightColor=(R=235,G=235,B=110)
+	  Translation=(Z=-15)
+	End Object
+	Components.Add(MyPointlightBack)
+
+	Begin Object Class=PointLightComponent Name=MyPointlightFront
+	  bEnabled=true
+	  bCastCompositeShadow = true;
+	  bAffectCompositeShadowDirection =true;
+	  CastShadows = true;
+	  CastStaticShadows = true;
+	  CastDynamicShadows = true;
+	  LightShadowMode = LightShadow_Normal ;
+	  Radius=15.000000
+	  Brightness=.5
+	  LightColor=(R=235,G=235,B=110)
+	  Translation=(X=5, Z=-15)
+	End Object
+	Components.Add(MyPointlightFront)
 }
 
 

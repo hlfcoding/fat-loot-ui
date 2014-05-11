@@ -309,30 +309,17 @@ function setFountainPoint(vector loc)
 function TickMap(float DeltaTime)
 {
 	local SneaktoSlimPlayerController_Spectator player; 
-	local float transformedX[4], transformedY[4];
-	local GFxObject root;
+	local float transformedX[4], transformedY[4];	
 
 	player = SneaktoSlimPlayerController_Spectator(GetPC());
 
 	if(player == None)
-		return;
-
-	/*root = GetVariableObject("_root");
-	if(!SneaktoSlimPlayerController(GetPC()).uiOn)
-	{
-		root.SetBool("visible", false);
-	}
-	else
-	{
-		root.SetBool("visible", true);
-	}*/
+		return;	
 
 	if(miniMap != NONE)
 	{
 		if(!setMapTexture())
 			return;
-		//Map.SetBool("isOn", miniMap.isOn);
-		//playerIcon.SetBool("isOn", miniMap.isOn);
 	
 		playerIcon.GetObject("player1").SetFloat("rotation", mouseRotation[0]);
 		playerIcon.GetObject("player2").SetFloat("rotation", mouseRotation[1]);
@@ -360,16 +347,7 @@ function TickMap(float DeltaTime)
 				Map.SetFloat("width", flashMapWidth*scaleFactorX);
 				Map.SetFloat("height", flashMapHeight*scaleFactorY);
 				Map.SetFloat("x", screenSizeX - (flashMapWidth+10)*scaleFactorX);
-				Map.SetFloat("y", screenSizeY - (flashMapHeight+10)*scaleFactorY);
-
-				/*`log("x " $ Map.GetFloat("x"));
-				`log("x prime " $ (Map.GetFloat("width") - (Map.GetFloat("width") * 70/150) - (Map.GetFloat("width")*40/150) + Map.GetFloat("x")));
-				`log("W " $ Map.GetFloat("width"));
-				`log("W prime " $ (Map.GetFloat("width")*70/150));
-				`log("A ratio " $ 1 - (screenSizeX - player2DScreenPoint.X)/screenSizeX);*/
-
-				//Passes player relative location to its controller for tracking/metric purposes
-				//player.trackLocation(player2DScreenPoint.X, player2DScreenPoint.Y, self.mapName);
+				Map.SetFloat("y", screenSizeY - (flashMapHeight+10)*scaleFactorY);			
 
 				player2DScreenPoint[0].X *= Map.GetFloat("width");   
 				player2DScreenPoint[0].Y *= Map.GetFloat("height"); 

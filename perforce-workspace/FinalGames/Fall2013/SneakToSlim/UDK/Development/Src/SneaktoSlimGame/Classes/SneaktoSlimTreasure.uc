@@ -289,5 +289,5 @@ DefaultProperties
 	CurrentSpawnPointIndex = 255;
     TreasureOut = false;
 	treasureVelocity = 500.0
-	TreasureResetTime = 15;
+	TreasureResetTime = 10;
 }

@@ -50,7 +50,7 @@ simulated function StartSpawnBuffItem(){
 simulated event ReplicatedEvent(name VarName){
 	if(VarName == 'BuffType'){
         `log("1111111111122222222222222isHaveBuff~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@BuffType);
-		ParticalEffect.SetColorParameter('steamColor', steamParticleColor[BuffType]);
+		//ParticalEffect.SetColorParameter('steamColor', steamParticleColor[BuffType]);
 		`log("steamColor is"@steamParticleColor[BuffType].R);
 		switch (BuffType){
 		case 0:
@@ -168,10 +168,10 @@ DefaultProperties
 		Translation = (X=35, Y= 5, Z=50)
 		Scale = 5
     End Object
-    steamParticleColor[0]=(R=0,G=0,B=0,A=255)
-	steamParticleColor[1]=(R=255,G=255,B=180,A=26) //invisible
-	steamParticleColor[2]=(R=26,G=80,B=255,A=26) //disquise
-	steamParticleColor[3]=(R=120,G=255,B=26,A=26) //regeneration
+   // steamParticleColor[0]=(R=0,G=0,B=0,A=255)
+	//steamParticleColor[1]=(R=255,G=255,B=180,A=26) //invisible
+	//steamParticleColor[2]=(R=26,G=80,B=255,A=26) //disquise
+	//steamParticleColor[3]=(R=120,G=255,B=26,A=26) //regeneration
 	//4  thunder fan
 	//5  super sprint
 	//6  curse
