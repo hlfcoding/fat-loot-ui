@@ -13,10 +13,16 @@ package {
 
         public function MainRepository() {
             super();
+            games = [];
+            levels = [];
+            characters = [];
         }
 
         public function initFromFixtures():void {
-            games = MainRepository.GAMES_FIXTURE;
+            if (MainMenuView.DEBUG) {
+                // We only want this one while debugging / developing.
+                games = MainRepository.GAMES_FIXTURE;
+            }
             characters = MainRepository.CHARACTERS_FIXTURE;
             levels = MainRepository.LEVELS_FIXTURE;
         }
