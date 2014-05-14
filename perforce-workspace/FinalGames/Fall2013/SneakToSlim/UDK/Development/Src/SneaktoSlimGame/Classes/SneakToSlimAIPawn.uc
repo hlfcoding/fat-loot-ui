@@ -82,7 +82,7 @@ simulated function interpolateLocation()
 		if( interpolationCounter == 0)
 			currentDestination = customLocation;
 				
-		if( VSize(customLocation - self.Location) > 10 ) //don't move very short distances
+		if( VSize(currentDestination - self.Location) > 10 ) //don't move very short distances
 		{
 			moveStep = (currentDestination - self.Location) / (NUM_INTERPOLATION_UPDATES - interpolationCounter);
 			self.SetLocation(self.Location + moveStep);
@@ -234,7 +234,7 @@ DefaultProperties
 	DetectAngle = 60.0 
 	DetectDistance = 1000.0
 	DetectReactionTime = 0.0
-	HoldTime = 1.0
+	HoldTime = 2
 	MaxInvestigationDistance = 2000.0
 	MinInvestigationDistance = 50.0
 	bNoEncroachCheck = false     //Enables pawns to move even when overlapping	

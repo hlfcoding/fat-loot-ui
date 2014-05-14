@@ -22,7 +22,7 @@ function setOriginNode(PathNode node)
 
 	foreach CollidingActors( class'SneakToSlimAIPawn', HitActor, soundRadius, origin.Location)
 	{
-		`log("soundsphere found actor " $ HitActor.Name);
+		//`log("soundsphere found actor " $ HitActor.Name);
 		controller = SneakToSlimAIController(HitActor.Controller);
 		if(controller.investigateLocation(origin.Location))
 		{
@@ -41,7 +41,7 @@ event Tick (float DeltaTime)
 	if(body.SphereRadius > soundRadius)
 	{
 		ShutDown();
-		`log("Noise is gone");
+		//`log("Noise is gone");
 	}
 	body.ForceUpdate(false);
 }

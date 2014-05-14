@@ -30,7 +30,7 @@ simulated event PostBeginPlay()
 
 simulated function SneaktoSlimTreasure SpawnTreasure()
 {
-	`log("Spawn Index~~~~~~~~~~~~~~~~~~~~~~~~~~"@BoxIndex);
+	//`log("Spawn Index~~~~~~~~~~~~~~~~~~~~~~~~~~"@BoxIndex);
 	MyTreasure = spawn(class'SneaktoSlimTreasure',,,self.Location);
 	MyTreasure.ShutDown();
 	MyTreasure.SetHidden(true);
@@ -52,7 +52,7 @@ reliable server function SetTreasureFlag(bool flag){
 
 simulated event ReplicatedEvent(name VarName){
 	if(VarName == 'isHaveTreasure'){
-        `log("Change Flag in replicated ~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@isHaveTreasure);
+        //`log("Change Flag in replicated ~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@isHaveTreasure);
 		if(isHaveTreasure){
 			SetParticalEffectActive(true);
 		}
@@ -96,7 +96,7 @@ simulated function bool UsedBy(Pawn User)
     }
     if(isHaveTreasure == true)
     {
-		`log("GetTreasure!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		//`log("GetTreasure!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		MyTreasure.giveTreasure(SneaktoSlimPawn(User),self);
 
 		foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
@@ -109,6 +109,10 @@ simulated function bool UsedBy(Pawn User)
 		if(role == role_authority){
 		    isHaveTreasure=false;
 		}
+	}
+	else
+	{
+		PlaySound(SoundCue'flsfx.Buzz_fx_Cue');
 	}
 	return used;
 }

@@ -292,7 +292,7 @@ function setFountainPoint(vector loc)
 
 	if(rect.GetInt("width") > originalRectSize && !miniMap.isOn)
 	{
-		`log("Width: " $ rect.GetInt("width") $ " | Height: " $ rect.GetInt("height"));
+		//`log("Width: " $ rect.GetInt("width") $ " | Height: " $ rect.GetInt("height"));
 		if(rect.GetInt("width") - 60 >= originalRectSize)
 		{
 			rect.SetInt("width", (rect.GetInt("width") - 17));

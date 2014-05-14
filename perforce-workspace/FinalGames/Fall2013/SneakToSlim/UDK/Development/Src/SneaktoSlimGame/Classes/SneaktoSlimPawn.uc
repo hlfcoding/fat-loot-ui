@@ -19,7 +19,6 @@ var bool bInvulnerable;
 var float InvulnerableTimer;
 var bool playerHasFan;
 var SneakToSlimMovingTreasure SpawnedProjectile;
-//var SkeletalMeshComponent Mesh;
 var vector meshTranslationOffset;
 
 var SkeletalMeshComponent mySkelComp;
@@ -42,8 +41,9 @@ var int bellyBumpHits;
 
 var SpotLightComponent AIFlashlight;
 var StaticMeshComponent AILantern;
-
+var bool isCurrentlyDetectedByAGuard;
 var Array<SoundCue> teamAnnouncement;
+var AudioComponent globalAnnouncement;
 
 struct HUDMessage
 {
@@ -164,8 +164,8 @@ replication
 		endinvisibleNum,
 		mistNum,
 		beerNum,
-		isUsingBeer,
-		bAffectedByCurse;
+		isUsingBeer;
+	    //,	bAffectedByCurse;
 
 	if(bNetDirty && Role == ROLE_Authority && RemoteRole == ROLE_SimulatedProxy) //send from server to non-owning clients
 		customLocation, customRotation, customVelocity;
@@ -184,7 +184,7 @@ function sendCustomLocation()
 simulated function interpolateLocation()
 {
 	local Vector moveStep;
-
+	
 	if(Role == ROLE_SimulatedProxy)
 	{
 		self.SetRotation(customRotation);
@@ -193,10 +193,10 @@ simulated function interpolateLocation()
 		if( interpolationCounter == 0)
 			currentDestination = customLocation;
 				
-		if( VSize(customLocation - self.Location) > 10 ) //don't move very short distances
+		if( VSize(currentDestination - self.Location) > 10 ) //don't move very short distances
 		{
 			moveStep = (currentDestination - self.Location) / (NUM_INTERPOLATION_UPDATES - interpolationCounter);
-			self.SetLocation(self.Location + moveStep);
+			self.SetLocation(self.Location + moveStep);			
 		}
 		interpolationCounter += 1;	
 		if(interpolationCounter >= NUM_INTERPOLATION_UPDATES)
@@ -209,7 +209,7 @@ simulated event ReplicatedEvent(name VarName)
 	Local SneaktoSlimSpawnPoint Current;
 	Local SneaktoSlimpawn CurrentPawn;
 
-	`log("enter ReplicatedEvent " $ self.GetTeamNum());
+	//`log("enter ReplicatedEvent " $ self.GetTeamNum());
 	if ( VarName == 'replicateAnimName')
 	{
 		ClientPlayAnim(replicateAnimName);
@@ -221,7 +221,7 @@ simulated event ReplicatedEvent(name VarName)
 		{
 			disablePlayerMovement();
 			self.canMoveAfterBeingReturnedToSpawnPoint = true;
-			`log("press 'i' to resume play");
+			//`log("press 'i' to resume play");
 		}
 	}
 	
@@ -229,7 +229,7 @@ simulated event ReplicatedEvent(name VarName)
 	{
         ForEach class'WorldInfo'.static.GetWorldInfo().AllActors(class 'SneaktoSlimSpawnPoint', Current)
         {
-            `log("client:function current"@current.Name,true,'David');
+            //`log("client:function current"@current.Name,true,'David');
     	    Current.SetColor();
         }
 	}
@@ -270,7 +270,7 @@ simulated event ReplicatedEvent(name VarName)
 	}
 	if(VarName == 'endDisguiseNum')
 	{
-		`log("endDisguiselog");
+		//`log("endDisguiselog");
 		if(endDisguiseNum >= 0)
 		{	
 			ForEach WorldInfo.AllActors(class 'sneaktoslimpawn', CurrentPawn)
@@ -474,22 +474,30 @@ simulated event ReplicatedEvent(name VarName)
 				{
 					if(CurrentPawn.Role == ROLE_AutonomousProxy)
 					{
-						//CurrentPawn.beerNum = -1;
-						CurrentPawn.serverSetBeerNum(true);
-						//CurrentPawn.SetUsingBuff(true);
-						CurrentPawn.hidePowerupUI(CurrentPawn.bBuffed);
-						CurrentPawn.serverResetBBuffed();
-						if(CurrentPawn.Controller.IsInState('UsingSuperSprint'))
+						if( CurrentPawn.Controller.IsInState('caughtByAI') ||
+							CurrentPawn.Controller.IsInState('ChargingDash') || 
+							CurrentPawn.Controller.IsInState('Dashing') )
 						{
-							SneaktoSlimPlayerController(CurrentPawn.Controller).attemptToChangeState('PlayerWalking');
-							SneaktoSlimPlayerController(CurrentPawn.Controller).GotoState('PlayerWalking');
 						}
-						//CurrentPawn.bUsingBuffed[6] = 1;
-						CurrentPawn.bAffectedByCurse = true;
-						//WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.lightningEffect',CurrentPawn.Location);
-						CurrentPawn.hideAffectedByCurseIcon();
-						CurrentPawn.toggleCursedEffect(true);
-						CurrentPawn.showAffectedByCurseIcon();
+						else 
+						{
+							//CurrentPawn.beerNum = -1;
+							CurrentPawn.serverSetBeerNum(true);
+							//CurrentPawn.SetUsingBuff(true);
+							CurrentPawn.hidePowerupUI(CurrentPawn.bBuffed);
+							CurrentPawn.serverResetBBuffed();
+							if(CurrentPawn.Controller.IsInState('UsingSuperSprint'))
+							{
+								SneaktoSlimPlayerController(CurrentPawn.Controller).attemptToChangeState('PlayerWalking');
+								SneaktoSlimPlayerController(CurrentPawn.Controller).GotoState('PlayerWalking');
+							}
+							//CurrentPawn.bUsingBuffed[6] = 1;
+							CurrentPawn.bAffectedByCurse = true;
+							//WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.lightningEffect',CurrentPawn.Location);
+							CurrentPawn.hideAffectedByCurseIcon();
+							CurrentPawn.toggleCursedEffect(true);
+							CurrentPawn.showAffectedByCurseIcon();
+						}
 					}
 				}
 			}
@@ -501,11 +509,7 @@ simulated event ReplicatedEvent(name VarName)
 
 simulated event PostBeginPlay()
 {
-	`log("PostBeginPlay====================");
-	if(Role == ROLE_Authority)
-		`log("I am running on the server!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	else
-		`log("I am running on the client!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	//`log("PostBeginPlay====================");
 
 	treasureComponent.SetActorCollision(true, false); //so that treasure does not block others, e.g., guard
     SetSpawnPointColor();
@@ -527,19 +531,19 @@ simulated event PostBeginPlay()
 }
 
 simulated exec function EnterMist(){
-	`log("Enter Mist!!!!!!!!!!!!!!");
+	//`log("Enter Mist!!!!!!!!!!!!!!");
 	removePowerUp();	
 	self.mistNum = 1;//need to be set to mistTrigger num
 }
 
 simulated exec function ExitMist(){
-	`log("Exit Mist!!!!!!!!!!!!!!");	
+	//`log("Exit Mist!!!!!!!!!!!!!!");	
 	self.mistNum = 0;
 }
 
 reliable client function removePowerUp()
 {
-	`log("remove PowerUP");
+	//`log("remove PowerUP");
 	if(self.beerNum == -1)
 	{
 	}
@@ -548,11 +552,11 @@ reliable client function removePowerUp()
 		self.hideCountdownTimer();
 		BuffedTimer = 0;
 		inputStringToCenterHUD(0);
-		`log("buff end "); 
-		`log(bUsingBuffed[0]);
+		//`log("buff end "); 
+		//`log(bUsingBuffed[0]);
 		if(bUsingBuffed[0] == 1)
 		{
-			`log('remove power-ups');
+			//`log('remove power-ups');
 			bUsingBuffed[0] = 0;
 			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('EndInvisible');
 			SneaktoSlimPlayerController(self.Controller).GoToState('EndInvisible');
@@ -560,7 +564,7 @@ reliable client function removePowerUp()
 		}
 		if(bUsingBuffed[1] == 1)
 		{
-			`log('remove power-ups');
+			//`log('remove power-ups');
 			bUsingBuffed[1] = 0;
 			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('EndDisguised');
 			SneaktoSlimPlayerController(self.Controller).GoToState('EndDisguised');
@@ -685,8 +689,14 @@ unreliable client function updateTimeUI(int currentTime)
 			myFlashHUD.TimeUpText.SetInt("x", myFlashHUD.TimeUpText.GetInt("x") + int(myFlashHUD.screenSizeX/16));
 		if(currentTime == 0 && myFlashHUD.TimeUpText.GetInt("x") > myFlashHUD.screenSizeX/2)
 			myFlashHUD.TimeUpText.SetInt("x", int(myFlashHUD.screenSizeX/2));
+		if (currentTime == 30)
+		{
+			
+			clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.30Sec');
+		}
 		if(currentTime == 0)
 		{
+			clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.TimeUp');
 			PlayerController(self.Controller).IgnoreLookInput(true);
 			PlayerController(self.Controller).IgnoreMoveInput(true);
 		}
@@ -960,11 +970,11 @@ server reliable function ServerSyncTreasure(){
 	local SneaktoSlimTreasure TempTreasure;
 	foreach AllActors(class'SneaktoSlimTreasure',TempTreasure)
     {
-        `log("Treasure_____________________________________"@TempTreasure.CurrentSpawnPointIndex);
+        //`log("Treasure_____________________________________"@TempTreasure.CurrentSpawnPointIndex);
     }
 	foreach AllActors(class'SneaktoSlimTreasureSpawnPoint',TempBox)
 	{
-		`log("Box_____________________________________"@TempBox.BoxIndex);
+		//`log("Box_____________________________________"@TempBox.BoxIndex);
 	}
     foreach AllActors(class'SneaktoSlimPawn',TempPawn)
 	{
@@ -981,10 +991,10 @@ client reliable function ClientSyncTreasure()
     {
         
     	BoxIndex = TempTreasure.CurrentSpawnPointIndex;
-        `log("Treasure_____________________________________"@BoxIndex);
+        //`log("Treasure_____________________________________"@BoxIndex);
     }
 	foreach AllActors(class'SneaktoSlimTreasureSpawnPoint',TempBox){
-		`log("Box_____________________________________"@TempBox.BoxIndex);
+		//`log("Box_____________________________________"@TempBox.BoxIndex);
 		if(BoxIndex == TempBox.BoxIndex){
 			TempBox.SetParticalEffectActive(true);
 		}
@@ -1027,7 +1037,7 @@ exec function SetSpawnPointColor()
 
 		ForEach class'WorldInfo'.static.GetWorldInfo().AllActors(class 'SneaktoSlimSpawnPoint', Current)
 		{
-			`log("Server:crruent"@current.Name,true,'David');
+			//`log("Server:crruent"@current.Name,true,'David');
     		Current.SetColor();
 		}
 	}
@@ -1176,14 +1186,14 @@ reliable server function serverSetBeerNum(bool affected)
 
 exec function detachball()
 {
-	`log(treasureComponent);
+	//`log(treasureComponent);
 	serverdetachball();
 	//self.Mesh.DetachComponent(treasureComponent);
 }
 
 reliable server function serverdetachball()
 {
-	`log(treasureComponent);
+	//`log(treasureComponent);
 	//self.Mesh.DetachComponent(treasureComponent);
 }
 
@@ -1199,7 +1209,7 @@ simulated function simulatedDrawPlayerColor()
 	//self.Mesh.SetMaterial(1,baseMaterial);
 
 	self.changeCharacterMaterial(self,self.GetTeamNum(),"Character");
-	`log("simulated get team"@self.GetTeamNum());
+	//`log("simulated get team"@self.GetTeamNum());
 }
 
 function setBeingTracked()
@@ -1247,18 +1257,22 @@ simulated function callClientBumpParticle(int teamNumber)
 	if(role == role_authority)
 		foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
 		{
-			`log("callClientBumpParticle" $ current.GetTeamNum());
+			//`log("callClientBumpParticle" $ current.GetTeamNum());
 			current.clientBumpParticle(teamNumber);
 		}
 }
 
+unreliable client function clientStateChangeParticle(vector loc)
+{  
+	WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.stateChange',loc);
+}
 reliable client function clientBumpParticle(int teamNumber)
 {
 	local sneakToSlimPawn current;
 	
 	foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
 	{
-		`log("clientBumpParticle" $ current.GetTeamNum());
+		//`log("clientBumpParticle" $ current.GetTeamNum());
 		if(current.GetTeamNum() == teamNumber)
 		{
 			WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.hitEffect',current.Location);
@@ -1270,22 +1284,31 @@ reliable client function clientBumpParticle(int teamNumber)
 
 reliable client function clientGlobalAnnouncement(SoundCue announcement)
 {
-	`log("clientPlayAnnouncement");
-	PlaySound(announcement);
+	//`log("MQ:clientPlayAnnouncement");
+	if (!globalAnnouncement.IsPlaying())
+	{
+		//`log("MQ:clientshouldPlayAnnouncement");
+		globalAnnouncement.SoundCue = announcement;
+		globalAnnouncement.Play();
+	}
 }
 
+unreliable client function clientDetectByGuard()
+{
+	PlaySound(SoundCue'flsfx.Gong_fx_Cue');
+}
 reliable client function clientAnnounceBasedOnTeam(int teamNum)
 {
-	if (teamNum == GetTeamNum())
-	{
-		`log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Get_out_of_the_way_Cue");
-		PlaySound(SoundCue'flsfx.globalAnnouncement.Get_out_of_the_way_Cue');
-	}
-	else
-	{
-		`log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"$ teamNum);
-		PlaySound(teamAnnouncement[teamNum]);
-	}
+	//if (teamNum == GetTeamNum())
+	//{
+		//`log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Get_out_of_the_way_Cue");
+	//PlaySound(SoundCue'flsfx.globalAnnouncement.Get_out_of_the_way_Cue');
+	//}
+	//else
+	//{
+		//`log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"$ teamNum);
+		//PlaySound(teamAnnouncement[teamNum]);
+	//}
 
 }
 
@@ -1296,7 +1319,7 @@ simulated function callClientRoarParticle(int teamNumber)
 	//if(role == role_authority)
 		foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
 		{
-			`log("callClientRoarParticle" $ current.GetTeamNum());
+			//`log("callClientRoarParticle" $ current.GetTeamNum());
 			current.clientRoarParticle(teamNumber);
 		}
 }
@@ -1307,7 +1330,7 @@ reliable client function clientRoarParticle(int teamNumber)
 	
 	foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
 	{
-		`log("clientRoarParticle" $ current.GetTeamNum());
+		//`log("clientRoarParticle" $ current.GetTeamNum());
 		if(current.GetTeamNum() == teamNumber)
 		{
 			//WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.SonicBeam',current.Location, current.Rotation);
@@ -1349,7 +1372,7 @@ simulated function CallToggleDustParticle(bool flag, byte teamNum, float radius)
 	local SneakToSlimPawn current;
 	local SneakToSlimPawn_Spectator spectator;
 
-	`log("MQ: babyBurstRadius"@radius);
+	//`log("MQ: babyBurstRadius"@radius);
 
 	foreach worldinfo.allactors(class 'SneakToSlimPawn', current)
 	{
@@ -1526,7 +1549,7 @@ reliable client simulated function ClientMovingTreasure(vector TreasurDestinatio
 	
 	foreach allActors(class 'SneakToSlimTreasure', currenttreasure)
 	{
-		`log("ther is atreasue client" $ currenttreasure);	
+		//`log("ther is atreasue client" $ currenttreasure);	
 		currenttreasure.turnOn();	
 		currenttreasure.SetLocation(TreasurDestination);
 	}
@@ -1547,8 +1570,8 @@ simulated function dropTreasure(vector bumpNormal){
 	ThrowDirection.Y =0.1;
 	ThrowDirection.Z = 1;
 	TreasureMovingDirection = Normal(bumpNormal + ThrowDirection);
-	`log("drop simulate");
-	`log("drop name:"@self.Name);
+	//`log("drop simulate");
+	//`log("drop name:"@self.Name);
     //DropCenterLocation = self.Location;
     //ZTestStart = DropCenterLocation;
 	//ZTestEnd = DropCenterLocation;
@@ -1637,19 +1660,27 @@ server reliable function ServerTurnBackTreasure(){
 	switch(countGlobalAnnounScore)
 	{
 	case 2:
-		//playsound 2
-		`log("Player XX is scoring twice");
+		//foreach worldinfo.allactors(class 'sneakToSlimPawn', CurrentPawn)
+		//{
+			//`log("clientRoarParticle" $ current.GetTeamNum());
+			clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Theft_Streak');
+			
+		//}
+		//`log("Player XX is scoring twice");
 		break;
 	case 3:
 		//playsound 3
-		`log("Player XX is scoring thrice");
+		clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Theft_Streak');
+		//`log("Player XX is scoring thrice");
 		break;
 	case 4:
 		//playsound 4
-		`log("Player XX is scoring fourth");
+		clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Theft_Streak');
+		//`log("Player XX is scoring fourth");
 		break;
 	case 5:
-		`log("Rampage!");
+		clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Theft_Streak');
+		//`log("Rampage!");
 		break;
 	}
 	foreach allactors(class 'sneaktoslimpawn', CurrentPawn)
@@ -1661,7 +1692,7 @@ server reliable function ServerTurnBackTreasure(){
             TSP.MyTreasure = myTreasure;
 			myTreasure.CurrentSpawnPointIndex = index;
 			TSP.isHaveTreasure = true;
-			`log("treasure move to location" @ TSP.Location);
+			//`log("treasure move to location" @ TSP.Location);
 			myTreasure.SetLocation(TSP.Location);
 			myTreasure = none;
 		}
@@ -1682,7 +1713,7 @@ simulated function turnBackTreasure(){
 	local SneakToSlimPawn current;
 	if(isGotTreasure == true){
 	    isGotTreasure = false;
-	    `log("turnBackTreasure");	
+	    //`log("turnBackTreasure");	
 	    SneaktoSlimPlayerController(self.Controller).recordHoldTreasureTime();
 	    ServerTurnBackTreasure();
 		foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
@@ -1708,7 +1739,7 @@ function setTreasureLocation(vector newLocation)
 
 reliable server function checkServerFLBuff(enumBuff _eb, bool _boo)
 {	
-	`log("[Server] "$ Name $ " press 'use buff' key " $ _eb $" "$ _boo  $ " " $ bBuffed);
+	//`log("[Server] "$ Name $ " press 'use buff' key " $ _eb $" "$ _boo  $ " " $ bBuffed);
 	
 	if(self.bBuffed > 0 && self.bBuffed <= 6)
 	{		
@@ -1730,7 +1761,7 @@ reliable server function checkOtherFLBuff(SneakToSlimPawn _other)
 
 reliable server function setServerFLBuff(enumBuff _eb, int _buffnumber)
 {	
-	`log("[Server] "$ Name $ " set " $ _eb $" " $  bBuffed);
+	//`log("[Server] "$ Name $ " set " $ _eb $" " $  bBuffed);
 	bBuffed = _buffnumber;
 }
 
@@ -1803,7 +1834,7 @@ reliable client function hideCountdownTimer()
 
 unreliable client function toggleCursedEffect(bool flag)
 {
-	`log("MQ:toggle curse"@flag);
+	//`log("MQ:toggle curse"@flag);
 	curseEffect.SetActive(flag);
 }
 reliable client function showAffectedByCurseIcon()
@@ -1913,7 +1944,7 @@ event Tick(float DeltaTime)
 	{
 		SneaktoSlimPlayerController(self.Controller).myMap.playerLocation = Location;
 	}
-	
+		
 	/// check when usr having buff
 	if(bUsingBuffed[0] == 1)
 	//if(self.Controller.IsInState('InvisibleSprinting') || self.Controller.IsInState('InvisibleExhausted')  || self.Controller.IsInState('InvisibleWalking') )//for test purpose
@@ -1932,7 +1963,7 @@ event Tick(float DeltaTime)
 			self.hideCountdownTimer();
 			BuffedTimer = 0;
 			inputStringToCenterHUD(0);
-			`log("buff end ");
+			//`log("buff end ");
 			//beInvisable(false, false, false);  
 			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('EndInvisible');
 			SneaktoSlimPlayerController(self.Controller).GoToState('EndInvisible');
@@ -1951,7 +1982,7 @@ event Tick(float DeltaTime)
 			self.hideCountdownTimer();
 			BuffedTimer = 0;
 			inputStringToCenterHUD(0);
-			`log("buff end ");			
+			//`log("buff end ");			
 			SneaktoSlimPlayerController(self.Controller).attemptToChangeState('EndDisguised');
 			SneaktoSlimPlayerController(self.Controller).GoToState('EndDisguised');			
 		}
@@ -1992,7 +2023,7 @@ event Tick(float DeltaTime)
 			self.ToggleCursedEffect(false);
 			BuffedTimer = 0;
 			inputStringToCenterHUD(0);
-			`log("buff end ");			
+			//`log("buff end ");			
 			self.serverSetBeerNum(false);			
 			bAffectedByCurse = false;
 		}
@@ -2042,7 +2073,7 @@ simulated exec function showCountDown(float DeltaTime)
 		{
 			BuffedTimer = 0;
 			inputStringToCenterHUD(0);
-			`log("buff end ");
+			//`log("buff end ");
 			myCloth.turnOn();
 			//beInvisable(false, false, false);  
 			inputStringToHUD("cloth out");
@@ -2071,18 +2102,18 @@ simulated exec function beInvisable(bool _boo, bool _selfInvis, bool _aiInvis)
 
 simulated function GetClosestWall()
 {
-	local StaticMeshActor Wall;
-	local float Distance;
+	//local StaticMeshActor Wall;
+	//local float Distance;
 
-	foreach OverlappingActors (class'StaticMeshActor', Wall, 100)
-	{
-		if(Wall!=none)
-		{
-			Distance=VSize(Wall.Location-Location);
-			if(Distance>0)
-				`Log("find one:"@Distance,true,'alex');
-		}
-	}//find the mesh with distance less than 50
+	//foreach OverlappingActors (class'StaticMeshActor', Wall, 100)
+	//{
+	//	if(Wall!=none)
+	//	{
+	//		Distance=VSize(Wall.Location-Location);
+	//		//if(Distance>0)
+	//			//`Log("find one:"@Distance,true,'alex');
+	//	}
+	//}//find the mesh with distance less than 50
 }
 
 event HitWall (Object.Vector HitNormal, Actor Wall, PrimitiveComponent WallComp)
@@ -2247,7 +2278,7 @@ server reliable function ServerPlayerRestart()
 function ClientIgnoreMoveInputRecover()
 {
 	PlayerController(self.Controller).ClientIgnoreMoveInput(false);
-	`Log("input recover has been called");
+	//`log("input recover has been called");
 }
 
 //start to use buff
@@ -2273,13 +2304,13 @@ reliable client function inputStringToCenterHUD(int _msg)// used in countdown , 
 
 reliable client function updateStaticHUDeq(string _msgs)// used in countdown
 {
-	`log("client update eqGotten to " $ _msgs);
+	//`log("client update eqGotten to " $ _msgs);
 	staticHUDmsg.eqGotten = _msgs;
 }
 
 reliable client function updateStaticHUDPromtText(string _msgs)// used in countdown
 {
-	`log("client update triggerPromtText to " $ _msgs);
+	//`log("client update triggerPromtText to " $ _msgs);
 	staticHUDmsg.triggerPromtText = _msgs;
 }
 
@@ -2292,7 +2323,7 @@ Server Reliable function ServerToggleLight()
 		if(container!=none&&Vsize2d(container.Location-self.Location)<200)
 		{
 			container.ServerToggleLight();
-			`Log("my light "@container.Light@" has been toggled",true,'alex');
+			//`log("my light "@container.Light@" has been toggled",true,'alex');
 		}
 	}
 }
@@ -2320,11 +2351,11 @@ Client Reliable function ClientShowLightBrightness()
 	{
 		if(spotlight!=none)
 		{
-			`Log("Spotlight:"@spotlight@":"@spotlight.LightComponent.Brightness);
+			//`log("Spotlight:"@spotlight@":"@spotlight.LightComponent.Brightness);
 		}
 	}
 
-	`Log("has called client show function");
+	//`log("has called client show function");
 }
 
 exec function ToggleLight()
@@ -2391,19 +2422,19 @@ simulated function FaceRotation(rotator NewRotation, float DeltaTime)
 
 exec function callServer()
 {
-	`log("I am client");
+	//`log("I am client");
 	callServer1();
 }
 
 reliable server function callServer1()
 {
-	`log("I am server1");
+	//`log("I am server1");
 	callServer2();
 }
 
 reliable server function callServer2()
 {
-	`log("I am server2");
+	//`log("I am server2");
 }
 
 ///////////////////////////////////////////////////end temporary trash can 
@@ -2421,42 +2452,6 @@ reliable client function changeAnimTreeOnAllClients(SneaktoSlimPawn pawnToChange
 		}
 	}
 }
-
-
-exec function callPlay()
-{
-	servercallPlay();
-	playerPlayOrStopCustomAnim('customVanish', 'Vanish',1.0f,true, 0,0,true,false);
-}
-
-reliable server function servercallPlay()
-{
-	playerPlayOrStopCustomAnim('customVanish', 'Vanish',1.0f,true, 0,0,true,false);
-}
-
-exec function callStop()
-{
-	servercallStop();
-	playerPlayOrStopCustomAnim('customVanish', 'Vanish',1.0f,false, 0,0,true,false);
-}
-
-reliable server function servercallStop()
-{
-	playerPlayOrStopCustomAnim('customVanish', 'Vanish',1.0f,false, 0,0,true,false);
-}
-
-simulated function myGetCustomAnimNodeSequence(name nodeName)
-{
-	//local AnimNodePlayCustomAnim customNode;
-	//local AnimNodeSequence mySequence;
-
-
-	//customNode = AnimNodePlayCustomAnim(Mesh.FindAnimNode(nodeName));
-	//mySequence = customNode.GetCustomAnimNodeSeq();
-
-	//return mySequence;
-}
-
 
 simulated function playerPlayOrStopCustomAnim
 (
@@ -2478,7 +2473,7 @@ simulated function playerPlayOrStopCustomAnim
 	customNode = AnimNodePlayCustomAnim(self.Mesh.FindAnimNode(nodeName));
 	if(customNode == None)
 	{
-		`log("Invalid custom node name",false,'Lu');
+		//`log("Invalid custom node name",false,'Lu');
 		return;
 	}
 
@@ -2497,7 +2492,8 @@ simulated function playerPlayOrStopCustomAnim
 	{
 		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
 		{
-			onePawn.clientPlayerPlayCustomAnim(self, nodename, AnimName, Rate, playOrStop, BlendInTime, BlendOutTime, bLooping, bOverride);
+			if(onePawn.GetTeamNum() != self.GetTeamNum())
+				onePawn.clientPlayerPlayCustomAnim(self, nodename, AnimName, Rate, playOrStop, BlendInTime, BlendOutTime, bLooping, bOverride);
 		}
 
 		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn_Spectator', specPawn)
@@ -2531,7 +2527,7 @@ reliable client function clientPlayerPlayCustomAnim
 			customNode = AnimNodePlayCustomAnim(onePawn.Mesh.FindAnimNode(nodeName));
 			if(customNode == None)
 			{
-				`log("Invalid custom node name",false,'Lu');
+				//`log("Invalid custom node name",false,'Lu');
 				return;
 			}
 			
@@ -2569,7 +2565,7 @@ reliable client function clientPlayerPlayAIAnimation
 			customNode = AnimNodePlayCustomAnim(onePawn.aiSkelComp.FindAnimNode(nodeName));
 			if(customNode == None)
 			{
-				`log("Invalid custom node name",false,'Lu');
+				//`log("Invalid custom node name",false,'Lu');
 				return;
 			}
 			
@@ -2608,7 +2604,7 @@ simulated function changeCharacterMaterial(SneaktoSlimPawn currentPawn, int team
 		}
 		else if(currentPawn.characterName == "Rabbit")
 		{
-			`log("Rabbit material"$ teamID);
+			//`log("Rabbit material"$ teamID);
 			CurrentPawn.Mesh.SetMaterial(0, MaterialInstanceConstant(DynamicLoadObject("FLCharacter.Rabbit.Rabbit_material_" $ teamID, class'MaterialInstanceConstant')));
 		}
 		else if(currentPawn.characterName == "Shorty")
@@ -2767,7 +2763,7 @@ reliable server function HostQuitGame()
 
 reliable server function SetUsingBeer(bool inputUsingBeer)
 {
-	`log("I am fucked");
+	//`log("I am fucked");
 	self.isUsingBeer = inputUsingBeer;
 	
 }
@@ -2803,7 +2799,7 @@ defaultproperties
 	bJumpCapable = false;
 	bUpdateSimulatedPosition=false;
 	
-	bBuffed = 6;
+	bBuffed = 0;
 	bUsingBuffed[0] = 0;
 	bUsingBuffed[1] = 0;
 	//bUsingBuffed[6] = 0;
@@ -3005,4 +3001,12 @@ defaultproperties
 	teamAnnouncement[1] = SoundCue'flsfx.globalAnnouncement.Green_Player_Fire_Cue'
 	teamAnnouncement[2] = SoundCue'flsfx.globalAnnouncement.Blue_Player_Fire_Cue'
 	teamAnnouncement[3] = SoundCue'flsfx.globalAnnouncement.White_Player_Fire_Cue'
+
+	Begin Object Class=AudioComponent Name=audioComp
+		SoundCue=SoundCue'flsfx.globalAnnouncement.Red_Player_Fire_Cue'
+		bAlwaysPlay=false
+	End Object
+	Components.Add(audioComp)
+	globalAnnouncement=audioComp
+	isCurrentlyDetectedByAGuard = false
 }

@@ -21,9 +21,9 @@ function Init(optional LocalPlayer player)
 
 	minimapText = GetVariableObject("_root.Minimap_text");
 	minimapText.SetBool("visible", false);
-	if(SneaktoSlimPawn(SneaktoSlimPlayerController(GetPC()).Pawn).getIsUsingXboxController())
-		minimapText.SetText("Press 'B'");
-	else
+	//if(SneaktoSlimPawn(SneaktoSlimPlayerController(GetPC()).Pawn).getIsUsingXboxController())     // this will cause a "access none pawn" warning
+		//minimapText.SetText("Press 'B'");
+	//else
 		minimapText.SetText("Click 'm'");
 	Map = GetVariableObject("_root.Minimap");
 	MapBackground = GetVariableObject("_root.MiniMapBackground");
@@ -280,7 +280,7 @@ function setFountainPoint(vector loc)
 
 	if(rect.GetInt("width") > originalRectSize && !miniMap.isOn)
 	{
-		`log("Width: " $ rect.GetInt("width") $ " | Height: " $ rect.GetInt("height"));
+		//`log("Width: " $ rect.GetInt("width") $ " | Height: " $ rect.GetInt("height"));
 		if(rect.GetInt("width") - 60 >= originalRectSize)
 		{
 			rect.SetInt("width", (rect.GetInt("width") - 17));

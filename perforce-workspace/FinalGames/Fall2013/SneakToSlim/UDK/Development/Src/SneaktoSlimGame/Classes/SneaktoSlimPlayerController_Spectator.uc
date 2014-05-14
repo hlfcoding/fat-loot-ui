@@ -2,27 +2,30 @@ class SneaktoSlimPlayerController_Spectator extends PlayerController
 	config(Game);
 
 var SneaktoSlimPawn playerSpectatingAs;
-var float yawOfPlayerSpectatingAs;
-var float zOfPlayerSpectatingAs;
-var float SERVER_AUTHORITATIVE_LOCATION_FREQUENCY;
+var int rotationsSetNum; //while this var is less than ROTATIONS_TO_BE_SET, spectator's yaw is set to player's yaw
+var int ROTATIONS_TO_BE_SET;
 var float LOCATION_UPDATE_FREQUENCY;
 var MiniMap myMap;
 var bool uiOn, pauseMenuOn;
-
-replication
-{
-	if(bNetDirty && Role == ROLE_Authority)
-		yawOfPlayerSpectatingAs, zOfPlayerSpectatingAs;
-}
 
 simulated event PostBeginPlay()
 {
     super.PostBeginPlay();
 	SetTimer(0.05, false, 'doPostProcessing');
+	SetTimer(0.5, false, 'changeToDefaultState');
 
 	myMap = Spawn(class'SneaktoSlimGame.MiniMap',,,self.Location,,,);
 	uiOn = true;
-	pauseMenuOn = false;
+	pauseMenuOn = false;	
+}
+
+exec function OnPressFirstSkill() 
+{	
+	if(!IsInState('SpectateAndMove'))
+	{		
+		ServerGotoState('SpectateAndMove');
+		GotoState('SpectateAndMove');
+	}
 }
 
 reliable server function ServerGotoState(name state)
@@ -30,42 +33,27 @@ reliable server function ServerGotoState(name state)
 	GotoState(state);
 }
 
-exec function OnPressFirstSkill() 
-{	
-	if(IsInState('FreeMove'))
-	{		
-		ServerGotoState('FollowPlayer');
-		GotoState('FollowPlayer');
-	}
-	else
-	{		
-		ServerGotoState('FreeMove');
-		GotoState('FreeMove');  
-	}
-}
-
-simulated state FreeMove extends PlayerWalking
-{
-Begin:
-	`log(Name $ " In FreeMove state", true, 'Ravi');	
-}
-
-simulated state FollowPlayer
+simulated state SpectateAndMove extends PlayerWalking
 {
 	simulated event BeginState(Name prevState)
-	{
-		Pawn.GroundSpeed = 0;		
+	{		
+		Pawn.GroundSpeed = SneaktoSlimPawn_Spectator(Pawn).SpectatorWalkingSpeed;
 	}
 
 	simulated event EndState(Name nextState)
 	{
-		Pawn.GroundSpeed = SneaktoSlimPawn_Spectator(Pawn).SpectatorWalkingSpeed;		
+		Pawn.GroundSpeed = SneaktoSlimPawn_Spectator(Pawn).SpectatorWalkingSpeed;
 		ClearTimer('updateLocationAndRotation');		
 	}
 
-	simulated function PlayerMove( float DeltaTime )
-	{				
-		//UpdateRotation(DeltaTime);
+	exec function OnPressSecondSkill()
+	{
+		changeToSprintSpeed();		
+	}
+
+	exec function OnReleaseSecondSkill()
+	{
+		changeToWalkSpeed();		
 	}
 
 	exec function SpecatorSwitchToPlayer1()
@@ -96,7 +84,7 @@ simulated state FollowPlayer
 		changePlayerSpectatingAs(3);
 	}
 
-	exec function OnPressSecondSkill()
+	exec function OnPressFirstSkill()
 	{	
 		local int teamNumSpectatingAs;
 		local int teamNumToSpectateAs;
@@ -119,10 +107,9 @@ simulated state FollowPlayer
 	}
 
 Begin:		
-	`log(Name $ " In FollowPlayer state", true, 'Ravi');
+	`log(Name $ " In SpectateAndMove state", true, 'Ravi');
 	changePlayerSpectatingAs(0);
 
-	//SetTimer(SERVER_AUTHORITATIVE_LOCATION_FREQUENCY, true, 'getLocationAndRotation');
 	SetTimer(LOCATION_UPDATE_FREQUENCY, true, 'updateLocationAndRotation');		
 }
 
@@ -130,6 +117,7 @@ simulated function changePlayerSpectatingAs(int teamNumToSpectateAs)
 {
 	local SneaktoSlimPawn playerPawn;	
 
+	rotationsSetNum = 0;	
 	foreach WorldInfo.AllActors(class'SneaktoSlimPawn', playerPawn)
 	{		
 		if( playerPawn.GetTeamNum() == teamNumToSpectateAs) 
@@ -141,41 +129,33 @@ simulated function changePlayerSpectatingAs(int teamNumToSpectateAs)
 	}
 }
 
-function getLocationAndRotation()
-{
-	if(Role == ROLE_Authority)
-	{
-		yawOfPlayerSpectatingAs = SneakToSlimPlayerController(playerSpectatingAs.Controller).Rotation.Yaw;			
-		zOfPlayerSpectatingAs = playerSpectatingAs.Location.Z;			
-	}
-}
-
 simulated function updateLocationAndRotation()
 {
-	local Rotator playerRotation;		
 	local Vector behindPlayer;
-	local Vector playerServerLoc;
 	
-	if(playerSpectatingAs != none)
+	if(playerSpectatingAs != none && rotationsSetNum < ROTATIONS_TO_BE_SET)
 	{
-		playerServerLoc = playerSpectatingAs.Location;
-		if(Role == ROLE_Authority)
-		{
-			yawOfPlayerSpectatingAs = SneakToSlimPlayerController(playerSpectatingAs.Controller).Rotation.Yaw;			
-			zOfPlayerSpectatingAs = playerSpectatingAs.Location.Z;			
-		}
-		playerServerLoc.Z = zOfPlayerSpectatingAs;
-		playerRotation.Yaw = yawOfPlayerSpectatingAs; 
-		behindPlayer = playerServerLoc - vector(playerRotation) * 180;
-		//behindPlayer.Z -= 35;
-		self.SetRotation(playerRotation);
-		Pawn.SetLocation(behindPlayer);		
+		behindPlayer = playerSpectatingAs.Location - vector(playerSpectatingAs.Rotation) * 130;
+		behindPlayer.Z -= 35;
+		self.SetRotation(playerSpectatingAs.Rotation);
+		Pawn.SetLocation(behindPlayer);			
+		rotationsSetNum++; // set location and rotation for each player limited number of times
 	}
 }
 
 reliable server function serverChangePlayerSpectatingAs(int teamNumToSpectateAs)
 {
 	changePlayerSpectatingAs(teamNumToSpectateAs);
+}
+
+reliable server function changeToSprintSpeed()
+{
+	Pawn.GroundSpeed = SneaktoSlimPawn_Spectator(Pawn).SpectatorSprintingSpeed;
+}
+
+reliable server function changeToWalkSpeed()
+{
+	Pawn.GroundSpeed = SneaktoSlimPawn_Spectator(Pawn).SpectatorWalkingSpeed;
 }
 
 function doPostProcessing()
@@ -195,6 +175,12 @@ function doPostProcessing()
 	} 
 }
 
+simulated function changeToDefaultState()
+{
+	ServerGotoState('SpectateAndMove');
+	GotoState('SpectateAndMove');  
+}
+
 //When player clicks 'M' their minimap is turned on/off
 exec function toggleMap()
 {
@@ -212,7 +198,7 @@ exec function toggleMap()
 			SneaktoSlimPawn_Spectator(self.Pawn).enablePlayerMovement();
 			self.IgnoreLookInput(false);
 		}
-	}
+	}	
 }
 
 exec function ToggleUIHUD()
@@ -228,7 +214,8 @@ exec function togglePauseMenu()
 	if(myMap != NONE)
 	{
 		if(!myMap.isOn)
-		{			
+		{
+			//`log("Pause Menu activated");
 			pauseMenuOn = !pauseMenuOn;
 
 			if(pauseMenuOn)
@@ -247,8 +234,8 @@ exec function togglePauseMenu()
 
 DefaultProperties
 {
-	LandMovementState=FreeMove
 	LOCATION_UPDATE_FREQUENCY = 0.03
-	SERVER_AUTHORITATIVE_LOCATION_FREQUENCY = 0.1
-	Physics=PHYS_Flying
+	ROTATIONS_TO_BE_SET = 5
+	rotationsSetNum = 0
+	Physics=PHYS_None	
 }

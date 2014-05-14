@@ -14,6 +14,7 @@ simulated event Landed( vector HitNormal, actor FloorActor )
 	if(MyPawn == None){
 		`log("I dont have pawn!!!!!!!!!!!!!!!!!!!!!!!");
 	}
+	else{
 	newlocation = self.Location;
 	newlocation.Z = newlocation.Z-16;
 	MyPawn.myTreasure.SetLocation(newlocation);
@@ -27,6 +28,7 @@ simulated event Landed( vector HitNormal, actor FloorActor )
 			{
 	   		   current.ClientMovingTreasure(newlocation);
 			}
+	}
 	}
 	self.Destroy();
 }

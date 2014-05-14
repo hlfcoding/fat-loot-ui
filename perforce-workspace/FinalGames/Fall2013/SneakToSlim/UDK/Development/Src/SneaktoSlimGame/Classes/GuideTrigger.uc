@@ -46,7 +46,7 @@ simulated function bool UsedBy(Pawn User)
     //Passes tag name to guide's player controller and activates scripted event
 	if(guidePawn != none)
 	{
-		`log("Controller of pawn user in guide trigger: " $ SneaktoSlimPawn(User).Name $ "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		//`log("Controller of pawn user in guide trigger: " $ SneaktoSlimPawn(User).Name $ "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 		guidePawn.talkingTo = SneakToSlimPawn(User);
 		guidePawn.changeToTutorialState(self.Tag);
 		return true;
@@ -71,7 +71,7 @@ event Tick(float deltaTime)
 	{
 		if(isInRange)
 		{
-			`log("Using Gamepad: (GuideTrigger tick) " $ fatlady.getIsUsingXboxController());
+			//`log("Using Gamepad: (GuideTrigger tick) " $ fatlady.getIsUsingXboxController());
 			if(fatlady.getIsUsingXboxController())
 				PromtText = "Press 'A' to talk.";
 			else

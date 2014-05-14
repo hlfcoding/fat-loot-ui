@@ -17,47 +17,23 @@ simulated event PostBeginPlay()
 
 
 simulated function SetColor()
-{
-	//	local string materialName;
-		//local Material baseMaterial;
-	    `log("set coloring of player");
-		//CurrentMesh.SetMaterial(0, Material'mypackage.Materials.NodeBuddy_Target_copy');
-		//materialName = "NodeBuddies.Materials.NodeBuddy_Player_";
-		//materialName $= teamID;	
-		//baseMaterial = Material(DynamicLoadObject(materialName, class'Material'));
-		baseParticle.SetColorParameter('baseParticleColor', teamColor[teamID]);
-		CurrentMesh.SetMaterial(0, teamMaterial[teamID]);
-		MyPointLight.SetLightProperties(1.0,teamColor[teamID]);
-		
+{	
+	//`log("set coloring of player");		
+	baseParticle.SetColorParameter('baseParticleColor', teamColor[teamID]);
+	CurrentMesh.SetMaterial(0, teamMaterial[teamID]);
+	MyPointLight.SetLightProperties(1.0,teamColor[teamID]);		
 }
-
-
-/*reliable server function ServerSetColors
-	CurrentMesh.SetMaterial(0, Material'mypackage.Materials.NodeBuddy_Target_copy');
-	ClientSetColor();
-}
-
-reliable client function ClientSetColor(){
-	`log("client@!#!@#$#!@$");
-	CurrentMesh.SetMaterial(0, Material'mypackage.Materials.NodeBuddy_Target_copy');
-
-}*/
 
 event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vector HitNormal)
 {
 	local SneaktoSlimPawn temp;
 	temp = SneaktoSlimPawn(Other);	
 
-	//`log("SpawnPoint touched",true,'Lu');
-
 	if(temp != none)
 	{
 		super.Touch(temp, OtherComp, HitLocation, HitNormal);
 	   
-		//cation! check Actor and team
-		//`log("team ID:"@teamID);	
-		//`log(temp.GetTeamNum());
-	
+		//caution! check Actor and team			
 		if(temp.isGotTreasure == true && temp.GetTeamNum() == teamID)
 		{
 			playTreasureCapturedParticle();
@@ -72,20 +48,16 @@ function playTreasureCapturedParticle()
 	foreach worldinfo.allactors(class 'SneakToSlimPawn', current)
 	{
 		current.clientSpawnParticle(ParticleSystem'flparticlesystem.treasureCaptureEffect', self.Location,rot(0,0,0));
-	}
-	//WorldInfo.MyEmitterPool.SpawnEmitter(ParticleSystem'flparticlesystem.treasureCaptureEffect',self.Location);
+	}	
 }
 event UnTouch(Actor Other)
 {
-    super.UnTouch(Other);
- 
-    //`log("SpawnPoint Untouch",true,'Lu');
+    super.UnTouch(Other);   
 }
 
 function bool UsedBy(Pawn User)
 {
-   `log("SpawnPoint usedBy"@User.Name, true,'Lu');   
-
+   //`log("SpawnPoint usedBy"@User.Name, true,'Lu');   
    return true;
 }
 
@@ -93,7 +65,7 @@ function bool UsedBy(Pawn User)
 
 exec function myFunction()
 {
-   `log("myFunction");
+   //`log("myFunction");
 	self.Destroy();
 
     return;
@@ -105,8 +77,7 @@ DefaultProperties
 	Begin Object Class=StaticMeshComponent Name=MyMesh
         StaticMesh=StaticMesh'FLInteractiveObject.Base.Base_indoor'
 		Translation = (X=0.0,Y=0.0,Z=5.0)
-		Scale = 5.0
-		//Scale = (X=5.0,Y=5.0,Z=5.0)
+		Scale = 5.0		
 		bUsePrecomputedShadows=True
     End Object
  
@@ -122,8 +93,6 @@ DefaultProperties
 		bDynamic = TRUE
 	End Object
 	Components.Add(MyLightEnvironment)
-//	LightEnvironment=MyLightEnvironment
-
 
 	Begin Object Class=ParticleSystemComponent Name=myParticle
 		template=ParticleSystem'flparticlesystem.baseParticle'
@@ -148,16 +117,6 @@ DefaultProperties
 	Components.Add(pPointLight)
 	MyPointLight = pPointLight
 
-
-	/*Begin Object Class=StaticMeshComponent Name=TestMesh
-        StaticMesh=StaticMesh'FLInteractiveObject.Base.Base_indoor'
-		Translation =(X=0.0,Y=0.0,Z=40.0)
-		//Scale = (X=5.0,Y=5.0,Z=5.0)
-		bUsePrecomputedShadows=True
-    End Object
-	Components.Add(TestMesh)*/
-
-
 	teamColor[0]=(R=128,G=0,B=0,A=255)
 	teamColor[1]=(R=255,G=219,B=1,A=255)
 	teamColor[2]=(R=0,G=72,B=170,A=255)
@@ -174,9 +133,5 @@ DefaultProperties
 	bAlwaysRelevant = true
 
 	teamID = 0;
-
 	Components.Remove(Sprite)
-
-	//isSetColor = false;
-
 }

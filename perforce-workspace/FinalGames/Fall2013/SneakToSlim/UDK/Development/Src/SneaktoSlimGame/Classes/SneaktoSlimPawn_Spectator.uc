@@ -1,11 +1,7 @@
 class SneaktoSlimPawn_Spectator extends Pawn;
 var Vector spawnLocation;
 var float SpectatorWalkingSpeed;
-
-event Tick(float DeltaTime)
-{
-	super.Tick(DeltaTime);	
-}
+var float SpectatorSprintingSpeed;
 
 simulated event PostBeginPlay()
 {   
@@ -37,7 +33,7 @@ reliable client function clientPlayerPlayCustomAnim
 			customNode = AnimNodePlayCustomAnim(onePawn.Mesh.FindAnimNode(nodeName));
 			if(customNode == None)
 			{
-				`log("Invalid custom node name",false,'Lu');
+				//`log("Invalid custom node name",false,'Lu');
 				return;
 			}
 			
@@ -144,8 +140,7 @@ reliable client function saveGameResults(int score1, string character1, optional
 	local array<int> scores;
 	local array<string> names;
 	local SaveGameState sgs;
-	local int count;
-
+	
 	sgs = new class 'SaveGameState';
 
 	//Values are entered in reverse order since GameInfo loop reads AllPawns in reverse order of being created
@@ -199,12 +194,11 @@ exec function QuitCurrentGame()
 DefaultProperties
 {
 	bJumpCapable = false
-	bCollideWorld = false
+	bCollideWorld = true
 	bCollideActors = false
-	SpectatorWalkingSpeed=300.0
+	SpectatorWalkingSpeed = 200.0
+	SpectatorSprintingSpeed = 350.0	
 	MaxStepHeight = 25
-	bForceFloorCheck = false
-	WalkingPhysics=PHYS_Flying
 	
 	Begin Object Name=CollisionCylinder
 		CollisionRadius=10.000000

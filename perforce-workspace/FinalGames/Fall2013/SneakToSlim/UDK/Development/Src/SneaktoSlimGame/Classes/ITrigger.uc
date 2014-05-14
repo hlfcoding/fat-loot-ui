@@ -10,7 +10,7 @@ event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hit
 	super.Touch(other, otherComp, hitLoc, hitNormal);
 
 	if(SneaktoSlimPawn(other)!= None){
-		`log("Using Gamepad (ITrigger touch): " $ SneaktoSlimPawn(other).getIsUsingXboxController());
+		//`log("Using Gamepad (ITrigger touch): " $ SneaktoSlimPawn(other).getIsUsingXboxController());
 		InRangePawnNumber=SneaktoSlimPawn(other).GetTeamNum();
 		if(SneaktoSlimPawn(other).getIsUsingXboxController())
 			SneaktoSlimPawn(other).showPromptUI(PromtTextXbox);
@@ -37,7 +37,7 @@ simulated function bool UsedBy(Pawn User)
 {
 
 	//write your code here
-	`log("Trigger " $ Name $ " USED  by " $ User.Name);
+	//`log("Trigger " $ Name $ " USED  by " $ User.Name);
 
 		//SneaktoSlimPawn(user).showPromptUI(eqGottenText);
 		//SneaktoSlimPawn(User).staticHUDmsg.eqGotten = eqGottenText; // local only

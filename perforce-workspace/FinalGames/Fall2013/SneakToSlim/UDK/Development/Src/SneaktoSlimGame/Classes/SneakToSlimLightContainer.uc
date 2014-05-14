@@ -16,7 +16,7 @@ simulated function bool UsedBy(Pawn User)
 {
 	super.UsedBy(User);
 	//write your code here
-	`log("Trigger " $ Name $ " USED  by " $ User.Name);
+	//`log("Trigger " $ Name $ " USED  by " $ User.Name);
 
 	if(string(User.Class) == "SneaktoSlimPawn")
 	{
@@ -37,9 +37,9 @@ Server reliable function ServerToggleLight()
 		if(IsOn==true)
 		{
 			SpotlightBrightness=Spotlight1.LightComponent.Brightness;
-			`Log("i get this light" @Spotlight1.LightComponent.Brightness@Pointlight1,true,'alex');
+			//`log("i get this light" @Spotlight1.LightComponent.Brightness@Pointlight1,true,'alex');
 			Spotlight1.LightComponent.SetLightProperties(0);
-			`Log("i get this light" @Spotlight1.LightComponent.Brightness@Pointlight1,true,'alex');
+			//`log("i get this light" @Spotlight1.LightComponent.Brightness@Pointlight1,true,'alex');
 			PointlightBrightness=Pointlight1.LightComponent.Brightness;
 			Pointlight1.LightComponent.SetLightProperties(0);
 			ClientChangeLightIntensity(Spotlight1,Pointlight1,LightMesh,0,0,TurnOffTexture);

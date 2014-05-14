@@ -30,7 +30,12 @@ function sendGameInfo(name VarName)
 {
 	//`log("increaseServerGameTime");
 	//`log(worldInfo.NetMode);
-	sendMyMessage("add",worldInfo.GetMapName());
+
+
+	//disable for demoday
+	//sendMyMessage("add",worldInfo.GetMapName());
+
+
 	//`log(worldInfo.GetMapName());
 }
 

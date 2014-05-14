@@ -27,7 +27,7 @@ simulated event Landed( vector HitNormal, actor FloorActor )
 unreliable server function ServerCreateExplosion(vector loc)
 {
 	local SneakToSlimPawn current;
-	foreach worldinfo.allactors(class 'SneakToSlimPawn', current)
+	foreach OverlappingActors(class'SneakToSlimPawn', current, EXPLOSION_DETECT_RADIUS, loc)
 	{
 		current.ClientCreateExplosion(loc);
 	}
@@ -41,7 +41,7 @@ reliable server function StunPlayers(vector loc)
 	{		
 		if( playerPawn.Name != fireCrackerOwner) //don't stun the player who threw the firecracker!
 		{
-			`log("Firecraker is stunning player: " $ playerPawn.Name, true, 'Ravi');
+			//`log("Firecraker is stunning player: " $ playerPawn.Name, true, 'Ravi');
 			if(playerPawn.Controller != None)
 			{
 				playerPawn.Controller.GoToState('Stunned');
@@ -63,7 +63,7 @@ reliable server function NotifyGuards(vector loc)
 		con = SneakToSlimAIController(aiPawn.Controller);
 		if(con != None && con.investigateLocation(loc))
 		{
-			`log(self.Name $ " called " $ aiPawn.Name $ " to investigate " $ loc, true, 'Ravi');			
+			//`log(self.Name $ " called " $ aiPawn.Name $ " to investigate " $ loc, true, 'Ravi');			
 		}
 	}
 

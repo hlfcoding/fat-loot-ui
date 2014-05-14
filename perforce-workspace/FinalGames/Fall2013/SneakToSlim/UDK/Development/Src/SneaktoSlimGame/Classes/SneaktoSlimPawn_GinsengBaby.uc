@@ -31,8 +31,8 @@ simulated event ReplicatedEvent(name VarName)
 				pa.showCharacterHasTreasure(self.GetTeamNum());
 			}
 
-			`log("authority"$ self.Role);
-			`log(self.Mesh.GetSocketByName('treasureSocket'));
+			//`log("authority"$ self.Role);
+			//`log(self.Mesh.GetSocketByName('treasureSocket'));
 			if (self.Mesh.GetSocketByName('treasureSocket') != None){
 				self.Mesh.AttachComponentToSocket(treasureComponent , 'treasureSocket');
 				self.Mesh.AttachComponentToSocket(treasureLightComponent , 'treasureSocket');
@@ -170,7 +170,7 @@ simulated function BabyBurst(float chargeTime)
 	
 	if(self.v_energy < EnergyNeededForBurst)
 	{
-		`log(self.Name $ " Doesn't have enough energy for Burst", true, 'Ravi');
+		//`log(self.Name $ " Doesn't have enough energy for Burst", true, 'Ravi');
 		return;
 	}
 	self.v_energy -= EnergyNeededForBurst; //Use the energy and then push nearby players

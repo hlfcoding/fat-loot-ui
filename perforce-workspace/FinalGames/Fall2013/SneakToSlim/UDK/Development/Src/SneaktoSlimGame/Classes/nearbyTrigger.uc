@@ -49,9 +49,9 @@ simulated function StartSpawnBuffItem(){
 
 simulated event ReplicatedEvent(name VarName){
 	if(VarName == 'BuffType'){
-        `log("1111111111122222222222222isHaveBuff~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@BuffType);
+        //`log("1111111111122222222222222isHaveBuff~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"@BuffType);
 		//ParticalEffect.SetColorParameter('steamColor', steamParticleColor[BuffType]);
-		`log("steamColor is"@steamParticleColor[BuffType].R);
+		//`log("steamColor is"@steamParticleColor[BuffType].R);
 		switch (BuffType){
 		case 0:
 			ParticalEffect.SetActive(false);
@@ -107,7 +107,7 @@ simulated function bool UsedBy(Pawn User)
 			return used;
         }
 
-		`log("BeerNum of Player who is trying to get a powerup: " $ SneaktoSlimPawn(User).beerNum);
+		//`log("BeerNum of Player who is trying to get a powerup: " $ SneaktoSlimPawn(User).beerNum);
 		if(SneaktoSlimPawn(User).beerNum != 1) {
 			return used;
 		}
@@ -128,7 +128,7 @@ simulated function bool UsedBy(Pawn User)
 	     }
         
 
-		Sneaktoslimpawn(User).playerPlayOrStopCustomAnim('customSearch', 'Search', 1.f, true, 0, 0, false, true);
+		Sneaktoslimpawn(User).playerPlayOrStopCustomAnim('customTea', 'Tea', 1.f, true, 0, 0, false, true);
 
 		return used;
 }
@@ -137,7 +137,7 @@ simulated function bool UsedBy(Pawn User)
 DefaultProperties
 {
 	displayName = "BookShelf"
-	PromtText = "Press 'E' to Check the shelf"
+	PromtText = "Press 'E' to Check Tea Set"
 	PromtTextXbox = "Press 'A' to Check the shelf"
 	eqGottenText = ""
 	powerupNum = 6

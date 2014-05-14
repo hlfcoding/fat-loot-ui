@@ -15,6 +15,8 @@ var int scoreLimit;
 var int playerNumLimit;
 
 var bool disableLoopCalling;
+var bool disableLoopCalling_Character;
+var bool disableLoopCalling_Map;
 
 var string IPAddress;
 
@@ -46,25 +48,19 @@ simulated event PostBeginPlay()
 	disableLoopCalling = false;
 
 	//fixing text create problem
-	sendMyMessage("query","null");
+	//disable for demoday
+	//sendMyMessage("query","null");
 }
 
 exec function joinGameScreen(int index)
 {
-	//`log("join fucking game");
-	//sendMyMessage("query","null");
-	//getClientInfo();
-
-	//if(clientInfoList.Length == 0 || index >=  clientInfoList.Length)
-	//{
-	//	`log("No client info");
-	//}
-	//else
-	//{
-	//	ConsoleCommand("open "$clientInfoList[index].IPAddress$"?Character="$characterName$"?Time="$timeLimit);
-	//}
+	
 }
 
+exec function showCreditInUdk()
+{
+	ConsoleCommand("open Credit?Character=FatLady");
+}
 
 exec function getClientInfo()
 {
@@ -111,7 +107,8 @@ exec function sendMyMessage(string inputCommand, string inputMapName)
 
 function updateClientArray()
 {
-	sendMyMessage("query","null");
+	//disable for demoday
+	//sendMyMessage("query","null");
 	getClientInfo();
 }
 
@@ -120,13 +117,23 @@ function resetDisable()
 	disableLoopCalling = false;
 }
 
+function resetDisable_Character()
+{
+	disableLoopCalling_Character = false;
+}
+
+function resetDisable_Map()
+{
+	disableLoopCalling_Map = false;
+}
+
 exec function requestGamesInUdk()
 {
 	if(disableLoopCalling == false)
 	{
 		sneaktoslimHUD_MainMenu(self.myHUD).refreshGameList(clientInfoList);
 		disableLoopCalling = true;
-		settimer(1,false,'resetDisable');
+		settimer(0.5,false,'resetDisable');
 	}
 	//getClientInfo();
 	//sneaktoslimHUD_MainMenu(self.myHUD).refreshGameList(clientInfoList);
@@ -145,10 +152,25 @@ exec function selectGameMapInUDK(string inMapName)
 {
 	`log(inMapName);
 
+
+	if(disableLoopCalling_Map == false)
+	{
+		disableLoopCalling_Map = true;
+		settimer(0.5,false,'resetDisable_Map');
+	}
+	else 
+		return;
+
 	if(inMapName == "Vault")
+	{
 		mapName = "flmist";
+		PlaySound(SoundCue'flsfx.globalAnnouncement.Empress_Basement_Cue');
+	}
 	else if(inMapName == "Temple")
+	{
 		mapName = "fltemplemaptopplatform";
+		PlaySound(SoundCue'flsfx.globalAnnouncement.Duchess_Arboretum_Cue');
+	}
 	else
 		mapName = "FLMist";
 }
@@ -156,7 +178,32 @@ exec function selectGameMapInUDK(string inMapName)
 exec function selectCharacterInUdk(string inCharacterName)
 {
 	`log("selectCharacterInUdk "$inCharacterName);
+
+	if(disableLoopCalling_Character == false)
+	{
+		disableLoopCalling_Character = true;
+		settimer(0.5,false,'resetDisable_Character');
+	}
+	else 
+		return;
+
 	characterName = inCharacterName;
+	if (characterName == "FatLady")
+	{
+		PlaySound(SoundCue'flsfx.globalAnnouncement.Lady_Qian_Cue');
+	}
+	else if (characterName == "GinsengBaby")
+	{
+		PlaySound(SoundCue'flsfx.globalAnnouncement.GinsengBaby_Cue');
+	}
+	else if (characterName == "Rabbit")
+	{
+		PlaySound(SoundCue'flsfx.globalAnnouncement.Tiger_Cue');
+	}
+	else if (characterName == "Shorty")
+	{
+		PlaySound(SoundCue'flsfx.globalAnnouncement.Shorty_Cue');
+	}
 	//change character's model
 }
 
@@ -247,7 +294,9 @@ exec function createRoom()
 	`log(urlAddress);
 
 	runWindowsCommand(urlAddress);
-	sendMyMessage("add",mapName);
+
+	//disable for demoday
+	//sendMyMessage("add",mapName);
 }
 
 exec function joinGameInUdk_Host()

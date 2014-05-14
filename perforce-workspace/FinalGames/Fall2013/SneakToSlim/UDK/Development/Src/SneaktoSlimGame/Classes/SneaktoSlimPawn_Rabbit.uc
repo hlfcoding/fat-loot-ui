@@ -18,8 +18,8 @@ simulated event ReplicatedEvent(name VarName)
 				pa.showCharacterHasTreasure(self.GetTeamNum());
 			}
 
-			`log("authority"$ self.Role);
-			`log(self.Mesh.GetSocketByName('treasureSocket'));
+			//`log("authority"$ self.Role);
+			//`log(self.Mesh.GetSocketByName('treasureSocket'));
 			if (self.Mesh.GetSocketByName('treasureSocket') != None){
 				self.Mesh.AttachComponentToSocket(treasureComponent , 'treasureSocket');
 				self.Mesh.AttachComponentToSocket(treasureLightComponent , 'treasureSocket');

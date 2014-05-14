@@ -6,6 +6,7 @@ var float burstChargeTime;
 var float energyConsumptionFactor; //To know if player is Bursting while Burrowed
 var bool burstComplete;
 var float burstRadius;
+var bool borrowAndBurst; //To make sure right click and hold left click immediately has no effect
 
 exec function showFatLootClassName()
 {
@@ -76,7 +77,12 @@ simulated state Burrow extends PlayerWalking
 	{
 		//Player can't Burst if pause menu is on 
 		if(sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslationOffset.Z > -90)
+		{
+			borrowAndBurst = true;
 			return;
+		}
+
+		borrowAndBurst = false;
 
 		if(pauseMenuOn)
 			return;
@@ -86,7 +92,7 @@ simulated state Burrow extends PlayerWalking
 			sneaktoslimpawn(self.Pawn).removePowerUp();
 			attemptToChangeState('EndInvisible');
 			GoToState('EndInvisible');
-			`log("ON RELEASE FROM INVISIBLE");
+			//`log("ON RELEASE FROM INVISIBLE");
 		}
 		else if (sneaktoslimpawn(self.Pawn).bUsingBuffed[1] == 1)
 		{
@@ -111,7 +117,7 @@ simulated state Burrow extends PlayerWalking
 
 	simulated exec function OnReleaseFirstSkill()
 	{
-		if(sneaktoslimpawn_ginsengbaby(self.Pawn).meshTranslationOffset.Z > -90)
+		if(borrowAndBurst)
 			return;
 
 		SneaktoSlimPawn(self.Pawn).incrementBumpCount();
@@ -182,7 +188,7 @@ simulated state Burrow extends PlayerWalking
 
 Begin:
 	Pawn.bBlockActors = false;
-	SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customDive', 'Dive', 2.f, true, 0.1f, 0.1f, false, true);
+	SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customDive', 'Dive', 2.f, true, 1.0f, 0.1f, false, true);
 	sneaktoslimpawn(self.Pawn).bInvisibletoAI = true;
 	SetTimer(0.5f, false, 'Dive');
 	if(debugStates) logState();
@@ -223,7 +229,7 @@ simulated state HoldingTreasureBurrow extends Burrow
 			sneaktoslimpawn_ginsengbaby(self.Pawn).CallToggleDustParticle(false, self.GetTeamNum(), 0);
 			burstRadius = 0;
 		}
-		`log("Restarting energy regen", true, 'Ravi');
+		//`log("Restarting energy regen", true, 'Ravi');
 		ClearTimer('UpdateEnergy');
 		SetTimer(2, false, 'StartEnergyRegen');
 

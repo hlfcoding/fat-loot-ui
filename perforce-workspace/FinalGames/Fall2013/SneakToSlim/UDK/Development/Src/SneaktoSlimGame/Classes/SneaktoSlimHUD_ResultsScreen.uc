@@ -34,11 +34,13 @@ event PostBeginPlay()
 
 	class'Engine'.static.BasicLoadObject(sgs, "GameResults.bin", true, 1);
 
-	for(count = 0; count < sgs.characterType.Length; count++)
-	{
-		scoreBoard.AddItem(sgs.scoreBoard[count]);
-		playerTypes.AddItem(sgs.characterType[count]);
-	}
+	//for(count = 0; count < sgs.characterType.Length; count++)
+	//{
+	//	scoreBoard.AddItem(sgs.scoreBoard[count]);
+	//	playerTypes.AddItem(sgs.characterType[count]);
+	//}
+	scoreBoard = sgs.scoreBoard;
+	playerTypes = sgs.characterType;
 
 	determineRanks();
 

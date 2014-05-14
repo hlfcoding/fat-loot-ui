@@ -7,14 +7,14 @@ function SneaktoSlimCloth SpawnCloth()
 }
 event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hitNormal)
 {
-	`log( Name $ " Touched by " $other.Name);
+	//`log( Name $ " Touched by " $other.Name);
 }
 
 event UnTouch(Actor Other)
 {
     super.UnTouch(Other);
  
-    `log(Other.Name $ " leave " $ Name);
+    //`log(Other.Name $ " leave " $ Name);
 }
 
 defaultproperties

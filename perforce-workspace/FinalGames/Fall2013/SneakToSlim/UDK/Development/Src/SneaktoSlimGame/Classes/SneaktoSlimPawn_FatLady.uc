@@ -15,8 +15,8 @@ simulated event ReplicatedEvent(name VarName)
 				pa.showCharacterHasTreasure(self.GetTeamNum());
 			}
 
-			`log("authority"$ self.Role);
-			`log(self.Mesh.GetSocketByName('treasureSocket'));
+			//`log("authority"$ self.Role);
+			//`log(self.Mesh.GetSocketByName('treasureSocket'));
 			if (self.Mesh.GetSocketByName('treasureSocket') != None){
 				self.Mesh.AttachComponentToSocket(treasureComponent , 'treasureSocket');
 				self.Mesh.AttachComponentToSocket(treasureLightComponent , 'treasureSocket');
@@ -48,19 +48,19 @@ simulated event ReplicatedEvent(name VarName)
 			{
 				SneaktoSlimPlayerController_FatLady(Self.Controller).attemptToChangeState('HoldingTreasureExhausted');//to server
 				SneaktoSlimPlayerController_FatLady(Self.Controller).GotoState('HoldingTreasureExhausted');//local
-				`log("Going to HT_Exhausted");
+				//`log("Going to HT_Exhausted");
 			}
 			else if(SneaktoSlimPlayerController_FatLady(Self.Controller).IsInState('Sprinting'))
 			{
 				SneaktoSlimPlayerController_FatLady(Self.Controller).attemptToChangeState('HoldingTreasureSprinting');//to server
 				SneaktoSlimPlayerController_FatLady(Self.Controller).GotoState('HoldingTreasureSprinting');//local
-				`log("Going to HT_Sprinting");
+				//`log("Going to HT_Sprinting");
 			}
 			else
 			{
 				SneaktoSlimPlayerController_FatLady(Self.Controller).attemptToChangeState('HoldingTreasureWalking');//to server
 				SneaktoSlimPlayerController_FatLady(Self.Controller).GotoState('HoldingTreasureWalking');//local
-				`log("Going to HT_Walking");
+				//`log("Going to HT_Walking");
 			}
 
 		}
@@ -87,8 +87,6 @@ simulated event ReplicatedEvent(name VarName)
 
 event Tick(float DeltaTime)
 {
-	local SneakToSlimGuidePawn pc;
-
 	super.Tick(DeltaTime);
 
 	if(self.Controller != none && !isGuideReady)
@@ -170,7 +168,7 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 				if(victim.isGotTreasure){            //if the victim is holding treasure...
 					victim.dropTreasure(Normal(vector(self.rotation)));         //...she drops it.
 				}
-				`log("bump Particle");		
+				//`log("bump Particle");		
 				
 				checkOtherFLBuff(victim);
 
@@ -212,7 +210,7 @@ event Bump (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitNormal)
 			{
 					//belly-bump stun here for self.
 					//SneaktoSlimPawn(Other).StunPlayer(2);
-					`log("BUMPING INTO SOMETHING ELSE!", true, 'ANDY');
+					//`log("BUMPING INTO SOMETHING ELSE!", true, 'ANDY');
 					//THE FOLLOWING SECTION OF CODE SEEMS BADLY PLACED. ASK WHOEVER AND CHECK IT WHEN POSSIBLE --ANDY
 					foreach CollidingActors( class'SneakToSlimAIPawn', HitActor, 200,)
 					{

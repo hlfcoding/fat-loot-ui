@@ -31,7 +31,7 @@ event PreBeginPlay()
 {
 	endMatchAtEndTime = true;
 	//Added one second to time because GameOver function activates when time is at 1
-	timePerMatch = 501;
+	timePerMatch = 301;
 	uniqueMatchDate = TimeStamp();
 	uniqueMatchDate = Repl(uniqueMatchDate, ":", ";");    //.txt format doesn't allow colons in filenames
 	uniqueMatchDate = Repl(uniqueMatchDate, "/", ",");    //.txt format doesn't allow slashs in filenames
@@ -169,34 +169,19 @@ event Tick(float deltaTime)
 {
 	local int currentTime; //, count;
 	local Pawn pawn;
-	local string time;
-	//local SneakToSlimAIController AIController;
-	//local string AICatchText;
-
+	
 	super.Tick(deltaTime);
 
-	//AICatchText = "";
-	//count = 1;
 	currentTime = int(GetTimerCount('GameOver',));
 
 	if(currentTime != -1)
 	{
-		if((timePerMatch - currentTime) % 60 < 10)
-		{
-			time = (timePerMatch - currentTime) / 60 $ ":0" $ (timePerMatch - currentTime) % 60;
-		}
-		else
-		{
-			time = (timePerMatch - currentTime) / 60 $ ":" $ (timePerMatch - currentTime) % 60;
-		}
 		foreach WorldInfo.AllPawns(class'Pawn', pawn)
 		{
-			//pawn.showDemoTime(time);
 			if(SneaktoSlimPawn(pawn) != NONE)
 				SneaktoSlimPawn(pawn).updateTimeUI(timePerMatch - currentTime - 1);
 			else if (SneaktoSlimPawn_Spectator(pawn) != NONE)
 				SneaktoSlimPawn_Spectator(pawn).updateTimeUI(timePerMatch - currentTime - 1);
-
 		}
 	}
 	else
@@ -487,26 +472,20 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	local UniqueNetId ZeroId;
 	local int SupposeTeam;
 	local bool IsSpectator;
-	//local string inTime;
 
 	// Get URL options.
-	InName     = Left(ParseOption ( Options, "Name"), 20);
+	InName = Left(ParseOption ( Options, "Name"), 20);
+	IsSpectator = false;
 
 	InCharacter = ParseOption(Options, "Character");
-	//NewPlayer.SetCharacter(InCharacter);
-
-	//InTime = ParseOption(Options, "Time");
-	//if(int(InTime) != 0)
-	//	timePerMatch = int(InTime);
 
 	//get suppose team
 	SupposeTeam=FindTheFirstEmptyTeam();
 	if(InCharacter == "Spectator")
 	{
 		`log("enter spectator mode");
-		//IsSpectator=true;
-		SupposeTeam = 4;
-		//return None;
+		IsSpectator=true;
+		SupposeTeam = 4;		
 	}
 
 	bAdmin = false;
@@ -523,18 +502,9 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 
 	bPerfTesting = ( ParseOption( Options, "AutomatedPerfTesting" ) ~= "1" );
 	bSpectator = bPerfTesting || ( ParseOption( Options, "SpectatorOnly" ) ~= "1" );
-
-	
-
-	//InTeam     = GetIntOption( Options, "Team", 255 ); // default to "no team"
-	//if(IsSpectator==true)
-	//	InTeam= 255;
-	//else
-		InTeam = SupposeTeam;
-	
-	//InAdminName= ParseOption ( Options, "AdminName");
+	InTeam = SupposeTeam;
 	InPassword = ParseOption ( Options, "Password" );
-	//InChecksum = ParseOption ( Options, "Checksum" );
+	
 
 	if ( AccessControl != None )
 	{
@@ -575,8 +545,7 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	}
 
 	SpawnRotation.Yaw = StartSpot.Rotation.Yaw;
-	//NewPlayer = SpawnPlayerController(StartSpot.Location, SpawnRotation);
-
+	
 	//choose different character by character's name
 	HUDType=class'SneaktoSlimGame.SneakToSlimHUD';
 	if (InCharacter == "FatLady")
@@ -641,11 +610,6 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 		NewPlayer.PlayerReplicationInfo.Team.TeamIndex=SupposeTeam;
 	}
 	
-	//`Log("team "@NewPlayer.PlayerReplicationInfo.Team.TeamIndex@" in, total number "@newPlayerNumber@" supposed to be"@SupposeTeam);
-	//`Log(TeamOccupied[0]@" "@TeamOccupied[1]@" "@TeamOccupied[2]@" "@TeamOccupied[3]);
-
-	//PrintPri();
-
 	// Handle spawn failure.
 	if( NewPlayer == None )
 	{

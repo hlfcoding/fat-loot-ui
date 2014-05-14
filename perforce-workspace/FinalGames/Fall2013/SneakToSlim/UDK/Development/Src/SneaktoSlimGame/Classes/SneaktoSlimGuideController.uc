@@ -132,8 +132,7 @@ function readNextDialogueEntry()
 	local string entry;
 	local int count;
 	local PathNode node;
-	local GuideTrigger guideTrigger;
-	local Rotator rotate;
+	local GuideTrigger guideTrigger;	
 	local SneaktoSlimAIPawn aiPawn;
 	local SneaktoSlimPawn_FatLady lady;
 	local SneaktoSlimPlayerController_FatLady pclady;
@@ -235,8 +234,7 @@ function readNextDialogueEntry()
 	{
 		entry = currentDialogue[0];
 		currentDialogue.Remove(0, 1);
-		talkingTo.displayTutorialText(entry);
-		//`log(entry);
+		talkingTo.displayTutorialText(entry);		
 
 		//Sets timer for HowToMove to activate read loop every five seconds instead of two after first line is read
 		if(currentState == "HowToMove" && self.timeBetweenLines == 1 && currentDialogue.Length == 9)
@@ -280,7 +278,7 @@ function changeToTutorialState(name stateName)
 {
 	//Checks what current state is
 	currentState = string(stateName);
-	`log("I'm in state " $ currentState);
+	//`log("I'm in state " $ currentState);
 
 	//Does stuff specific to state
 	//Aside from "default" and "Wait on FirstLoad",

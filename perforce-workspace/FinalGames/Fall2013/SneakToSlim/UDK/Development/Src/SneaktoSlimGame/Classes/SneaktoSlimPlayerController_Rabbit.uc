@@ -53,7 +53,7 @@ simulated state PlayerWalking
 
 	exec function testForEnergy()
 	{
-		`log(sneaktoslimpawn(self.Pawn).v_energy);
+		//`log(sneaktoslimpawn(self.Pawn).v_energy);
 	}
 
 	exec function OnPressFirstSkill()
@@ -214,7 +214,7 @@ simulated state Roaring extends CustomizedPlayerWalking
 	simulated function Rabbit_Roar()
 	{
 		local SneaktoSlimPawn victim;
-		`log("Rabbit_Roar!!");
+		//`log("Rabbit_Roar!!");
 
 		
 		SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customRoar', 'roar', 1.f, true, 0.1f, 0.1f, false, true);

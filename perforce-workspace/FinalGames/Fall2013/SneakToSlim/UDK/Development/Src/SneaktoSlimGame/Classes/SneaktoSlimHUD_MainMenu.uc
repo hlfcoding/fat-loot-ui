@@ -14,9 +14,7 @@ event PostBeginPlay()
 	//Creates and initializes flash UI
 	FlashMenu = new class 'SneaktoSlimGFxHUD_Menu';
 	FlashMenu.Init();
-	`log("mainMenu................................................................");
-	//FlashResults.SetViewScaleMode(SM_NoScale);
-	//FlashResults.SetAlignment(Align_TopLeft);
+	//`log("mainMenu................................................................");
 }
 
 event DrawHUD()
@@ -34,17 +32,7 @@ function refreshGameList(array<clientInfo> clientInfoList)
 	FlashMenu.setGames(clientInfoList);
 }
 
-//function saySomething()
-//{
-//	FlashMenu.saySomething();
-//}
-
-//function outputArray()
-//{
-//	FlashMenu.outputArray();
-//}
 
 DefaultProperties
-{
-	setTextOnce = false;
+{	
 }

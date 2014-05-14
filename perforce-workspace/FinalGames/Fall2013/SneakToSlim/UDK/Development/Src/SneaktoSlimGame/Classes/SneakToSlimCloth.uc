@@ -41,7 +41,7 @@ simulated event PostBeginPlay()
 	myX = self.Location.X;
 	myY = self.Location.Y;
 	myZ = self.Location.Z;
-	`log("cloth is created");
+	//`log("cloth is created");
 
 }
 
@@ -49,7 +49,7 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 {
     super.Touch(Other, OtherComp, HitLocation, HitNormal);
 
-	`log("Cloth touched" $ self.GetPhysicsName());
+	//`log("Cloth touched" $ self.GetPhysicsName());
 
 	if(string(Other.Class) == "SneaktoSlimPawn")
 	{
@@ -57,14 +57,14 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 		tempUser.bBuffed = 2;
 		tempUser.inputStringToHUD("get Cloth, press Shift to use");
 		tempUser.myCloth = self;
-		`log(tempUser $ " get " $ tempUser.bBuffed);
+		//`log(tempUser $ " get " $ tempUser.bBuffed);
 		//tempUser.ChangeMesh(true);
 		//tempUser.getTreasure(self);
 
 
 		//tempUser.staticHUDmsg.eqGotten = eqGottenText; //local only
 		tempUser.updateStaticHUDeq( eqGottenText);
-		`log("server tell client to do updateStaticHUDeq");
+		//`log("server tell client to do updateStaticHUDeq");
 		self.ShutDown();
 
 	}
@@ -73,12 +73,12 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, Vector HitLocation, Vecto
 event UnTouch(Actor Other)
 {
     super.UnTouch(Other);
-    `log(Other.Name $ " leave " $ self.GetPhysicsName());
+    //`log(Other.Name $ " leave " $ self.GetPhysicsName());
 }
 
 reliable server function turnOn()
 {
-	`log(name $ " on");
+	//`log(name $ " on");
 	// Shut down physics
 	//SetPhysics(PHYS_None);
 	SetPhysics(PHYS_None);

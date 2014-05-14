@@ -8,6 +8,60 @@ exec function showFatLootClassName()
 	`log(self.GetTeamNum());
 }
 
+reliable server function sendEnergy()
+{
+	getEnergy(sneaktoslimPawn(self.Pawn).v_energy);
+}
+
+reliable client function getEnergy(float inputEnergy)
+{
+	sneaktoslimPawn(self.Pawn).v_energy = inputEnergy;
+}
+
+reliable client function clientReleaseSecondButton()
+{
+	if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+	{
+
+		ServerSpeedDown();
+
+		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
+		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+		{
+			ClearTimer('removeEnergyWithTime');
+			SetTimer(2, false, 'StartEnergyRegen');
+			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
+			sneaktoslimpawn(self.Pawn).s_energized = 0;
+		}
+		attemptToChangeState('Playerwalking');
+		GoToState('Playerwalking');
+	}
+}
+
+reliable server function serverReleaseSecondButton()
+{
+	if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+	{
+
+		ServerSpeedDown();
+
+		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
+		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+		{
+			ClearTimer('removeEnergyWithTime');
+			SetTimer(2, false, 'StartEnergyRegen');
+			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
+			sneaktoslimpawn(self.Pawn).s_energized = 0;
+		}
+		attemptToChangeState('Playerwalking');
+		GoToState('Playerwalking');
+	}
+}
+
 simulated state PreBellyBump extends CustomizedPlayerWalking
 {
 	event BeginState (Name LastStateName)
@@ -60,7 +114,7 @@ simulated state InBellyBump extends CustomizedPlayerWalking
 	event OnAnimEnd(AnimNodeSequence SeqNode, float PlayedTime, float ExcessTime)
 	{
 		super.OnAnimEnd(SeqNode, PlayedTime, ExcessTime);
-		`log("213123123123123");
+		//`log("213123123123123");
 	}
 
 	simulated function bool letsBellyBump()
@@ -171,7 +225,7 @@ simulated state Sprinting extends PlayerWalking
 		}
 		else
 		{
-			`log("state " $ LastStateName $ " trying to go through state Sprinting", true, 'LOG');
+			//`log("state " $ LastStateName $ " trying to go through state Sprinting", true, 'LOG');
 		}
 	}
 
@@ -234,10 +288,10 @@ simulated state Sprinting extends PlayerWalking
 				
 				attemptToChangeState('InvisibleWalking');
 				GoToState('InvisibleWalking');
-				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
-				{
-					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Invisibility');
-				}
+				//foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				//{
+					sneaktoslimpawn(self.Pawn).clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Invisibility');
+				//}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 2) 
 			{			
@@ -251,10 +305,10 @@ simulated state Sprinting extends PlayerWalking
 				SetTimer(0.05, true, 'removeEnergyWithTime');
 				attemptToChangeState('DisguisedWalking');
 				GoToState('DisguisedWalking');
-				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
-				{
-					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Guard_Like_Cue');
-				}
+				//foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				//{
+					sneaktoslimpawn(self.Pawn).clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Guard_Like_Cue');
+				//}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 3) 
 			{			
@@ -266,10 +320,10 @@ simulated state Sprinting extends PlayerWalking
 
 				attemptToChangeState('UsingThunderFan');
 				GoToState('UsingThunderFan');
-				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
-				{
-					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Thunder_Fan');
-				}
+				//foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				//{
+					sneaktoslimpawn(self.Pawn).clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Buddha_Palm');
+				//}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 4) 
 			{			
@@ -283,10 +337,10 @@ simulated state Sprinting extends PlayerWalking
 				//GoToState('UsingThunderFan');
 				sneaktoslimpawn(self.Pawn).v_energy = 100;
 				ServerResetEnergy();
-				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
-				{
-					current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Gives_Wings_Cue');
-				}
+				//foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				//{
+					sneaktoslimpawn(self.Pawn).clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Gives_Wings_Cue');
+				//}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 5)
 			{
@@ -294,11 +348,11 @@ simulated state Sprinting extends PlayerWalking
 				sneaktoslimpawn(self.Pawn).serverResetBBuffed();
 				attemptToChangeState('UsingSuperSprint');
 				GoToState('UsingSuperSprint');
-				foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
-				{
-					//current.clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Get_out_of_the_way_Cue');
-					current.clientAnnounceBasedOnTeam(SneaktoSlimPawn(self.Pawn).GetTeamNum());
-				}
+				//foreach worldinfo.allactors(class 'sneakToSlimPawn', current)
+				//{
+					sneaktoslimpawn(self.Pawn).clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Get_out_of_the_way_Cue');
+					//current.clientAnnounceBasedOnTeam(SneaktoSlimPawn(self.Pawn).GetTeamNum());
+				//}
 			}
 			if(sneaktoslimpawn(self.Pawn).bBuffed == 6)
 			{
@@ -371,10 +425,24 @@ simulated state Sprinting extends PlayerWalking
 				SneaktoSlimPawn(self.Pawn).v_energy = SneaktoSlimPawn(self.Pawn).v_energy - SneaktoSlimPawn(self.Pawn).PerSpeedEnergy;
 				if (sneaktoslimpawn(self.Pawn).v_energy < 0)
 						sneaktoslimpawn(self.Pawn).v_energy = 0;
+
+				//sync energy
+				if(Role == ROLE_Authority)
+					sendEnergy();
 			}
 			else
 			{
-				OnReleaseSecondSkill();
+				if(role == ROLE_Authority)
+				{
+					OnReleaseSecondSkill();
+					clientReleaseSecondButton();
+				}
+				else if(role == ROLE_AutonomousProxy)
+				{
+					OnReleaseSecondSkill();
+					serverReleaseSecondButton();
+				}
+
 			}
 		}
 		else

@@ -74,7 +74,7 @@ simulated function ResetTreasure(){
 reliable Server function ServerSetToLocationPoint(int Index)
 {
 	self.SetLocation(SpawnPoints[Index]);
-	`Log("alex: ServerSetToLocationPointCalled"@SpawnPoints.Length);
+	//`log("alex: ServerSetToLocationPointCalled"@SpawnPoints.Length);
 }
 
 simulated event PostBeginPlay()
@@ -87,7 +87,7 @@ simulated event PostBeginPlay()
 	myY = self.Location.Y;
 	myZ = self.Location.Z;
 
-	`log(beginPosition);
+	//`log(beginPosition);
 }
 
 
@@ -148,7 +148,7 @@ exec simulated function turnOn()
 
 function bool UsedBy(Pawn User)
 {
-   `log("Treasure usedBy"@User.Name, true,'Lu');
+   //`log("Treasure usedBy"@User.Name, true,'Lu');
 
    return true;
 }
@@ -168,7 +168,7 @@ function releaseBeingTracked()
 
 exec function myFunction()
 {
-   `log("myFunction");
+   //`log("myFunction");
 	self.ShutDown();
 
     return;
@@ -177,10 +177,10 @@ exec function myFunction()
 simulated function movetoDropLocation(Vector TargetLocation)
 {
 	treasureTargetLocation = TargetLocation;
-	`log("treasureMoveToLocation" @treasureTargetLocation);
+	//`log("treasureMoveToLocation" @treasureTargetLocation);
 	TreasureIsMoving = true;
-	`log("treasure is not ticking" @self.bTickIsDisabled);
-	`log("treasure is moving" @TreasureIsMoving);
+	//`log("treasure is not ticking" @self.bTickIsDisabled);
+	//`log("treasure is moving" @TreasureIsMoving);
 }
 
 
@@ -211,8 +211,8 @@ simulated event Tick(float DeltaTime)
 	if (TreasureIsMoving)
 	{
 		vdirection = treasureTargetLocation - self.Location;
-		`log("treasureCurrentLocation" @self.Location);
-		`log("movingDirection" @vdirection);
+		//`log("treasureCurrentLocation" @self.Location);
+		//`log("movingDirection" @vdirection);
 		if (VSize(vdirection)>treasureVelocity*DeltaTime)
 		{
 			//`log("treasure is moving!" @ VSize(vdirection));

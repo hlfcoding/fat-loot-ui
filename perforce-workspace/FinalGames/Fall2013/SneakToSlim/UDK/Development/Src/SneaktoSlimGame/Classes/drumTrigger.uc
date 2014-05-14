@@ -18,7 +18,7 @@ function setOriginNode()
 			break;
 		}
 	}
-	`log(node.Name $ " saved in drum trigger " $ Name $ " at location " $ node.Location);
+	//`log(node.Name $ " saved in drum trigger " $ Name $ " at location " $ node.Location);
 }
 
 function bool UsedBy(Pawn User)

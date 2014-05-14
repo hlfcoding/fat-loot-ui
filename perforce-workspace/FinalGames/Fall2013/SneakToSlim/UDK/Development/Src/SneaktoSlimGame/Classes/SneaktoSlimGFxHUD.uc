@@ -21,7 +21,7 @@ function Init(optional LocalPlayer player)
 	HealthBar = GetVariableObject("_root.stamina_bar");
 	TutorialText = GetVariableObject("_root.TutorialText");
 	TutorialText.GetObject("TutorialText").SetText("");
-	`log("Using Gamepad: (STSGFxHUD init) " $ SneaktoSlimPawn(SneaktoSlimPlayerController(GetPC()).Pawn).getIsUsingXboxController());
+	//`log("Using Gamepad: (STSGFxHUD init) " $ SneaktoSlimPawn(SneaktoSlimPlayerController(GetPC()).Pawn).getIsUsingXboxController());     // it will cause a "access none pawn" warning
 	if(SneaktoSlimPawn(SneaktoSlimPlayerController(GetPC()).Pawn).getIsUsingXboxController())
 		TutorialText.GetObject("SkipLineText").SetText("Press 'B' to skip");
 	else

@@ -22,7 +22,7 @@ function setDestinationNode()
 			break;
 		}
 	}
-	`log(destination.Name $ " saved in trigger " $ Name);
+	//`log(destination.Name $ " saved in trigger " $ Name);
 }
 
 event Touch(Actor other, PrimitiveComponent otherComp, vector hitLoc, vector hitNormal)
@@ -47,26 +47,27 @@ simulated function bool UsedBy(Pawn User)
 {
 	local bool used;
 	//Spawn(class 'soundSphere',,,self.Location);
-	PlaySound(SoundCue'flsfx.teleport_fx_Cue');
     used = super.UsedBy(User);
 	if(InRangePawnNumber!=SneaktoSlimPawn(User).GetTeamNum()){
 	    return used;
     }  
 	if(destination == NONE)
 	{
-		`log("Trigger " $ Name $ " used by" $ User.Name);
+		//`log("Trigger " $ Name $ " used by" $ User.Name);
 		return super.UsedBy(User);
 	}
 	if(!destination.checkIfOccupied())
 	{
 		User.SetRotation(destination.Rotation);
 		User.SetLocation(destination.Location);
-		`log("Trigger " $ Name $ " used by" $ User.Name);
+		//`log("Trigger " $ Name $ " used by" $ User.Name);
+		PlaySound(SoundCue'flsfx.teleport_fx_Cue');
 		return super.UsedBy(User);
 	}
 	else
 	{
-		`log("Can't use teleporter");
+		//`log("Can't use teleporter");
+		PlaySound(SoundCue'flsfx.Buzz_fx_Cue');
 		return used;
 	}
 }

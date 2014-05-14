@@ -223,7 +223,6 @@ function showContinueText()
 function showAllScores()
 {
 	local ResultsDummyPawn dummyPawn;
-
 	SneaktoSlimHUD_ResultsScreen(SneaktoSlimPlayerController_Results(self.Controller).myHUD).showAllScores();
 
 	foreach WorldInfo.AllPawns(class 'ResultsDummyPawn', dummyPawn)
@@ -233,16 +232,18 @@ function showAllScores()
 			if(dummyPawn.hasWon)
 			{
 				`log("Player " $ (playerIndex+1) $ " was WON");
-				PlaySound(SoundCue'flsfx.Mega_Steal');
+				PlaySound(SoundCue'flsfx.globalAnnouncement.winning');
 			}
 			else
 			{
 				`log("Player " $ (playerIndex+1) $ " was LOST");
-				PlaySound(SoundCue'flsfx.Ultimate_Heist');
+				//clientGlobalAnnouncement(SoundCue'flsfx.globalAnnouncement.Losing');
+				PlaySound(SoundCue'flsfx.globalAnnouncement.Losing');
 			}
 		}
 	}
 }
+
 
 function updateAllAnimations()
 {

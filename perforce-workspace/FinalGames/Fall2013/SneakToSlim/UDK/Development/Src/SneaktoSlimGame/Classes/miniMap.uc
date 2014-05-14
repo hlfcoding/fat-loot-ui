@@ -35,7 +35,7 @@ function getAllActors()
 function toggleMap()
 {
 	isOn = !isOn;
-	`log(Name $ " is " $ isOn);
+	//`log(Name $ " is " $ isOn);
 	//if(isOn)
 		//getAllActors();
 }

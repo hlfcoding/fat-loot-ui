@@ -262,7 +262,7 @@ simulated function changeToTutorialState(name stateName)
 {
 	//Checks what current state is
 	currentState = string(stateName);
-	`log("I'm in state " $ currentState);
+	//`log("I'm in state " $ currentState);
 
 	//Does stuff specific to state
 	//Aside from "default" and "Wait on FirstLoad",

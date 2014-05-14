@@ -9,6 +9,9 @@ var bool secondSkillUsed;
 var float FIRECRACKER_INDICATOR_SPEED;
 var bool fireCrackerCheatModeOn;
 
+var float cappedChargeTime;
+var float dashStartTime;
+
 simulated event PostBeginPlay()
 {
 	ServerStopEnergyRegen();
@@ -18,18 +21,18 @@ simulated event PostBeginPlay()
 simulated event Possess(Pawn inPawn, bool bVehicleTransition)
 {	
 	super.Possess(inPawn, bVehicleTransition);	
-	`log("Pawn " $ Pawn.Name $ " is attached to controller " $ self.Name, true, 'Ravi');
+	//`log("Pawn " $ Pawn.Name $ " is attached to controller " $ self.Name, true, 'Ravi');
     Pawn.SetMovementPhysics();
 
     FIRECRACKER_INDICATOR_SPEED = 1.3 / 250 * SneaktoSlimPawn_Shorty(inPawn).FIRECRACKER_SPEED_MULTIPLIER;
 	clientSetFirecrackerIndicatorSpeed(FIRECRACKER_INDICATOR_SPEED);
-	`log("Indicator speed is " $ FIRECRACKER_INDICATOR_SPEED, true,'Ravi');
+	//`log("Indicator speed is " $ FIRECRACKER_INDICATOR_SPEED, true,'Ravi');
 }
 
 reliable client function clientSetFirecrackerIndicatorSpeed(float speed)
 {
 	FIRECRACKER_INDICATOR_SPEED = speed;
-	`log("Indicator speed is " $ FIRECRACKER_INDICATOR_SPEED, true,'Ravi');
+	//`log("Indicator speed is " $ FIRECRACKER_INDICATOR_SPEED, true,'Ravi');
 }
 
 exec function showFatLootClassName()
@@ -116,7 +119,7 @@ simulated state ChargingFireCracker
 
 	simulated event BeginState(Name LastStateName)
 	{	
-		if(debugStates) `log(self.GetStateName());
+		//if(debugStates) `log(self.GetStateName());
 		firstSkillUsed = false;
 		fireCrackerChargeTime = WorldInfo.TimeSeconds; //time when charging started		
 		Pawn.GroundSpeed = 0;
@@ -210,7 +213,7 @@ simulated state ThrowingFireCracker
 
 	simulated event BeginState(Name LastStateName)
 	{	
-		if(debugStates) `log(self.GetStateName());
+		//if(debugStates) `log(self.GetStateName());
 		if (LastStateName == 'InvisibleExhausted' || LastStateName == 'InvisibleWalking')
 		{
 			attemptToChangeState('EndInvisible');
@@ -301,7 +304,7 @@ simulated state ChargingDash
 
 	simulated event BeginState(Name LastStateName)
 	{		
-		if(debugStates) `log(self.GetStateName());
+		//if(debugStates) `log(self.GetStateName());
 		secondSkillUsed = false;
 		dashChargeTime = WorldInfo.TimeSeconds; //time when charging started		
 		Pawn.GroundSpeed = 0;
@@ -329,8 +332,8 @@ simulated state ChargingDash
 
 simulated state Dashing
 {
-	local float dashStartTime;
-	local float cappedChargeTime;
+	
+	
 
 	simulated exec function use()
 	{
@@ -342,7 +345,7 @@ simulated state Dashing
 
 	simulated event BeginState(Name LastStateName)
 	{		
-		if(debugStates) `log(self.GetStateName());
+		//if(debugStates) `log(self.GetStateName());
 		if (LastStateName == 'InvisibleExhausted' || LastStateName == 'InvisibleWalking')
 		{
 			attemptToChangeState('EndInvisible');
@@ -429,7 +432,7 @@ simulated state Dashing
 Begin:
 	
 	Pawn.GroundSpeed = SneaktoSlimPawn_Shorty(Pawn).SHORTY_DASH_SPEED;
-	Pawn.bForceMaxAccel = true;	
+	Pawn.bForceMaxAccel = true;
 	sleep(cappedChargeTime);	
 	GotoState('PlayerWalking');
 }

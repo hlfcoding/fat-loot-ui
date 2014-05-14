@@ -34,8 +34,8 @@ simulated event ReplicatedEvent(name VarName)
 				pa.showCharacterHasTreasure(self.GetTeamNum());
 			}
 
-			`log("authority"$ self.Role);
-			`log(self.Mesh.GetSocketByName('treasureSocket'));
+			//`log("authority"$ self.Role);
+			//`log(self.Mesh.GetSocketByName('treasureSocket'));
 			if (self.Mesh.GetSocketByName('treasureSocket') != None){
 				self.Mesh.AttachComponentToSocket(treasureComponent , 'treasureSocket');
 				self.Mesh.AttachComponentToSocket(treasureLightComponent , 'treasureSocket');
@@ -177,13 +177,6 @@ simulated function toggleSprintParticle(bool flag)
 	shortySprintParticleComp.SetActive(flag);
 }
 
-//event Tick(float DeltaTime)
-//{
-//	//`log(self.Controller.GetStateName());
-//	//`log(self.GroundSpeed);
-//	`log(self.v_energy);
-//}
-
 DefaultProperties
 {
 	FLWalkingSpeed=200.0
@@ -214,12 +207,6 @@ DefaultProperties
 	
 	Components.Add(ShortySkeletalMesh)
 	Mesh = ShortySkeletalMesh
-
-	//Begin Object Name=CollisionCylinder
-	//	CollisionRadius=15.000000
-    //    CollisionHeight=48.000000
-    //End Object
-	//CylinderComponent=CollisionCylinder
 
 	Begin Object Class=PointLightComponent Name=MyPointlightBack
 	  bEnabled=true
@@ -263,7 +250,5 @@ DefaultProperties
 	FIRECRACKER_EXPLOSION_DETECT_RADIUS = 1000
 	FIRECRACKER_EXPLOSION_AFFECT_RADIUS = 100
 
-	characterName = "Shorty";
-
-	//Material'FLCharacter.GinsengBaby.GinsengBaby_material_0'
+	characterName = "Shorty";	
 }
