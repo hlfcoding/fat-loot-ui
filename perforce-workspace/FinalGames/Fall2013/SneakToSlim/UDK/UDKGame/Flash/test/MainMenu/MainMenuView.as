@@ -91,8 +91,12 @@
                         case hostOrJoinGameView.joinButton:
                             toViewName = 'joinGameView';
                             var selectedModel:Object = hostOrJoinGameView.gameTableView.selectedModel;
-                            gameModel.level = MainRepository.getById(selectedModel.level, levels);
-                            gameModel.location = selectedModel.location;
+                            if (selectedModel != null) {
+                                // TODO: In theory, if we don't have a selected
+                                // level, we shouldn't be able to select characters.
+                                gameModel.level = MainRepository.getById(selectedModel.level, levels);
+                                gameModel.location = selectedModel.location;
+                            }
                             MainMenuView.sendCommand('joinGameScreen');
                             break;
                         case hostOrJoinGameView.hostButton:
@@ -153,20 +157,22 @@
             // Setup view as needed.
             switch (toViewName) {
                 case 'joinGameView':
-                    // Clone model.
-                    var levelModel:Object = {};
-                    for (var key:String in gameModel.level) {
-                        if (key === 'image') {
-                            levelModel.image = new Bitmap(gameModel.level.image.bitmapData);
-                            continue;
+                    if (gameModel.level != null) {
+                        // Clone model.
+                        var levelModel:Object = {};
+                        for (var key:String in gameModel.level) {
+                            if (key === 'image') {
+                                levelModel.image = new Bitmap(gameModel.level.image.bitmapData);
+                                continue;
+                            }
+                            levelModel[key] = gameModel.level[key];
                         }
-                        levelModel[key] = gameModel.level[key];
+                        if (levelModel.image == null) {
+                            var classRef = LevelSelectView.getPreviewAssetClass(levelModel.id);
+                            levelModel.image = new Bitmap(new classRef() as BitmapData);
+                        }
+                        joinGameView.levelPreview.model = levelModel;
                     }
-                    if (levelModel.image == null) {
-                        var classRef = LevelSelectView.getPreviewAssetClass(levelModel.id);
-                        levelModel.image = new Bitmap(new classRef() as BitmapData);
-                    }
-                    joinGameView.levelPreview.model = levelModel;
                     break;
                 case 'hostGameView':
                     hostGameView.gameModel = gameModel;
