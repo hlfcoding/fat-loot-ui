@@ -32,10 +32,9 @@ package  {
             super();
             inputDebouncer = new InputDebouncer(onGameSettingChange);
             // Restyle.
-            gameNameInput.defaultTextFormat.color =
-            playerLimitInput.defaultTextFormat.color =
-            scoreLimitInput.defaultTextFormat.color =
-            timeLimitInput.defaultTextFormat.color = 0x0F3D0D;
+            for each (var settingInput:TextInput in settingInputs) {
+                settingInput.defaultTextFormat.color = 0x0F3D0D;
+            }
         }
 
         public function init():void {
@@ -74,6 +73,10 @@ package  {
         }
         public function get navigationButtons():Vector.<Button> {
             return new <Button>[hostButton];
+        }
+
+        public function get settingInputs():Vector.<TextInput> {
+            return new <TextInput>[gameNameInput, playerLimitInput, scoreLimitInput, timeLimitInput];
         }
 
         public function onGameSettingChange(event:Event):void {
