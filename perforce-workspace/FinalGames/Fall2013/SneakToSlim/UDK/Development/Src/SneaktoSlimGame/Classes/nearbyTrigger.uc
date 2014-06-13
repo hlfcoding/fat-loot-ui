@@ -128,7 +128,14 @@ simulated function bool UsedBy(Pawn User)
 	     }
         
 
-		Sneaktoslimpawn(User).playerPlayOrStopCustomAnim('customTea', 'Tea', 1.f, true, 0, 0, false, true);
+		 if(User.Class == class 'SneaktoSlimPawn_FatLady')
+			Sneaktoslimpawn(User).playerPlayOrStopCustomAnim('customTea', 'Tea', 1.0f, true, 0, 0, false, true);
+		 else if(User.Class == class 'SneaktoSlimPawn_Shorty')
+			Sneaktoslimpawn(User).playerPlayOrStopCustomAnim('customTea', 'Tea', 2.0f, true, 0, 0, false, true);
+		 else if(User.Class == class 'SneaktoSlimPawn_GinsengBaby')
+			Sneaktoslimpawn(User).playerPlayOrStopCustomAnim('customTea', 'Tea', 2.5f, true, 0, 0, false, true);
+		 else
+			Sneaktoslimpawn(User).playerPlayOrStopCustomAnim('customTea', 'Tea', 1.f, true, 0, 0, false, true);
 
 		return used;
 }

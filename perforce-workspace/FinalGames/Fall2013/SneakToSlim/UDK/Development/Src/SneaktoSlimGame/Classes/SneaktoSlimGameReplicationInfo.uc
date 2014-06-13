@@ -19,6 +19,9 @@ simulated event PostBeginPlay()
 
 	worldInfo.GetMapName();
 	//setTimer(2.0,true,'killZeroPlayerServer');
+
+	//indiecade
+	setTimer(5,true,'checkZeroServer');
 }
 
 function sendMyMessage(string inputCommand, string inputMapName)
@@ -33,7 +36,7 @@ function sendGameInfo(name VarName)
 
 
 	//disable for demoday
-	//sendMyMessage("add",worldInfo.GetMapName());
+	sendMyMessage("add",worldInfo.GetMapName());
 
 
 	//`log(worldInfo.GetMapName());
@@ -55,7 +58,44 @@ function killZeroPlayerServer()
 	killTheServer(outputString);
 }
 
+//indiecade
+function checkZeroServer()
+{
+	local int playerNumber;
+	local playercontroller current;
+	//local sneaktoslimplayercontroller CurrentController;
+	//local sneaktoslimplayercontroller_Menu CurrentController_Menu;
 
+
+	playerNumber = 0;
+
+
+	ForEach WorldInfo.AllControllers(class 'playercontroller', current)
+		{
+			playerNumber++;
+		}
+
+	//ForEach WorldInfo.AllControllers(class 'sneaktoslimplayercontroller', CurrentController)
+	//	{
+	//		playerNumber++;
+	//	}
+
+
+	//ForEach WorldInfo.AllControllers(class 'SneaktoSlimPlayerController_Menu', CurrentController_Menu)
+	//	{
+	//		playerNumber++;
+	//	}
+
+	//`log(playerNumber);
+
+	if(playerNumber<=0)
+		ConsoleCommand("quit");
+}
+
+function suicide()
+{
+	ConsoleCommand("quit");
+}
 
 
 DefaultProperties

@@ -2492,8 +2492,7 @@ simulated function playerPlayOrStopCustomAnim
 	{
 		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn', onePawn)
 		{
-			if(onePawn.GetTeamNum() != self.GetTeamNum())
-				onePawn.clientPlayerPlayCustomAnim(self, nodename, AnimName, Rate, playOrStop, BlendInTime, BlendOutTime, bLooping, bOverride);
+			onePawn.clientPlayerPlayCustomAnim(self, nodename, AnimName, Rate, playOrStop, BlendInTime, BlendOutTime, bLooping, bOverride);
 		}
 
 		ForEach WorldInfo.AllActors(class'SneaktoSlimPawn_Spectator', specPawn)

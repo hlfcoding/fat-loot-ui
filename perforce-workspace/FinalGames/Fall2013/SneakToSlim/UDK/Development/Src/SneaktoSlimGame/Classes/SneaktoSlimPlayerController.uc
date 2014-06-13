@@ -89,6 +89,11 @@ simulated event PostBeginPlay()
 	tempString = "";
 }
 
+exec function showMyController()
+{
+	`log(self.Name);
+}
+
 exec function ForceGameOver()
 {
 	forceGameOverQuit();
@@ -1649,10 +1654,15 @@ simulated state InvisibleWalking extends PlayerWalking
 		}
 		else if (self.Class == class'SneaktoSlimPlayerController_FatLady')
 		{
-			SneaktoSlimPawn(self.Pawn).incrementSprintCount();
-			resumeSprintTimer();
-			attemptToChangeState('InvisibleSprinting');//to server
-			GoToState('InvisibleSprinting');//local
+			if(sneaktoslimpawn(self.Pawn).v_energy <= (sneaktoslimpawn(self.Pawn).PerDashEnergy+1))
+				return;
+			else
+			{
+				SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+				resumeSprintTimer();
+				attemptToChangeState('InvisibleSprinting');//to server
+				GoToState('InvisibleSprinting');//local
+			}
 		}
 		else if (self.Class == class'SneaktoSlimPlayerController_GinsengBaby')
 		{
@@ -2155,31 +2165,6 @@ reliable server function serverApplyWalkingSpeed()
 	//`log("serverApplyWalkingSpeed");
 }
 
-simulated function removeEnergyWithTime()
-{
-	if (Vsize(sneaktoslimpawn(self.Pawn).Velocity) != 0)
-	{
-		if(sneaktoslimpawn(self.Pawn).v_energy > sneaktoslimpawn(self.Pawn).PerSpeedEnergy)
-		{
-			ClearTimer('EnergyRegen');
-			ClearTimer('StartEnergyRegen');
-			SneaktoSlimPawn(self.Pawn).v_energy = SneaktoSlimPawn(self.Pawn).v_energy - SneaktoSlimPawn(self.Pawn).PerSpeedEnergy;
-			if (sneaktoslimpawn(self.Pawn).v_energy < 0)
-					sneaktoslimpawn(self.Pawn).v_energy = 0;
-		}
-		else
-		{
-			ApplyWalkingSpeed();
-			SetTimer(2, false, 'StartEnergyRegen');
-		}
-	}
-	else
-	{
-		SetTimer(2, false, 'StartEnergyRegen');
-	}
-}
-
-
 //Child of PlayerWalking, entered when player has <20% energy, and exited when >=20%
 simulated state DisguisedExhausted extends DisguisedWalking
 {
@@ -2321,10 +2306,15 @@ simulated state HoldingTreasureWalking extends PlayerWalking
 	{
 		if(self.Class == class 'SneaktoSlimPlayerController_FatLady')
 		{
-			SneaktoSlimPawn(self.Pawn).incrementSprintCount();
-			resumeSprintTimer();
-			attemptToChangeState('HoldingTreasureSprinting');//to server
-			GoToState('HoldingTreasureSprinting');//local
+			if(sneaktoslimpawn(self.Pawn).v_energy <= (sneaktoslimpawn(self.Pawn).PerDashEnergy+1))
+				return;
+			else
+			{
+				SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+				resumeSprintTimer();
+				attemptToChangeState('HoldingTreasureSprinting');//to server
+				GoToState('HoldingTreasureSprinting');//local
+			}
 		}
 		else if(self.Class == class 'SneaktoSlimPlayerController_Rabbit')
 		{

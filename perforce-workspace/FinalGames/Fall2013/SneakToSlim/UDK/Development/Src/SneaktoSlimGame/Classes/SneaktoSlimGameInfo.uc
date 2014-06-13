@@ -588,8 +588,9 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	}
 	else
 	{
-		NewPlayer = Spawn(class 'SneaktoSlimPlayerController',,, StartSpot.Location, SpawnRotation);
-		NewPlayer.Pawn = Spawn(class 'SneaktoSlimPawn',,,StartSpot.Location,SpawnRotation);
+		NewPlayer = Spawn(class 'SneaktoSlimGame.SneaktoSlimPlayerController_Menu',,, StartSpot.Location, SpawnRotation);
+		NewPlayer.Pawn = Spawn(class 'SneaktoSlimGame.SneaktoSlimPawn_Menu',,,StartSpot.Location,SpawnRotation);
+		HUDType=class'SneaktoSlimGame.SneakToSlimHUD_MainMenu'; //disable in-game HUD
 	}
 
 	NewPlayer.SetCharacter(InCharacter);

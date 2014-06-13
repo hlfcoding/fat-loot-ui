@@ -22,6 +22,8 @@ var string IPAddress;
 
 var array<clientInfo> clientInfoList;
 
+var bool bGameCreateCoolDown;
+
 dllimport final function runWindowsCommand(out string s);
 dllimport final function killTheServer(out string s);
 dllimport final function string sendClientMessage(out string inputCommand, out string inputMapName);
@@ -39,7 +41,7 @@ simulated event PostBeginPlay()
 {
 	`log("Menu_controller");
 
-	setTimer(1,true,'killZeroPlayerServer');
+	//setTimer(1,true,'killZeroPlayerServer');
 	setTimer(1,true,'updateClientArray');
 
 	IgnoreLookInput(true);
@@ -49,7 +51,9 @@ simulated event PostBeginPlay()
 
 	//fixing text create problem
 	//disable for demoday
-	//sendMyMessage("query","null");
+	sendMyMessage("query","null");
+
+	bGameCreateCoolDown = false;
 }
 
 exec function joinGameScreen(int index)
@@ -108,7 +112,7 @@ exec function sendMyMessage(string inputCommand, string inputMapName)
 function updateClientArray()
 {
 	//disable for demoday
-	//sendMyMessage("query","null");
+	sendMyMessage("query","null");
 	getClientInfo();
 }
 
@@ -127,17 +131,27 @@ function resetDisable_Map()
 	disableLoopCalling_Map = false;
 }
 
+exec function lobbyScreen()
+{
+	requestGamesInUdk();
+}
+
 exec function requestGamesInUdk()
 {
+
+	`log("called" $ disableLoopCalling);
+
 	if(disableLoopCalling == false)
-	{
-		sneaktoslimHUD_MainMenu(self.myHUD).refreshGameList(clientInfoList);
+	{	
 		disableLoopCalling = true;
 		settimer(0.5,false,'resetDisable');
 	}
+	else
+		return;
 	//getClientInfo();
 	//sneaktoslimHUD_MainMenu(self.myHUD).refreshGameList(clientInfoList);
 
+	sneaktoslimHUD_MainMenu(self.myHUD).refreshGameList(clientInfoList);
 	//fix can't get first option problem.
 	if(clientInfoList.Length > 0)
 		IPAddress = clientInfoList[0].IPAddress;
@@ -285,18 +299,33 @@ exec function selectScoremLimit(int inScoreLimit)
 exec function createRoom()
 {
 	local string urlAddress;
+
+	//check mutiple click
+	if(bGameCreateCoolDown == true)
+		return;
+
+	bGameCreateCoolDown = true;
+	settimer(3, false, 'clearGameCreateCoolDown');
 	
 	//public self ip address, player number, map
 	//ConsoleCommand("open "$"map"$"?"$"Character="$characterName);
 
-	urlAddress = "start ..\\udk.exe server "$mapName$" -log";
+	urlAddress = "start ..\\udk.exe server "$mapName$" -silent";
 
 	`log(urlAddress);
 
 	runWindowsCommand(urlAddress);
 
 	//disable for demoday
-	//sendMyMessage("add",mapName);
+	sendMyMessage("add",mapName);
+
+	
+	
+}
+
+function clearGameCreateCoolDown()
+{
+	bGameCreateCoolDown = false;
 }
 
 exec function joinGameInUdk_Host()
@@ -317,7 +346,24 @@ exec function joinGameInUdk_NonHost()
 
 exec function playTutorialInUdk()
 {
-	ConsoleCommand("open TutorialSmall?Character=Tutor");
+	//ConsoleCommand("open TutorialSmall?Character=Tutor");
+
+	local string urlAddress;
+
+	//check mutiple click
+	if(bGameCreateCoolDown == true)
+		return;
+
+	bGameCreateCoolDown = true;
+	settimer(3, false, 'clearGameCreateCoolDown');
+
+	urlAddress = "start ..\\udk.exe server TutorialSmall -silent";
+
+	`log(urlAddress);
+
+	runWindowsCommand(urlAddress);
+
+	ConsoleCommand("open 127.0.0.1?Character=FatLady");
 }
 
 exec function setIPAddress(string inIpAddress)
@@ -366,5 +412,9 @@ DefaultProperties
 	scoreLimit = 5;
 	playerNumLimit = 4;
 
+	disableLoopCalling = false
+	disableLoopCalling_Menu = false
+	disableLoopCalling_Map = false
 
+	bGameCreateCoolDown = false
 }

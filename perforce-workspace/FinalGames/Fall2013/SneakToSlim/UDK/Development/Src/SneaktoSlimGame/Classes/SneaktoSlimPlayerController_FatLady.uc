@@ -22,9 +22,26 @@ reliable client function clientReleaseSecondButton()
 {
 	if(sneaktoslimpawn(self.Pawn).s_energized == 1)
 	{
+		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
+		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+		{
+			ClearTimer('removeEnergyWithTime');
+			SetTimer(2, false, 'StartEnergyRegen');
+			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
+			sneaktoslimpawn(self.Pawn).s_energized = 0;
+		}
 
-		ServerSpeedDown();
+		attemptToChangeState('Playerwalking');
+		GoToState('Playerwalking');
+	}
+}
 
+reliable server function serverReleaseSecondButton()
+{
+	if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+	{
 		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
 					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
 		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
@@ -40,16 +57,13 @@ reliable client function clientReleaseSecondButton()
 	}
 }
 
-reliable server function serverReleaseSecondButton()
+reliable client function clientReleaseSecondButton_HoldingTreasure()
 {
 	if(sneaktoslimpawn(self.Pawn).s_energized == 1)
 	{
-
-		ServerSpeedDown();
-
 		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
 					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5);
+		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',1.f,true,0,0.5);
 		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
 		{
 			ClearTimer('removeEnergyWithTime');
@@ -57,8 +71,27 @@ reliable server function serverReleaseSecondButton()
 			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
 			sneaktoslimpawn(self.Pawn).s_energized = 0;
 		}
-		attemptToChangeState('Playerwalking');
-		GoToState('Playerwalking');
+		attemptToChangeState('HoldingTreasureWalking');
+		GoToState('HoldingTreasureWalking');
+	}
+}
+
+reliable server function serverReleaseSecondButton_HoldingTreasure()
+{
+	if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+	{
+		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
+					SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
+		sneaktoslimpawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Treasure_Walk',1.f,true,0,0.5);
+		if(sneaktoslimpawn(self.Pawn).s_energized == 1)
+		{
+			ClearTimer('removeEnergyWithTime');
+			SetTimer(2, false, 'StartEnergyRegen');
+			sneaktoslimpawn(self.Pawn).GroundSpeed = sneaktoslimpawn(self.Pawn).FLWalkingSpeed;
+			sneaktoslimpawn(self.Pawn).s_energized = 0;
+		}
+		attemptToChangeState('HoldingTreasureWalking');
+		GoToState('HoldingTreasureWalking');
 	}
 }
 
@@ -179,7 +212,7 @@ simulated state PlayerWalking
 		if(pauseMenuOn)
 			return;
 
-		if(sneaktoslimpawn(self.Pawn).v_energy <= 20)
+		if(sneaktoslimpawn(self.Pawn).v_energy <= (sneaktoslimpawn(self.Pawn).PerDashEnergy+1))
 			return;
 		else
 		{
@@ -197,11 +230,15 @@ simulated state PlayerWalking
 		//Player can't sprint if pause menu is on 
 		if(pauseMenuOn)
 			return;
-
-		SneaktoSlimPawn(self.Pawn).incrementSprintCount();
-		resumeSprintTimer();
-		attemptToChangeState('Sprinting');//to server
-		GoToState('Sprinting');//local
+		
+		if(sneaktoslimpawn(self.Pawn).v_energy <= (sneaktoslimpawn(self.Pawn).PerDashEnergy+1))
+			return;
+		else {
+			SneaktoSlimPawn(self.Pawn).incrementSprintCount();
+			resumeSprintTimer();
+			attemptToChangeState('Sprinting');//to server
+			GoToState('Sprinting');//local
+		}
 	}
 
 Begin:
@@ -378,45 +415,11 @@ simulated state Sprinting extends PlayerWalking
 		}
 	}
 
-
-
-
-	//simulated function EnergyCheck()
-	//{
-	//	if (Vsize(sneaktoslimpawn(self.Pawn).Velocity) != 0)
-	//	{
-	//		if(sneaktoslimpawn(self.Pawn).v_energy > sneaktoslimpawn(self.Pawn).PerSpeedEnergy)
-	//		{
-	//			ClearTimer('EnergyRegen');
-	//			ClearTimer('StartEnergyRegen');
-	//			//current.startSpeedUpAnim();
-	//			SwitchToCamera('ShoulderCam');
-	//			SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,true,0.5,0.5,true,false);
-	//			sneaktoslimpawn(self.Pawn).v_energy = sneaktoslimpawn(self.Pawn).v_energy - sneaktoslimpawn(self.Pawn).PerSpeedEnergy;
-	//			if (sneaktoslimpawn(self.Pawn).v_energy < 0)
-	//				sneaktoslimpawn(self.Pawn).v_energy = 0;
-	//		}
-	//		else
-	//		{
-	//			//attemptToChangeState('EndSprinting');
-	//			//GoToState('EndSprinting');//local
-	//			OnReleaseSecondSkill();
-	//		}
-	//	}
-	//	else
-	//	{
-	//		SetTimer(2, false, 'StartEnergyRegen');
-	//		if(SneakToSlimPlayerCamera(PlayerCamera).CameraStyle == 'ShoulderCam')
-	//				SwitchToCamera(SneakToSlimPlayerCamera(PlayerCamera).PreSprintCamera);     //ANDYCAM
-	//		SneaktoSlimPawn(self.Pawn).playerPlayOrStopCustomAnim('customSprint','Sprint',1.f,false,0,0.5f);
-	//	}
-	//}
-
 	simulated function removeEnergyWithTime()
 	{
 		if (Vsize(sneaktoslimpawn(self.Pawn).Velocity) != 0)
 		{
-			if(sneaktoslimpawn(self.Pawn).v_energy > sneaktoslimpawn(self.Pawn).PerSpeedEnergy)
+			if(sneaktoslimpawn(self.Pawn).v_energy > (sneaktoslimplayercontroller(Pawn.Controller).exhaustedThreshold+1))
 			{
 				ClearTimer('EnergyRegen');
 				ClearTimer('StartEnergyRegen');
@@ -635,7 +638,7 @@ simulated state HoldingTreasureSprinting extends Sprinting
 	{
 		if (Vsize(sneaktoslimpawn(self.Pawn).Velocity) != 0)
 		{
-			if(sneaktoslimpawn(self.Pawn).v_energy > sneaktoslimpawn(self.Pawn).PerSpeedEnergy)
+			if(sneaktoslimpawn(self.Pawn).v_energy > (sneaktoslimplayercontroller(Pawn.Controller).exhaustedThreshold+1))
 			{
 				ClearTimer('EnergyRegen');
 				ClearTimer('StartEnergyRegen');
@@ -647,7 +650,16 @@ simulated state HoldingTreasureSprinting extends Sprinting
 			}
 			else
 			{
-				OnReleaseSecondSkill();
+				if(role == ROLE_Authority)
+				{
+					OnReleaseSecondSkill();
+					clientReleaseSecondButton_HoldingTreasure();
+				}
+				else if(role == ROLE_AutonomousProxy)
+				{
+					OnReleaseSecondSkill();
+					serverReleaseSecondButton_HoldingTreasure();
+				}
 			}
 		}
 		else
