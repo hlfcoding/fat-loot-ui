@@ -19,7 +19,7 @@
         public static const USE_DEBOUNCE:Boolean = false; // FIXME: UDK has problems with this.
         public static const USE_REGEXP_TEST:Boolean = false; // FIXME: UDK has problems with this.
         public static const USE_DEFAULT_GAME_SETTINGS:Boolean = true; // Enable to give players less control over game settings.
-        public static const VERSION:String = '0.29.2';
+        public static const VERSION:String = '0.29.3';
 
         public var cursor:Cursor;
         public var rootMenuView:RootMenuView;
