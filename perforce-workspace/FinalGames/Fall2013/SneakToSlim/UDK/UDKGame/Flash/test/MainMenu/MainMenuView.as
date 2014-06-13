@@ -8,15 +8,17 @@
     import flash.text.TextFieldAutoSize;
 
     import scaleform.clik.controls.Label;
+    import scaleform.clik.controls.TextInput;
     import scaleform.clik.events.ButtonEvent;
 
     public class MainMenuView extends NavigableView {
 
         public static const DEBUG:Boolean = false; // Disable in general for production builds.
-        public static const USE_FIXTURES:Boolean = true;
+        public static const USE_FIXTURES:Boolean = true; // Note this can't turn on all fixtures.
         public static const SEND_COMMANDS:Boolean = true; // Disable for preview or debugger builds.
         public static const USE_DEBOUNCE:Boolean = false; // FIXME: UDK has problems with this.
         public static const USE_REGEXP_TEST:Boolean = false; // FIXME: UDK has problems with this.
+        public static const USE_DEFAULT_GAME_SETTINGS:Boolean = false; // Enable to give players less control over game settings.
         public static const VERSION:String = '0.29.2';
 
         public var cursor:Cursor;
@@ -176,6 +178,13 @@
                     break;
                 case 'hostGameView':
                     hostGameView.gameModel = gameModel;
+                    if (MainMenuView.USE_DEFAULT_GAME_SETTINGS) {
+                        for each (var settingInput:TextInput in hostGameView.settingInputs) {
+                            settingInput.enabled = false;
+                            // Since inputs are disabled, attached handlers must run at least once.
+                            settingInput.dispatchEvent(new Event(Event.CHANGE));
+                        }
+                    }
                     break;
                 default: break;
             }
