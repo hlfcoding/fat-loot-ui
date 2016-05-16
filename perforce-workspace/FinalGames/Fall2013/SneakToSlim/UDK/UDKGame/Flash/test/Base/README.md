@@ -41,3 +41,16 @@ Via `TableItemRenderer`, it also keeps the header 'cells' in its `selectTopBar`
 aligned to create the illusion of columns. In fact, the item ('row') renderer
 does the actual sizing of the 'cells' (actually extra `TextField`s) and
 instances of `TableItemDivider`.
+
+## Utility
+
+Most utility methods are self-explanatory. One to note is `sendCommand` wraps
+`fscommand`, since the final game 'command' is a joined string value for the
+`callConsoleCommand` command.
+
+## Other
+
+`Cursor` is the bare minimum behavior for a custom cursor view.
+
+`InputDebouncer` is a debounce implementation adapted to `Timer` being an
+observable object.
