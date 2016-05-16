@@ -16,6 +16,8 @@ The application shares its data and state with the game process via four
 computed properties: `games`, `characters`, `levels`, and `gameModel`. The
 objects behind those properties are observable from subclassing
 `EventDispatcher`, so updating them can cause observing views to update.
+`gameModel` is passed down to all screens as a reference and is modified as the
+current game is configured by the user.
 
 It also provides access to global game state via its `sharedApplication` and
 `sharedRepository` singleton properties. And it has flags like `DEBUG` for
