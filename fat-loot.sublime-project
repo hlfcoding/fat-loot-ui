@@ -2,20 +2,7 @@
   "folders":
   [
     {
-      "name": "FatLoot/Flash/Workspace",
-      "path": "perforce-workspace/FinalGames/Fall2013/SneakToSlim/UDK/UDKGame/Flash/test"
-    },
-    {
-      "name": "Flash/Library",
-      "path": "perforce-workspace/FinalGames/Fall2013/SneakToSlim/UDK/Development/Flash/AS3"
-    },
-    {
-      "name": "UDK/CLIK",
-      "path": "perforce-workspace/FinalGames/Fall2013/SneakToSlim/UDK/Development/Flash/AS3/CLIK/scaleform/clik"
-    },
-    {
-      "name": "UDK/GFX",
-      "path": "perforce-workspace/FinalGames/Fall2013/SneakToSlim/UDK/Development/Flash/AS3/CLIK/scaleform/gfx"
+      "path": "perforce-workspace/FinalGames/Fall2013/SneakToSlim/UDK"
     }
   ]
 }
