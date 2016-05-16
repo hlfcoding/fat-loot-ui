@@ -28,3 +28,16 @@ For items, it uses a customized `SelectItemRenderer` that extends the CLIK
 `ListItemRenderer` with common model-specific behaviors, like displaying a
 background image under its text label. Similarly, its `PreviewView` is just a
 basic view with a couple labels over an image.
+
+## TableSelectView
+
+`TableSelectView` is a base class for a compound view consisting of an
+`ExtendedScrollingList` of the CLIK `ScrollingList`, a CLIK `ButtonBar`, and an
+optional `PreviewView`, backed by a CLIK `DataProvider`. Because it doesn't use
+the same CLIK controls as `SelectView`, it re-implements the latter's features.
+It also does column-based sorting.
+
+Via `TableItemRenderer`, it also keeps the header 'cells' in its `selectTopBar`
+aligned to create the illusion of columns. In fact, the item ('row') renderer
+does the actual sizing of the 'cells' (actually extra `TextField`s) and
+instances of `TableItemDivider`.
